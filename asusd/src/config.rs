@@ -56,6 +56,12 @@ pub struct Config {
     /// Temporary state for AC/Batt
     #[serde(skip)]
     pub last_power_plugged: u8,
+    /// Last platform profile used when on AC power
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_ac: Option<PlatformProfile>,
+    /// Last platform profile used when on battery power
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_battery: Option<PlatformProfile>,
 }
 
 impl Config {
@@ -105,6 +111,8 @@ impl Default for Config {
             last_power_plugged: Default::default(),
             screenpad_gamma: Default::default(),
             screenpad_sync_primary: Default::default(),
+            last_profile_on_ac: None,
+            last_profile_on_battery: None,
         }
     }
 }
@@ -155,6 +163,10 @@ pub struct Config611 {
     pub armoury_settings: HashMap<FirmwareAttribute, i32>,
     #[serde(skip)]
     pub last_power_plugged: u8,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_ac: Option<PlatformProfile>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_battery: Option<PlatformProfile>,
 }
 
 impl From<Config611> for Config {
@@ -181,6 +193,8 @@ impl From<Config611> for Config {
             armoury_settings: HashMap::default(),
             screenpad_gamma: None,
             screenpad_sync_primary: Default::default(),
+            last_profile_on_ac: c.last_profile_on_ac,
+            last_profile_on_battery: c.last_profile_on_battery,
         };
 
         config.ac_profile_tunings = c.ac_profile_tunings;
@@ -227,6 +241,10 @@ pub struct Config601 {
     pub nv_temp_target: Option<u8>,
     #[serde(skip)]
     pub last_power_plugged: u8,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_ac: Option<PlatformProfile>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub last_profile_on_battery: Option<PlatformProfile>,
 }
 
 impl From<Config601> for Config {
@@ -253,6 +271,8 @@ impl From<Config601> for Config {
             armoury_settings: HashMap::default(),
             screenpad_gamma: None,
             screenpad_sync_primary: Default::default(),
+            last_profile_on_ac: None,
+            last_profile_on_battery: None,
         }
     }
 }

@@ -222,31 +222,106 @@ impl CtrlPlatform {
         }
     }
 
-    async fn update_policy_ac_or_bat(&self, power_plugged: bool, change_epp: bool) {
-        if power_plugged && !self.config.lock().await.change_platform_profile_on_ac {
+    async fn update_policy_ac_or_bat(
+        &self,
+        previous_power_plugged: bool,
+        power_plugged: bool,
+        change_epp: bool,
+        signal_ctxt: Option<&SignalEmitter<'static>>,
+    ) {
+        let should_change_profile = if power_plugged {
+            self.config.lock().await.change_platform_profile_on_ac
+        } else {
+            self.config.lock().await.change_platform_profile_on_battery
+        };
+
+        if !should_change_profile {
             debug!(
-                "Power status changed but set_platform_profile_on_ac set false. Not setting the \
-                 thing"
+                "Power status changed but change_platform_profile_on_{} set false. Not setting the profile",
+                if power_plugged { "ac" } else { "battery" }
             );
-            return;
-        }
-        if !power_plugged && !self.config.lock().await.change_platform_profile_on_battery {
-            debug!(
-                "Power status changed but set_platform_profile_on_battery set false. Not setting \
-                 the thing"
-            );
+            // Still emit signal even if not changing profile, so UI is notified of power change
+            if let Some(ctxt) = signal_ctxt {
+                if let Ok(_current_profile) = self.platform.get_platform_profile() {
+                    debug!("Emitting platform_profile_changed signal (no profile change)");
+                    if let Err(e) = self.platform_profile_changed(ctxt).await {
+                        warn!("Failed to emit platform_profile_changed signal: {e}");
+                    } else {
+                        debug!("Successfully emitted platform_profile_changed signal");
+                    }
+                    if let Err(e) = self.enable_ppt_group_changed(ctxt).await {
+                        warn!("Failed to emit enable_ppt_group_changed signal: {e}");
+                    } else {
+                        debug!("Successfully emitted enable_ppt_group_changed signal");
+                    }
+                }
+            }
+            self.config.lock().await.last_power_plugged = u8::from(power_plugged);
             return;
         }
 
-        let throttle = if power_plugged {
-            self.config.lock().await.platform_profile_on_ac
-        } else {
-            self.config.lock().await.platform_profile_on_battery
+        // Save current profile for the previous power state before switching
+        let current_profile_result = self.platform.get_platform_profile();
+        {
+            let mut config = self.config.lock().await;
+            debug!(
+                "Saving current profile: previous_power_plugged={}, new_power_plugged={}",
+                previous_power_plugged, power_plugged
+            );
+            if let Ok(current_profile) = current_profile_result {
+                let profile: PlatformProfile = current_profile.into();
+                debug!("Current profile is {:?}", profile);
+                if previous_power_plugged {
+                    debug!("Saving {:?} to last_profile_on_ac", profile);
+                    config.last_profile_on_ac = Some(profile);
+                } else {
+                    debug!("Saving {:?} to last_profile_on_battery", profile);
+                    config.last_profile_on_battery = Some(profile);
+                }
+            }
+            config.last_power_plugged = u8::from(power_plugged);
+            config.write();
+        }
+
+        // Use saved profile if available, otherwise fall back to configured default
+        let throttle = {
+            let config = self.config.lock().await;
+            if power_plugged {
+                debug!("Power plugged (AC), using last_profile_on_ac or default");
+                debug!("  last_profile_on_ac={:?}, platform_profile_on_ac={:?}",
+                    config.last_profile_on_ac, config.platform_profile_on_ac);
+                config.last_profile_on_ac.unwrap_or(config.platform_profile_on_ac)
+            } else {
+                debug!("Power unplugged (Battery), using last_profile_on_battery or default");
+                debug!("  last_profile_on_battery={:?}, platform_profile_on_battery={:?}",
+                    config.last_profile_on_battery, config.platform_profile_on_battery);
+                config.last_profile_on_battery.unwrap_or(config.platform_profile_on_battery)
+            }
         };
-        debug!("Setting {throttle:?} before EPP");
+        debug!("Power plugged={}, setting profile {throttle:?} before EPP", power_plugged);
         let epp = self.get_config_epp_for_throttle(throttle).await;
         self.platform.set_platform_profile(throttle.into()).ok();
         self.check_and_set_epp(epp, change_epp);
+
+        // Emit signal to notify clients (like rog-control-center) of the profile change
+        if let Some(ctxt) = signal_ctxt {
+            // Verify profile was set correctly before emitting signal
+            if let Ok(_current_profile) = self.platform.get_platform_profile() {
+                debug!("Emitting platform_profile_changed signal after setting {throttle:?}");
+                if let Err(e) = self.platform_profile_changed(ctxt).await {
+                    warn!("Failed to emit platform_profile_changed signal: {e}");
+                } else {
+                    debug!("Successfully emitted platform_profile_changed signal");
+                }
+                if let Err(e) = self.enable_ppt_group_changed(ctxt).await {
+                    warn!("Failed to emit enable_ppt_group_changed signal: {e}");
+                } else {
+                    debug!("Successfully emitted enable_ppt_group_changed signal");
+                }
+            } else {
+                warn!("Failed to verify profile after setting, not emitting signal");
+            }
+        }
     }
 }
 
@@ -339,6 +414,19 @@ impl CtrlPlatform {
             let change_epp = self.config.lock().await.platform_profile_linked_epp;
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
+
+            // Save profile for current power state
+            {
+                let mut config = self.config.lock().await;
+                if let Ok(power_plugged) = self.power.get_online() {
+                    if power_plugged > 0 {
+                        config.last_profile_on_ac = Some(policy);
+                    } else {
+                        config.last_profile_on_battery = Some(policy);
+                    }
+                }
+            }
+
             self.platform
                 .set_platform_profile(policy.into())
                 .map_err(|err| {
@@ -377,6 +465,18 @@ impl CtrlPlatform {
             let epp = self.get_config_epp_for_throttle(policy).await;
             self.check_and_set_epp(epp, change_epp);
 
+            // Save profile for current power state
+            {
+                let mut config = self.config.lock().await;
+                if let Ok(power_plugged) = self.power.get_online() {
+                    if power_plugged > 0 {
+                        config.last_profile_on_ac = Some(policy);
+                    } else {
+                        config.last_profile_on_battery = Some(policy);
+                    }
+                }
+            }
+
             self.config.lock().await.write();
 
             let choices = self.platform.get_platform_profile_choices()?;
@@ -394,7 +494,7 @@ impl CtrlPlatform {
                     FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
                 })?;
             self.enable_ppt_group_changed(&ctxt).await?;
-            Ok(())
+            Ok(self.platform_profile_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
                 "RogPlatform: platform_profile not supported".to_owned(),
@@ -426,6 +526,8 @@ impl CtrlPlatform {
         policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_battery = policy;
+        // Save as the remembered profile for battery power
+        self.config.lock().await.last_profile_on_battery = Some(policy);
         self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
@@ -455,6 +557,8 @@ impl CtrlPlatform {
         policy: PlatformProfile,
     ) -> Result<(), FdoErr> {
         self.config.lock().await.platform_profile_on_ac = policy;
+        // Save as the remembered profile for AC power
+        self.config.lock().await.last_profile_on_ac = Some(policy);
         self.set_platform_profile(ctxt, policy).await?;
         self.config.lock().await.write();
         Ok(())
@@ -624,6 +728,7 @@ impl ReloadAndNotify for CtrlPlatform {
             info!("asusd.ron updated externally, reloading and updating internal copy");
 
             let mut base_charge_control_end_threshold = None;
+            let last_power_plugged = config.last_power_plugged;
 
             if self.power.has_charge_control_end_threshold()
                 && data.charge_control_end_threshold != config.charge_control_end_threshold
@@ -656,6 +761,7 @@ impl ReloadAndNotify for CtrlPlatform {
             // reload_and_notify!(platform_profile, "platform_profile");
 
             *config = data;
+            config.last_power_plugged = last_power_plugged;
             config.base_charge_control_end_threshold =
                 base_charge_control_end_threshold.unwrap_or_default();
         }
@@ -676,12 +782,56 @@ impl crate::Reloadable for CtrlPlatform {
         }
 
         if let Ok(power_plugged) = self.power.get_online() {
-            self.config.lock().await.last_power_plugged = power_plugged;
+            let previous_power_state_u8 = self.config.lock().await.last_power_plugged;
+            let previous_power_state = previous_power_state_u8 > 0;
+            let power_state_changed = previous_power_state_u8 != power_plugged;
+            
             if self.platform.has_platform_profile() {
+                // Initialize saved profiles if they don't exist
+                {
+                    let mut config = self.config.lock().await;
+                    if let Ok(current_profile) = self.platform.get_platform_profile() {
+                        let profile: PlatformProfile = current_profile.into();
+                        if power_plugged > 0 {
+                            if config.last_profile_on_ac.is_none() {
+                                config.last_profile_on_ac = Some(profile);
+                            }
+                        } else {
+                            if config.last_profile_on_battery.is_none() {
+                                config.last_profile_on_battery = Some(profile);
+                            }
+                        }
+                    }
+                }
+                
                 let change_epp = self.config.lock().await.platform_profile_linked_epp;
-                self.update_policy_ac_or_bat(power_plugged > 0, change_epp)
-                    .await;
+                
+                if power_state_changed {
+                    // Only update if power state actually changed
+                    self
+                        .update_policy_ac_or_bat(
+                            previous_power_state,
+                            power_plugged > 0,
+                            change_epp,
+                            None,
+                        )
+                        .await;
+                } else {
+                    // At startup (no change detected), use saved profile if available, otherwise use configured default
+                    let throttle = {
+                        let config = self.config.lock().await;
+                        if power_plugged > 0 {
+                            config.last_profile_on_ac.unwrap_or(config.platform_profile_on_ac)
+                        } else {
+                            config.last_profile_on_battery.unwrap_or(config.platform_profile_on_battery)
+                        }
+                    };
+                    let epp = self.get_config_epp_for_throttle(throttle).await;
+                    self.platform.set_platform_profile(throttle.into()).ok();
+                    self.check_and_set_epp(epp, change_epp);
+                }
             }
+            
             self.run_ac_or_bat_cmd(power_plugged > 0).await;
         }
 
@@ -703,9 +853,11 @@ impl CtrlTask for CtrlPlatform {
         let platform2 = self.clone();
         let platform3 = self.clone();
         let signal_ctxt_copy = signal_ctxt.clone();
+        let signal_ctxt_copy2 = signal_ctxt.clone();
         self.create_sys_event_tasks(
             move |sleeping| {
                 let platform1 = platform1.clone();
+                let signal_ctxt_copy = signal_ctxt_copy2.clone();
                 async move {
                     // This block is commented out due to some kind of issue reported. Maybe the
                     // desktops used were storing a value whcih was then read here.
@@ -724,17 +876,25 @@ impl CtrlTask for CtrlPlatform {
                             )
                             .ok();
                     }
-                    if let Ok(power_plugged) = platform1.power.get_online() {
-                        if platform1.config.lock().await.last_power_plugged != power_plugged {
+                    if let Ok(power_plugged_raw) = platform1.power.get_online() {
+                        let new_state = power_plugged_raw > 0;
+                        let (previous_state, change_epp) = {
+                            let cfg = platform1.config.lock().await;
+                            (cfg.last_power_plugged > 0, cfg.platform_profile_linked_epp)
+                        };
+                        if previous_state != new_state {
                             if !sleeping && platform1.platform.has_platform_profile() {
-                                let change_epp =
-                                    platform1.config.lock().await.platform_profile_linked_epp;
                                 platform1
-                                    .update_policy_ac_or_bat(power_plugged > 0, change_epp)
+                                    .update_policy_ac_or_bat(
+                                        previous_state,
+                                        new_state,
+                                        change_epp,
+                                        Some(&signal_ctxt_copy),
+                                    )
                                     .await;
                             }
                             if !sleeping {
-                                platform1.run_ac_or_bat_cmd(power_plugged > 0).await;
+                                platform1.run_ac_or_bat_cmd(new_state).await;
                                 if let Ok(profile) =
                                     platform1.platform.get_platform_profile().map(|p| p.into())
                                 {
@@ -744,7 +904,7 @@ impl CtrlTask for CtrlPlatform {
                                         set_config_or_default(
                                             &attrs,
                                             &mut cfg,
-                                            power_plugged > 0,
+                                            new_state,
                                             profile,
                                         )
                                         .await;
@@ -761,7 +921,6 @@ impl CtrlTask for CtrlPlatform {
                                     }
                                 }
                             }
-                            platform1.config.lock().await.last_power_plugged = power_plugged;
                         }
                     }
                 }
@@ -798,10 +957,18 @@ impl CtrlTask for CtrlPlatform {
                 let signal_ctxt_copy = signal_ctxt.clone();
                 // power change
                 async move {
-                    if platform3.platform.has_platform_profile() {
-                        let change_epp = platform3.config.lock().await.platform_profile_linked_epp;
+                    let (previous_state, change_epp) = {
+                        let cfg = platform3.config.lock().await;
+                        (cfg.last_power_plugged > 0, cfg.platform_profile_linked_epp)
+                    };
+                    if previous_state != power_plugged && platform3.platform.has_platform_profile() {
                         platform3
-                            .update_policy_ac_or_bat(power_plugged, change_epp)
+                            .update_policy_ac_or_bat(
+                                previous_state,
+                                power_plugged,
+                                change_epp,
+                                Some(&signal_ctxt_copy),
+                            )
                             .await;
                     }
                     platform3.run_ac_or_bat_cmd(power_plugged).await;

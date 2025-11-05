@@ -440,25 +440,25 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     let mut x = proxy_copy.receive_platform_profile_changed().await;
                     use futures_util::StreamExt;
                     while let Some(e) = x.next().await {
-                        if let Ok(out) = e.get().await {
-                            handle_copy
-                                .upgrade_in_event_loop(move |handle| {
-                                    let indexes = handle
-                                        .global::<SystemPageData>()
-                                        .get_platform_profile_indexes();
-                                    handle
-                                        .global::<SystemPageData>()
-                                        .set_platform_profile(out as i32);
-                                    let profile_value = <i32>::from(out);
-                                    if let Some(position) =
-                                        indexes.iter().position(|index| index == profile_value)
-                                    {
-                                        handle
+                        if let Ok(_) = e.get().await {
+                            // Query the current profile instead of expecting it in the signal
+                            if let Ok(profile) = proxy_copy.platform_profile().await {
+                                handle_copy
+                                    .upgrade_in_event_loop(move |handle| {
+                                        let indexes = handle
                                             .global::<SystemPageData>()
-                                            .set_platform_profile(position as i32);
-                                    }
-                                })
-                                .ok();
+                                            .get_platform_profile_indexes();
+                                        let profile_value = <i32>::from(profile);
+                                        if let Some(position) =
+                                            indexes.iter().position(|index| index == profile_value)
+                                        {
+                                            handle
+                                                .global::<SystemPageData>()
+                                                .set_platform_profile(position as i32);
+                                        }
+                                    })
+                                    .ok();
+                            }
                         }
                     }
                 });
