@@ -7,6 +7,7 @@ import { PageFans } from "pages/fans.slint";
 import { PageAnime, AnimePageData } from "pages/anime.slint";
 import { RogItem } from "widgets/common.slint";
 import { PageAura } from "pages/aura.slint";
+import { PageSlash, SlashPageData } from "pages/slash.slint";
 import { Node } from "widgets/graph.slint";
 export { Node }
 import { FanPageData, FanType, Profile } from "types/fan_types.slint";
@@ -16,7 +17,7 @@ export { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones,
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 import { PageSupergfx, SupergfxPageData } from "pages/supergfx.slint";
 
-export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData, SupergfxPageData }
+export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData, SupergfxPageData, SlashPageData }
 
 export global BottomBarData {
     in-out property <[string]> entries: [];
@@ -29,7 +30,7 @@ export component MainWindow inherits Window {
     default-font-size: 14px;
     default-font-weight: 400;
     icon: @image-url("../data/rog-control-center.png");
-    in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true, true];
+    in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true, true, true];
     private property <bool> show_notif;
     private property <bool> fade_cover;
     private property <bool> toast: false;
@@ -67,10 +68,11 @@ export component MainWindow inherits Window {
                         @tr("Menu1" => "System Control"),
                         @tr("Menu2" => "Keyboard Aura"),
                         @tr("Menu3" => "AniMe Matrix"),
-                        @tr("Menu4" => "Fan Curves"),
-                        @tr("Menu5" => "Supergfx Control"),
-                        @tr("Menu6" => "App Settings"),
-                        @tr("Menu7" => "About"),
+                        @tr("Menu4" => "Slash Control"),
+                        @tr("Menu5" => "Fan Curves"),
+                        @tr("Menu6" => "Supergfx Control"),
+                        @tr("Menu7" => "App Settings"),
+                        @tr("Menu8" => "About"),
                     ];
                     available: root.sidebar_items_avilable;
                     vertical-stretch: 1;
@@ -132,20 +134,25 @@ export component MainWindow inherits Window {
                     width: root.width - side-bar.width;
                 }
 
-                fans := PageFans {
+                slash := PageSlash {
                     width: root.width - side-bar.width;
                     visible: side-bar.current-item == 3;
                 }
 
-                if(side-bar.current-item == 4): PageSupergfx {
+                fans := PageFans {
+                    width: root.width - side-bar.width;
+                    visible: side-bar.current-item == 4;
+                }
+
+                if(side-bar.current-item == 5): PageSupergfx {
                     width: root.width - side-bar.width;
                 }
 
-                if(side-bar.current-item == 5): PageAppSettings {
+                if(side-bar.current-item == 6): PageAppSettings {
                     width: root.width - side-bar.width;
                 }
 
-                if(side-bar.current-item == 6): PageAbout {
+                if(side-bar.current-item == 7): PageAbout {
                     width: root.width - side-bar.width;
                 }
             }

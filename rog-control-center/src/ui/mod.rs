@@ -1,6 +1,7 @@
 pub mod setup_anime;
 pub mod setup_aura;
 pub mod setup_bottom_bar;
+pub mod setup_slash;
 pub mod setup_fans;
 pub mod setup_supergfx;
 pub mod setup_system;
@@ -16,6 +17,7 @@ use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
 use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_bottom_bar::setup_bottom_bar;
+use crate::ui::setup_slash::setup_slash_page;
 use crate::ui::setup_fans::setup_fan_curve_page;
 use crate::ui::setup_supergfx::setup_supergfx_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
@@ -99,13 +101,19 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         .unwrap();
 
     let available = list_iface_blocking().unwrap_or_default();
+    let platform_available = available.contains(&"xyz.ljones.Platform".to_string());
+    let aura_available = available.contains(&"xyz.ljones.Aura".to_string());
+    let anime_available = available.contains(&"xyz.ljones.Anime".to_string());
+    let slash_available = available.contains(&"xyz.ljones.Slash".to_string());
+    let fans_available = available.contains(&"xyz.ljones.FanCurves".to_string());
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            available.contains(&"xyz.ljones.Platform".to_string()),
-            available.contains(&"xyz.ljones.Aura".to_string()),
-            available.contains(&"xyz.ljones.Anime".to_string()),
-            available.contains(&"xyz.ljones.FanCurves".to_string()),
+            platform_available,
+            aura_available,
+            anime_available,
+            slash_available,
+            fans_available,
             true,
             true,
             true,
@@ -118,18 +126,23 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     });
 
     setup_app_settings_page(&ui, config.clone());
-    if available.contains(&"xyz.ljones.Platform".to_string()) {
+    if platform_available {
         setup_system_page(&ui, config.clone());
         setup_system_page_callbacks(&ui, config.clone());
     }
-    if available.contains(&"xyz.ljones.Aura".to_string()) {
+    if aura_available {
         setup_aura_page(&ui, config.clone());
     }
-    if available.contains(&"xyz.ljones.Anime".to_string()) {
+    if anime_available {
         setup_anime_page(&ui, config.clone());
     }
-    if available.contains(&"xyz.ljones.FanCurves".to_string()) {
+    if slash_available {
+        setup_slash_page(&ui);
+    }
+    if fans_available {
         setup_fan_curve_page(&ui, config);
+    } else {
+        drop(config);
     }
 
     setup_supergfx_page(&ui);

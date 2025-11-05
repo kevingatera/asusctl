@@ -1,0 +1,165 @@
+import { Palette, ScrollView, HorizontalBox } from "std-widgets.slint";
+import { RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
+
+export global SlashPageData {
+    in-out property <bool> enabled: false;
+    callback cb_enabled(bool);
+    in-out property <float> brightness: 128;
+    callback cb_brightness(int);
+    in-out property <float> interval: 0;
+    callback cb_interval(int);
+    in-out property <[string]> mode_names: [];
+    in-out property <int> mode_index: 0;
+    callback cb_mode(int);
+    in-out property <bool> show_on_boot: true;
+    callback cb_show_on_boot(bool);
+    in-out property <bool> show_on_shutdown: true;
+    callback cb_show_on_shutdown(bool);
+    in-out property <bool> show_on_sleep: true;
+    callback cb_show_on_sleep(bool);
+    in-out property <bool> show_on_battery: true;
+    callback cb_show_on_battery(bool);
+    in-out property <bool> show_battery_warning: true;
+    callback cb_show_battery_warning(bool);
+    in-out property <bool> show_on_lid_closed: false;
+    callback cb_show_on_lid_closed(bool);
+    in-out property <[string]> status_lines: [];
+}
+
+export component PageSlash inherits ScrollView {
+    VerticalLayout {
+        padding: 12px;
+        spacing: 12px;
+
+        RogItem {
+            min-height: 96px;
+            max-height: 120px;
+            HorizontalBox {
+                padding-left: 16px;
+                padding-right: 20px;
+                spacing: 12px;
+                alignment: LayoutAlignment.stretch;
+                VerticalLayout {
+                    spacing: 6px;
+                    Text {
+                        font-size: 18px;
+                        color: Palette.control-foreground;
+                        text: @tr("SlashHead" => "Slash lightbar");
+                    }
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        font-size: 12px;
+                        color: Palette.foreground.with-alpha(180);
+                        text: @tr("SlashIntro" => "Customize the chassis slash lightbar, including effects, brightness, and when it appears.");
+                    }
+                }
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashEnable" => "Enable slash lightbar");
+            checked <=> SlashPageData.enabled;
+            toggled => {
+                SlashPageData.cb_enabled(SlashPageData.enabled);
+            }
+        }
+
+        SystemDropdown {
+            text: @tr("SlashMode" => "Lightbar effect");
+            current_index <=> SlashPageData.mode_index;
+            current_value: SlashPageData.mode_names.length > SlashPageData.mode_index ? SlashPageData.mode_names[SlashPageData.mode_index] : "";
+            model <=> SlashPageData.mode_names;
+            enabled: SlashPageData.enabled && SlashPageData.mode_names.length > 0;
+            selected => {
+                SlashPageData.cb_mode(SlashPageData.mode_index);
+            }
+        }
+
+        SystemSlider {
+            text: @tr("SlashBrightness" => "Brightness");
+            minimum: 0;
+            maximum: 255;
+            value: SlashPageData.brightness;
+            enabled: SlashPageData.enabled;
+            released => {
+                SlashPageData.brightness = self.value;
+                SlashPageData.cb_brightness(Math.round(self.value));
+            }
+        }
+
+        SystemSlider {
+            text: @tr("SlashInterval" => "Effect interval");
+            minimum: 0;
+            maximum: 255;
+            value: SlashPageData.interval;
+            enabled: SlashPageData.enabled;
+            released => {
+                SlashPageData.interval = self.value;
+                SlashPageData.cb_interval(Math.round(self.value));
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashBoot" => "Show on boot");
+            checked <=> SlashPageData.show_on_boot;
+            toggled => {
+                SlashPageData.cb_show_on_boot(SlashPageData.show_on_boot);
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashShutdown" => "Show on shutdown");
+            checked <=> SlashPageData.show_on_shutdown;
+            toggled => {
+                SlashPageData.cb_show_on_shutdown(SlashPageData.show_on_shutdown);
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashSleep" => "Show on sleep");
+            checked <=> SlashPageData.show_on_sleep;
+            toggled => {
+                SlashPageData.cb_show_on_sleep(SlashPageData.show_on_sleep);
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashBattery" => "Show when on battery");
+            checked <=> SlashPageData.show_on_battery;
+            toggled => {
+                SlashPageData.cb_show_on_battery(SlashPageData.show_on_battery);
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashWarning" => "Show low battery warning");
+            checked <=> SlashPageData.show_battery_warning;
+            toggled => {
+                SlashPageData.cb_show_battery_warning(SlashPageData.show_battery_warning);
+            }
+        }
+
+        SystemToggle {
+            text: @tr("SlashLidClosed" => "Show when lid is closed");
+            checked <=> SlashPageData.show_on_lid_closed;
+            toggled => {
+                SlashPageData.cb_show_on_lid_closed(SlashPageData.show_on_lid_closed);
+            }
+        }
+
+        if SlashPageData.status_lines.length > 0: RogItem {
+            min-height: 80px;
+            max-height: 160px;
+            VerticalLayout {
+                padding: 12px;
+                spacing: 6px;
+                for line[index] in SlashPageData.status_lines: Text {
+                    wrap: TextWrap.word-wrap;
+                    font-size: 12px;
+                    color: Palette.foreground.with-alpha(200);
+                    text: line;
+                }
+            }
+        }
+    }
+}

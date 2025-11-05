@@ -248,6 +248,7 @@ export component SystemDropdown inherits RogItem {
     in-out property <int> current_index;
     in-out property <string> current_value;
     in-out property <[string]> model;
+    in property <bool> enabled: true;
     callback selected(int);
     HorizontalLayout {
         HorizontalLayout {
@@ -256,7 +257,7 @@ export component SystemDropdown inherits RogItem {
             Text {
                 font-size: 16px;
                 vertical-alignment: TextVerticalAlignment.center;
-                color: Palette.control-foreground;
+                color: root.enabled ? Palette.control-foreground : Palette.foreground.with-alpha(150);
                 text: root.text;
             }
         }
@@ -267,6 +268,7 @@ export component SystemDropdown inherits RogItem {
             padding-top: 7px;
             padding-bottom: 7px;
             ComboBox {
+                enabled: root.enabled;
                 model <=> root.model;
                 current-index <=> root.current_index;
                 current-value <=> root.current_value;
