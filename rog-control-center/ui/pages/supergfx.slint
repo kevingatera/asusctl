@@ -1,0 +1,96 @@
+import { Palette, GroupBox, ComboBox, Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+
+export global SupergfxPageData {
+    in-out property <bool> available: false;
+    in-out property <bool> busy: false;
+    in-out property <[string]> modes: [];
+    in-out property <int> selected_mode: 0;
+    in-out property <string> current_mode: "";
+    in-out property <string> power_state: "";
+    in-out property <string> pending_mode: "";
+    in-out property <string> pending_action: "";
+    in-out property <string> vendor: "";
+    in-out property <string> status_message: "";
+    in-out property <bool> apply_enabled: false;
+    callback request_set_mode(int);
+    callback request_refresh();
+}
+
+export component PageSupergfx inherits Rectangle {
+    background: Palette.background;
+
+    VerticalLayout {
+        padding: 20px;
+        spacing: 16px;
+        if !SupergfxPageData.available: GroupBox {
+            title: @tr("Supergfx Status");
+            VerticalLayout {
+                padding: 12px;
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    text: @tr("The supergfxctl daemon is not available. Ensure supergfxctl 5.2.0 or newer is installed and running.");
+                }
+                Text {
+                    visible: SupergfxPageData.status_message != "";
+                    text: SupergfxPageData.status_message;
+                    color: Palette.accent-foreground;
+                    wrap: TextWrap.word-wrap;
+                }
+            }
+        }
+
+        if SupergfxPageData.available: GroupBox {
+            title: @tr("Graphics Mode Control");
+            VerticalLayout {
+                padding: 12px;
+                spacing: 12px;
+                ComboBox {
+                    model <=> SupergfxPageData.modes;
+                    current_index <=> SupergfxPageData.selected_mode;
+                    enabled: SupergfxPageData.apply_enabled && !SupergfxPageData.busy;
+                }
+                HorizontalBox {
+                    spacing: 10px;
+                    Button {
+                        text: @tr("Refresh");
+                        enabled: !SupergfxPageData.busy;
+                        clicked => { SupergfxPageData.request_refresh(); }
+                    }
+                    Button {
+                        text: SupergfxPageData.busy ? @tr("Applying…") : @tr("Apply Mode");
+                        enabled: SupergfxPageData.apply_enabled && !SupergfxPageData.busy;
+                        clicked => { SupergfxPageData.request_set_mode(SupergfxPageData.selected_mode); }
+                    }
+                }
+                Text {
+                    visible: SupergfxPageData.status_message != "";
+                    wrap: TextWrap.word-wrap;
+                    color: Palette.accent-foreground;
+                    text: SupergfxPageData.status_message;
+                }
+            }
+        }
+
+        if SupergfxPageData.available: GroupBox {
+            title: @tr("Current Status");
+            VerticalLayout {
+                padding: 12px;
+                spacing: 8px;
+                Text { text: @tr("Current mode: {0}", SupergfxPageData.current_mode); }
+                Text { text: @tr("Power state: {0}", SupergfxPageData.power_state); }
+                Text {
+                    text: @tr("Pending mode: {0}", SupergfxPageData.pending_mode);
+                    visible: SupergfxPageData.pending_mode != "" && SupergfxPageData.pending_mode != SupergfxPageData.current_mode;
+                }
+                Text {
+                    text: @tr("Pending action: {0}", SupergfxPageData.pending_action);
+                    visible: SupergfxPageData.pending_action != "" && SupergfxPageData.pending_action != @tr("No action required");
+                }
+                Text {
+                    text: @tr("dGPU vendor: {0}", SupergfxPageData.vendor);
+                    visible: SupergfxPageData.vendor != "";
+                }
+            }
+        }
+    }
+}

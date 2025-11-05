@@ -2,6 +2,7 @@ pub mod setup_anime;
 pub mod setup_aura;
 pub mod setup_bottom_bar;
 pub mod setup_fans;
+pub mod setup_supergfx;
 pub mod setup_system;
 
 use std::sync::{Arc, Mutex};
@@ -16,6 +17,7 @@ use crate::ui::setup_anime::setup_anime_page;
 use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_bottom_bar::setup_bottom_bar;
 use crate::ui::setup_fans::setup_fan_curve_page;
+use crate::ui::setup_supergfx::setup_supergfx_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
 
@@ -106,6 +108,7 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
             available.contains(&"xyz.ljones.FanCurves".to_string()),
             true,
             true,
+            true,
         ]
         .into(),
     );
@@ -129,6 +132,7 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         setup_fan_curve_page(&ui, config);
     }
 
+    setup_supergfx_page(&ui);
     setup_bottom_bar(&ui);
 
     ui

@@ -39,4 +39,6 @@ pub enum Page {
     AuraEffects,
     AnimeMatrix,
     FanCurves,
+    SupergfxControl,
+    About,
 }
