@@ -17,6 +17,10 @@ import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 
 export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData }
 
+export global BottomBarData {
+    in-out property <[string]> entries: [];
+}
+
 export component MainWindow inherits Window {
     title: "ROG Control";
     always-on-top: true;
@@ -48,67 +52,96 @@ export component MainWindow inherits Window {
     min-height: AppSize.height;
     min-width: AppSize.width;
     background: Colors.black;
-    HorizontalLayout {
-        padding: 0px;
-        VerticalLayout {
-            side-bar := SideBar {
-                title: @tr("ROG");
-                model: [
-                    @tr("Menu1" => "System Control"),
-                    @tr("Menu2" => "Keyboard Aura"),
-                    @tr("Menu3" => "AniMe Matrix"),
-                    @tr("Menu4" => "Fan Curves"),
-                    @tr("Menu5" => "App Settings"),
-                    @tr("Menu6" => "About"),
-                ];
-                available: root.sidebar_items_avilable;
-            }
-
-            Rectangle {
-                max-height: 40px;
-                width: side-bar.width;
-                background: Palette.control-background;
-                Text {
-                    vertical-alignment: center;
-                    horizontal-alignment: center;
-                    text: @tr("Quit App");
+    VerticalLayout {
+        spacing: 0px;
+        HorizontalLayout {
+            horizontal-stretch: 1;
+            vertical-stretch: 1;
+            padding: 0px;
+            VerticalLayout {
+                spacing: 12px;
+                side-bar := SideBar {
+                    title: @tr("ROG");
+                    model: [
+                        @tr("Menu1" => "System Control"),
+                        @tr("Menu2" => "Keyboard Aura"),
+                        @tr("Menu3" => "AniMe Matrix"),
+                        @tr("Menu4" => "Fan Curves"),
+                        @tr("Menu5" => "App Settings"),
+                        @tr("Menu6" => "About"),
+                    ];
+                    available: root.sidebar_items_avilable;
+                    vertical-stretch: 1;
                 }
 
-                TouchArea {
-                    clicked => {
-                        root.exit-app();
+                status_panel := Rectangle {
+                    visible: BottomBarData.entries.length > 0;
+                    width: side-bar.width;
+                    border-radius: 14px;
+                    border-width: 1px;
+                    border-color: Palette.border.with-alpha(120);
+                    background: Palette.background.darker(0.12);
+                    entries_layout := VerticalLayout {
+                        padding-left: 12px;
+                        padding-right: 12px;
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        spacing: 6px;
+                        for entry[index] in BottomBarData.entries: Text {
+                            color: Palette.control-foreground;
+                            font-size: 12px;
+                            text: entry;
+                        }
+                    }
+                }
+
+                Rectangle {
+                    max-height: 40px;
+                    width: side-bar.width;
+                    background: Palette.control-background;
+                    Text {
+                        vertical-alignment: center;
+                        horizontal-alignment: center;
+                        text: @tr("Quit App");
+                    }
+
+                    TouchArea {
+                        clicked => {
+                            root.exit-app();
+                        }
                     }
                 }
             }
-        }
 
-        Rectangle {
-            background: Palette.background;
-            if(side-bar.current-item == 0): page := PageSystem {
-                width: root.width - side-bar.width;
-                height: root.height + 12px;
-            }
+            Rectangle {
+                horizontal-stretch: 1;
+                background: Palette.background;
+                if(side-bar.current-item == 0): page := PageSystem {
+                    width: root.width - side-bar.width;
+                    height: root.height + 12px;
+                }
 
-            aura := PageAura {
-                width: root.width - side-bar.width;
-                visible: side-bar.current-item == 1;
-            }
+                aura := PageAura {
+                    width: root.width - side-bar.width;
+                    visible: side-bar.current-item == 1;
+                }
 
-            if(side-bar.current-item == 2): PageAnime {
-                width: root.width - side-bar.width;
-            }
+                if(side-bar.current-item == 2): PageAnime {
+                    width: root.width - side-bar.width;
+                }
 
-            fans := PageFans {
-                width: root.width - side-bar.width;
-                visible: side-bar.current-item == 3;
-            }
+                fans := PageFans {
+                    width: root.width - side-bar.width;
+                    visible: side-bar.current-item == 3;
+                }
 
-            if(side-bar.current-item == 4): PageAppSettings {
-                width: root.width - side-bar.width;
-            }
+                if(side-bar.current-item == 4): PageAppSettings {
+                    width: root.width - side-bar.width;
+                }
 
-            if(side-bar.current-item == 5): PageAbout {
-                width: root.width - side-bar.width;
+                if(side-bar.current-item == 5): PageAbout {
+                    width: root.width - side-bar.width;
+                }
             }
         }
     }

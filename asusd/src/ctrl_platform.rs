@@ -288,17 +288,28 @@ impl CtrlPlatform {
             let config = self.config.lock().await;
             if power_plugged {
                 debug!("Power plugged (AC), using last_profile_on_ac or default");
-                debug!("  last_profile_on_ac={:?}, platform_profile_on_ac={:?}",
-                    config.last_profile_on_ac, config.platform_profile_on_ac);
-                config.last_profile_on_ac.unwrap_or(config.platform_profile_on_ac)
+                debug!(
+                    "  last_profile_on_ac={:?}, platform_profile_on_ac={:?}",
+                    config.last_profile_on_ac, config.platform_profile_on_ac
+                );
+                config
+                    .last_profile_on_ac
+                    .unwrap_or(config.platform_profile_on_ac)
             } else {
                 debug!("Power unplugged (Battery), using last_profile_on_battery or default");
-                debug!("  last_profile_on_battery={:?}, platform_profile_on_battery={:?}",
-                    config.last_profile_on_battery, config.platform_profile_on_battery);
-                config.last_profile_on_battery.unwrap_or(config.platform_profile_on_battery)
+                debug!(
+                    "  last_profile_on_battery={:?}, platform_profile_on_battery={:?}",
+                    config.last_profile_on_battery, config.platform_profile_on_battery
+                );
+                config
+                    .last_profile_on_battery
+                    .unwrap_or(config.platform_profile_on_battery)
             }
         };
-        debug!("Power plugged={}, setting profile {throttle:?} before EPP", power_plugged);
+        debug!(
+            "Power plugged={}, setting profile {throttle:?} before EPP",
+            power_plugged
+        );
         let epp = self.get_config_epp_for_throttle(throttle).await;
         self.platform.set_platform_profile(throttle.into()).ok();
         self.check_and_set_epp(epp, change_epp);
@@ -785,7 +796,7 @@ impl crate::Reloadable for CtrlPlatform {
             let previous_power_state_u8 = self.config.lock().await.last_power_plugged;
             let previous_power_state = previous_power_state_u8 > 0;
             let power_state_changed = previous_power_state_u8 != power_plugged;
-            
+
             if self.platform.has_platform_profile() {
                 // Initialize saved profiles if they don't exist
                 {
@@ -803,27 +814,30 @@ impl crate::Reloadable for CtrlPlatform {
                         }
                     }
                 }
-                
+
                 let change_epp = self.config.lock().await.platform_profile_linked_epp;
-                
+
                 if power_state_changed {
                     // Only update if power state actually changed
-                    self
-                        .update_policy_ac_or_bat(
-                            previous_power_state,
-                            power_plugged > 0,
-                            change_epp,
-                            None,
-                        )
-                        .await;
+                    self.update_policy_ac_or_bat(
+                        previous_power_state,
+                        power_plugged > 0,
+                        change_epp,
+                        None,
+                    )
+                    .await;
                 } else {
                     // At startup (no change detected), use saved profile if available, otherwise use configured default
                     let throttle = {
                         let config = self.config.lock().await;
                         if power_plugged > 0 {
-                            config.last_profile_on_ac.unwrap_or(config.platform_profile_on_ac)
+                            config
+                                .last_profile_on_ac
+                                .unwrap_or(config.platform_profile_on_ac)
                         } else {
-                            config.last_profile_on_battery.unwrap_or(config.platform_profile_on_battery)
+                            config
+                                .last_profile_on_battery
+                                .unwrap_or(config.platform_profile_on_battery)
                         }
                     };
                     let epp = self.get_config_epp_for_throttle(throttle).await;
@@ -831,7 +845,7 @@ impl crate::Reloadable for CtrlPlatform {
                     self.check_and_set_epp(epp, change_epp);
                 }
             }
-            
+
             self.run_ac_or_bat_cmd(power_plugged > 0).await;
         }
 
@@ -901,13 +915,8 @@ impl CtrlTask for CtrlPlatform {
                                     let attrs = FirmwareAttributes::new();
                                     {
                                         let mut cfg = platform1.config.lock().await;
-                                        set_config_or_default(
-                                            &attrs,
-                                            &mut cfg,
-                                            new_state,
-                                            profile,
-                                        )
-                                        .await;
+                                        set_config_or_default(&attrs, &mut cfg, new_state, profile)
+                                            .await;
                                     }
                                     if let Err(e) = platform1
                                         .armoury_registry
@@ -961,7 +970,8 @@ impl CtrlTask for CtrlPlatform {
                         let cfg = platform3.config.lock().await;
                         (cfg.last_power_plugged > 0, cfg.platform_profile_linked_epp)
                     };
-                    if previous_state != power_plugged && platform3.platform.has_platform_profile() {
+                    if previous_state != power_plugged && platform3.platform.has_platform_profile()
+                    {
                         platform3
                             .update_policy_ac_or_bat(
                                 previous_state,
