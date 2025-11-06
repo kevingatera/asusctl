@@ -2,48 +2,61 @@
 // SPDX-License-Identifier: MIT
 
 import { Palette, HorizontalBox, VerticalBox } from "std-widgets.slint";
+import { Spacing, Typography, Radii, Shadows, Animations } from "../globals.slint";
 
 component SideBarItem inherits Rectangle {
-    // padding only has effect on layout elements
-    // padding: 10px;
     in property <bool> selected;
     in property <bool> has-focus;
     in-out property <string> text <=> label.text;
     callback clicked <=> touch.clicked;
-    min-height: self.visible ? l.preferred-height + 10px : 0px;
-    // min-width: self.visible ? l.preferred-width + 10px : 0px;
+    min-height: self.visible ? 44px : 0px;
+    border-radius: Radii.md;
+
     states [
         pressed when touch.pressed: {
-            state.opacity: 0.8;
+            state.opacity: 0.95;
+            state.background: Palette.accent-background.darker(0.15);
         }
         hover when touch.has-hover: {
-            state.opacity: 0.6;
+            state.opacity: 0.8;
+            state.background: Palette.accent-background.with-alpha(0.15);
         }
         selected when root.selected: {
             state.opacity: 1;
+            state.background: Palette.accent-background;
         }
         focused when root.has-focus: {
-            state.opacity: 0.8;
+            state.opacity: 0.9;
+            state.background: Palette.accent-background.with-alpha(0.2);
         }
     ]
+
     state := Rectangle {
         opacity: 0;
-        border-width: 2px;
-        border-radius: 10px;
+        border-width: 0px;
+        border-radius: Radii.md;
         border-color: Palette.accent-background;
         background: Palette.alternate-background;
-        animate opacity { duration: 150ms; }
-        animate border-width { duration: 150ms; }
-        height: l.preferred-height;
+        drop-shadow-blur: root.selected ? Shadows.md-blur : 0px;
+        drop-shadow-color: Palette.accent-background.with-alpha(0.4);
+        drop-shadow-offset-y: 2px;
+
+        animate opacity { duration: Animations.fast; easing: ease-in-out; }
+        animate background { duration: Animations.fast; easing: ease-in-out; }
+        animate drop-shadow-blur { duration: Animations.fast; easing: ease-in-out; }
     }
 
     l := HorizontalBox {
-        y: (parent.height - self.height) / 2;
-        spacing: 0px;
+        padding: Spacing.md;
+        spacing: Spacing.sm;
         label := Text {
-            color: Palette.foreground;
+            color: root.selected ? Colors.white : Palette.foreground;
             vertical-alignment: center;
-            font-size: 14px;
+            font-size: Typography.base;
+            font-weight: root.selected ? Typography.weight-semibold : Typography.weight-medium;
+
+            animate color { duration: Animations.fast; easing: ease-in-out; }
+            animate font-weight { duration: Animations.fast; easing: ease-in-out; }
         }
     }
 
@@ -60,56 +73,54 @@ export component SideBar inherits Rectangle {
     out property <int> current-item: 0;
     out property <int> current-focused: fs.has-focus ? fs.focused-tab : -1;
 
-    // The currently focused tab
-    width: 160px;
     forward-focus: fs;
     accessible-role: tab;
     accessible-delegate-focus: root.current-focused >= 0 ? root.current-focused : root.current-item;
-    Rectangle {
-        border-width: 2px;
-        border-color: Palette.accent-background;
-        border-radius: 0px;
-        background: Palette.background.darker(0.2);
-        fs := FocusScope {
-            key-pressed(event) => {
-                if (event.text == "\n") {
-                    root.current-item = root.current-focused;
-                    return accept;
-                }
-                if (event.text == Key.UpArrow) {
-                    self.focused-tab = Math.max(self.focused-tab - 1,  0);
-                    return accept;
-                }
-                if (event.text == Key.DownArrow) {
-                    self.focused-tab = Math.min(self.focused-tab + 1, root.model.length - 1);
-                    return accept;
-                }
-                return reject;
+    background: transparent;
+
+    fs := FocusScope {
+        key-pressed(event) => {
+            if (event.text == "\n") {
+                root.current-item = root.current-focused;
+                return accept;
             }
-            key-released(event) => {
-                if (event.text == " ") {
-                    root.current-item = root.current-focused;
-                    return accept;
-                }
-                return reject;
+            if (event.text == Key.UpArrow) {
+                self.focused-tab = Math.max(self.focused-tab - 1,  0);
+                return accept;
             }
-            property <int> focused-tab: 0;
-            x: 0;
-            width: 0;
-            // Do not react on clicks
+            if (event.text == Key.DownArrow) {
+                self.focused-tab = Math.min(self.focused-tab + 1, root.model.length - 1);
+                return accept;
+            }
+            return reject;
         }
+        key-released(event) => {
+            if (event.text == " ") {
+                root.current-item = root.current-focused;
+                return accept;
+            }
+            return reject;
+        }
+        property <int> focused-tab: 0;
+        x: 0;
+        width: 0;
     }
 
-    VerticalBox {
-        spacing: 4px;
+    VerticalLayout {
+        spacing: Spacing.lg;
         alignment: start;
+
+        // Sidebar title with modern styling
         label := Text {
-            font-size: 16px;
+            font-size: Typography.xl;
+            font-weight: Typography.weight-bold;
             horizontal-alignment: center;
+            color: Palette.foreground;
         }
 
+        // Navigation items with spacing
         navigation := VerticalLayout {
-            spacing: -6px;
+            spacing: Spacing.sm;
             alignment: start;
             vertical-stretch: 0;
             for item[index] in root.model: SideBarItem {
@@ -125,9 +136,6 @@ export component SideBar inherits Rectangle {
 
         VerticalLayout {
             bottom := VerticalBox {
-                padding-left: 0px;
-                padding-top: 0px;
-                padding-bottom: 0px;
                 @children
             }
         }

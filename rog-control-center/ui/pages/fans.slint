@@ -1,7 +1,8 @@
-import { Palette, TabWidget, Button, CheckBox } from "std-widgets.slint";
+import { Palette, TabWidget, Button, CheckBox, ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
 import { SystemToggle } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
+import { Spacing, Typography } from "../globals.slint";
 
 component FanTab inherits Rectangle {
     in-out property <bool> enabled: false;
@@ -16,20 +17,31 @@ component FanTab inherits Rectangle {
     in-out property <[Node]> nodes;
 
     VerticalLayout {
+        padding: Spacing.lg;
+        spacing: Spacing.lg;
+
         HorizontalLayout {
+            vertical-stretch: 1;
             if root.tab_enabled: Graph {
                 nodes <=> root.nodes;
             }
             if !root.tab_enabled: Rectangle {
-                Text {
-                    font-size: 24px;
-                    text: @tr("This fan is not avilable on this machine");
+                VerticalLayout {
+                    alignment: center;
+                    Text {
+                        font-size: Typography.xl;
+                        font-weight: Typography.weight-medium;
+                        text: @tr("This fan is not avilable on this machine");
+                        horizontal-alignment: center;
+                    }
                 }
             }
         }
 
         HorizontalLayout {
             alignment: LayoutAlignment.end;
+            spacing: Spacing.md;
+
             CheckBox {
                 text: @tr("Enabled");
                 checked <=> root.enabled;
@@ -67,8 +79,10 @@ component FanTab inherits Rectangle {
 }
 
 export component PageFans inherits VerticalLayout {
-    TabWidget {
-        Tab {
+    padding: Spacing.lg;
+    ScrollView {
+        TabWidget {
+            Tab {
             title: @tr("Balanced");
             TabWidget {
                 Tab {
@@ -243,6 +257,7 @@ export component PageFans inherits VerticalLayout {
                     }
                 }
             }
+        }
         }
     }
 }

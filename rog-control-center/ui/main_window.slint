@@ -1,5 +1,5 @@
 import { Palette, Button, VerticalBox } from "std-widgets.slint";
-import { AppSize } from "globals.slint";
+import { AppSize, Spacing, Typography, Radii, Shadows, Animations } from "globals.slint";
 import { PageSystem, SystemPageData, AttrMinMax } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
@@ -24,17 +24,26 @@ export global BottomBarData {
 }
 
 export component MainWindow inherits Window {
-    title: "ROG Control";
+    title: "ROG Control Center";
     always-on-top: true;
     default-font-family: "Noto Sans";
-    default-font-size: 14px;
-    default-font-weight: 400;
+    default-font-size: Typography.base;
+    default-font-weight: Typography.weight-regular;
     icon: @image-url("../data/rog-control-center.png");
+
+    // Responsive window sizing
+    preferred-width: AppSize.width;
+    preferred-height: AppSize.height;
+    min-height: AppSize.min-height;
+    min-width: AppSize.min-width;
+
     in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true, true, true];
     private property <bool> show_notif;
     private property <bool> fade_cover;
     private property <bool> toast: false;
     private property <string> toast_text: "I show when something is waiting";
+    private property <bool> sidebar_collapsed: false;
+
     callback show_toast(string);
     show_toast(text) => {
         toast = text != "";
@@ -51,18 +60,56 @@ export component MainWindow inherits Window {
         aura.external_colour_change();
         aura.external_colour_change();
     }
-    min-height: AppSize.height;
-    min-width: AppSize.width;
-    background: Colors.black;
+
+    // Beautiful gradient background
+    background: @linear-gradient(180deg, Palette.background.darker(0.3) 0%, Palette.background.darker(0.15) 100%);
     VerticalLayout {
         spacing: 0px;
+        padding: Spacing.md;
         HorizontalLayout {
             horizontal-stretch: 1;
             vertical-stretch: 1;
-            padding: 0px;
-            VerticalLayout {
-                spacing: 12px;
-                side-bar := SideBar {
+            spacing: Spacing.lg;
+
+            // Sidebar container with shadow and resizable handle
+            sidebar_container := Rectangle {
+                width: Math.max(180px, Math.min(400px, AppSize.sidebar-width));
+                background: Palette.background.darker(0.08);
+                border-radius: Radii.lg;
+                drop-shadow-blur: Shadows.lg-blur;
+                drop-shadow-color: Colors.black.with-alpha(0.3);
+                drop-shadow-offset-y: 4px;
+
+                // Resize handle on the right edge
+                resize_handle := Rectangle {
+                    x: parent.width - 4px;
+                    width: 8px;
+                    height: parent.height;
+                    background: resize_area.has-hover ? Palette.accent-background.with-alpha(0.3) : transparent;
+                    border-radius: 4px;
+
+                    animate background {
+                        duration: Animations.fast;
+                        easing: ease-in-out;
+                    }
+
+                    resize_area := TouchArea {
+                        width: parent.width;
+                        height: parent.height;
+                        mouse-cursor: ew-resize;
+
+                        moved => {
+                            if (self.pressed) {
+                                AppSize.sidebar-width = Math.max(180px, Math.min(400px, self.mouse-x + sidebar_container.x));
+                            }
+                        }
+                    }
+                }
+
+                VerticalLayout {
+                    spacing: Spacing.md;
+                    padding: Spacing.md;
+                    side-bar := SideBar {
                     title: @tr("ROG");
                     model: [
                         @tr("Menu1" => "System Control"),
@@ -74,103 +121,138 @@ export component MainWindow inherits Window {
                         @tr("Menu7" => "App Settings"),
                         @tr("Menu8" => "About"),
                     ];
-                    available: root.sidebar_items_avilable;
-                    vertical-stretch: 1;
-                }
+                        available: root.sidebar_items_avilable;
+                        vertical-stretch: 1;
+                    }
 
-                status_panel := Rectangle {
-                    visible: BottomBarData.entries.length > 0;
-                    width: side-bar.width;
-                    border-radius: 14px;
-                    border-width: 1px;
-                    border-color: Palette.border.with-alpha(120);
-                    background: Palette.background.darker(0.12);
-                    entries_layout := VerticalLayout {
-                        padding-left: 12px;
-                        padding-right: 12px;
-                        padding-top: 10px;
-                        padding-bottom: 10px;
-                        spacing: 6px;
-                        for entry[index] in BottomBarData.entries: Text {
-                            color: Palette.control-foreground;
-                            font-size: 12px;
-                            text: entry;
+                    // Status panel with improved styling
+                    status_panel := Rectangle {
+                        visible: BottomBarData.entries.length > 0;
+                        border-radius: Radii.lg;
+                        border-width: 1px;
+                        border-color: Palette.border.with-alpha(80);
+                        background: Palette.accent-background.with-alpha(0.1);
+                        drop-shadow-blur: Shadows.sm-blur;
+                        drop-shadow-color: Colors.black.with-alpha(0.2);
+
+                        entries_layout := VerticalLayout {
+                            padding: Spacing.md;
+                            spacing: Spacing.sm;
+                            for entry[index] in BottomBarData.entries: Text {
+                                color: Palette.control-foreground;
+                                font-size: Typography.sm;
+                                font-weight: Typography.weight-medium;
+                                text: entry;
+                            }
                         }
                     }
-                }
 
-                Rectangle {
-                    max-height: 40px;
-                    width: side-bar.width;
-                    background: Palette.control-background;
-                    Text {
-                        vertical-alignment: center;
-                        horizontal-alignment: center;
-                        text: @tr("Quit App");
-                    }
+                    // Quit button with hover effect
+                    quit_button := Rectangle {
+                        max-height: 44px;
+                        background: quit_area.has-hover ? Palette.accent-background.darker(0.1) : Palette.accent-background;
+                        border-radius: Radii.md;
+                        drop-shadow-blur: quit_area.pressed ? Shadows.sm-blur : Shadows.md-blur;
+                        drop-shadow-color: Colors.black.with-alpha(0.3);
+                        drop-shadow-offset-y: quit_area.pressed ? 1px : 2px;
 
-                    TouchArea {
-                        clicked => {
-                            root.exit-app();
+                        animate background, drop-shadow-blur, drop-shadow-offset-y {
+                            duration: Animations.fast;
+                            easing: ease-in-out;
+                        }
+
+                        Text {
+                            vertical-alignment: center;
+                            horizontal-alignment: center;
+                            text: @tr("Quit App");
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-semibold;
+                            color: Colors.white;
+                        }
+
+                        quit_area := TouchArea {
+                            clicked => {
+                                root.exit-app();
+                            }
                         }
                     }
                 }
             }
 
-            Rectangle {
+            // Main content area with card styling
+            content_card := Rectangle {
                 horizontal-stretch: 1;
                 background: Palette.background;
+                border-radius: Radii.lg;
+                drop-shadow-blur: Shadows.xl-blur;
+                drop-shadow-color: Colors.black.with-alpha(0.25);
+                drop-shadow-offset-y: 6px;
+
+                // Content pages
                 if(side-bar.current-item == 0): page := PageSystem {
-                    width: root.width - side-bar.width;
-                    height: root.height + 12px;
+                    width: parent.width;
+                    height: parent.height;
                 }
 
                 aura := PageAura {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                     visible: side-bar.current-item == 1;
                 }
 
                 if(side-bar.current-item == 2): PageAnime {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                 }
 
                 slash := PageSlash {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                     visible: side-bar.current-item == 3;
                 }
 
                 fans := PageFans {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                     visible: side-bar.current-item == 4;
                 }
 
                 if(side-bar.current-item == 5): PageSupergfx {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                 }
 
                 if(side-bar.current-item == 6): PageAppSettings {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                 }
 
                 if(side-bar.current-item == 7): PageAbout {
-                    width: root.width - side-bar.width;
+                    width: parent.width;
+                    height: parent.height;
                 }
             }
         }
     }
 
+    // Modern backdrop blur effect
     if fade_cover: Rectangle {
         x: 0px;
         y: 0px;
         width: root.width;
         height: root.height;
-        background: Colors.rgba(25,33,23,20);
-        opacity: 0.7;
+        background: Colors.black.with-alpha(0.5);
+        opacity: fade_cover ? 1.0 : 0.0;
+
+        animate opacity {
+            duration: Animations.normal;
+            easing: ease-in-out;
+        }
+
         TouchArea {
             height: 100%;
             width: 100%;
             clicked => {
-                // toolbar-dropdown.close();
                 if (show_notif) {
                     show_notif = false;
                 }
@@ -179,86 +261,133 @@ export component MainWindow inherits Window {
         }
     }
 
+    // Beautiful toast notification
     if toast: Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: 32px;
-        opacity: 1.0;
-        background: Colors.grey;
-        TouchArea {
-            height: 100%;
-            width: 100%;
-            clicked => {
-                toast = false;
-            }
-        }
+        x: Spacing.xl;
+        y: Spacing.xl;
+        width: root.width - (Spacing.xl * 2);
+        height: 48px;
 
         Rectangle {
             height: 100%;
             width: 100%;
-            background: Palette.control-background;
-            Text {
-                color: Palette.control-foreground;
-                text: root.toast_text;
+            background: @linear-gradient(90deg, Palette.accent-background 0%, Palette.accent-background.darker(0.2) 100%);
+            border-radius: Radii.md;
+            drop-shadow-blur: Shadows.lg-blur;
+            drop-shadow-color: Colors.black.with-alpha(0.4);
+            drop-shadow-offset-y: 4px;
+
+            HorizontalLayout {
+                padding: Spacing.md;
+                spacing: Spacing.md;
+                alignment: LayoutAlignment.start;
+
+                Text {
+                    color: Colors.white;
+                    text: root.toast_text;
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-medium;
+                    vertical-alignment: center;
+                }
+            }
+
+            TouchArea {
+                height: 100%;
+                width: 100%;
+                clicked => {
+                    toast = false;
+                }
             }
         }
     }
 
-    // // TODO: or use Dialogue
+    // Modern notification modal
     if show_notif: Rectangle {
         x: root.width / 8;
         y: root.height / 8;
         height: (root.height / 8) * 6;
         width: (root.width / 8) * 6;
-        TouchArea {
-            height: 100%;
-            width: 100%;
-            clicked => {
-                show_notif = false;
-                exit-app();
-            }
-        }
 
-        // TODO: add properties to display
         Rectangle {
             height: 100%;
             width: 100%;
             background: Palette.background;
-            Text {
-                text: "Click here to exit";
+            border-radius: Radii.xl;
+            drop-shadow-blur: Shadows.xl-blur;
+            drop-shadow-color: Colors.black.with-alpha(0.5);
+            border-width: 1px;
+            border-color: Palette.accent-background.with-alpha(0.3);
+
+            VerticalLayout {
+                padding: Spacing.xxl;
+                spacing: Spacing.xl;
+                alignment: LayoutAlignment.center;
+
+                Text {
+                    text: "Click here to exit";
+                    font-size: Typography.xxl;
+                    font-weight: Typography.weight-bold;
+                    horizontal-alignment: center;
+                    color: Palette.foreground;
+                }
+            }
+
+            TouchArea {
+                height: 100%;
+                width: 100%;
+                clicked => {
+                    show_notif = false;
+                    exit-app();
+                }
             }
         }
     }
 
+    // Beautiful error display
     if SomeError.error_message != "": Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        
-        //padding only has effect on layout elements
-        //padding: 10px;
+        x: Spacing.xxl;
+        y: Spacing.xxl;
+        width: root.width - (Spacing.xxl * 2);
+        height: root.height - (Spacing.xxl * 2);
 
-        background: Palette.background;
-        border-color: Palette.border;
-        border-width: 3px;
-        border-radius: 10px;
+        Rectangle {
+            background: Palette.background;
+            border-radius: Radii.xl;
+            drop-shadow-blur: Shadows.xl-blur;
+            drop-shadow-color: Colors.black.with-alpha(0.6);
+            border-width: 2px;
+            border-color: Colors.red.with-alpha(0.5);
 
-        VerticalBox {
-            RogItem {
-                min-height: 50px;
-                max-height: 100px;
-                Text {
-                    text <=> SomeError.error_message;
-                    font-size: 18px;
+            VerticalLayout {
+                padding: Spacing.xxl;
+                spacing: Spacing.xl;
+
+                Rectangle {
+                    background: Colors.red.with-alpha(0.1);
+                    border-radius: Radii.md;
+                    min-height: 60px;
+
+                    VerticalLayout {
+                        padding: Spacing.lg;
+                        Text {
+                            text <=> SomeError.error_message;
+                            font-size: Typography.xl;
+                            font-weight: Typography.weight-bold;
+                            color: Colors.red;
+                            horizontal-alignment: center;
+                            wrap: word-wrap;
+                        }
+                    }
                 }
-            }
 
-            Text {
-                text <=> SomeError.error_help;
-                horizontal-alignment: TextHorizontalAlignment.center;
-                vertical-alignment: TextVerticalAlignment.center;
+                Text {
+                    text <=> SomeError.error_help;
+                    font-size: Typography.md;
+                    horizontal-alignment: center;
+                    vertical-alignment: center;
+                    wrap: word-wrap;
+                    color: Palette.foreground;
+                }
             }
         }
     }

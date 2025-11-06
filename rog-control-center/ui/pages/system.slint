@@ -1,5 +1,6 @@
 import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
+import { Spacing, Typography, Radii } from "../globals.slint";
 
 export struct AttrMinMax {
   min: int,
@@ -148,17 +149,18 @@ export component PageSystem inherits Rectangle {
     //padding: 8px;
     ScrollView {
         VerticalLayout {
-            padding: 10px;
-            spacing: 10px;
+            padding: Spacing.lg;
+            spacing: Spacing.lg;
             alignment: LayoutAlignment.start;
             Rectangle {
                 background: Palette.alternate-background;
                 border-color: Palette.accent-background;
-                border-width: 3px;
-                border-radius: 10px;
-                height: 40px;
+                border-width: 2px;
+                border-radius: Radii.md;
+                height: 48px;
                 Text {
-                    font-size: 18px;
+                    font-size: Typography.lg;
+                    font-weight: Typography.weight-semibold;
                     color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
                     text: @tr("Power settings");
@@ -248,11 +250,12 @@ export component PageSystem inherits Rectangle {
             Rectangle {
                 background: Palette.alternate-background;
                 border-color: Palette.accent-background;
-                border-width: 3px;
-                border-radius: 10px;
-                height: 40px;
+                border-width: 2px;
+                border-radius: Radii.md;
+                height: 48px;
                 Text {
-                    font-size: 18px;
+                    font-size: Typography.lg;
+                    font-weight: Typography.weight-semibold;
                     color: Palette.control-foreground;
                     horizontal-alignment: TextHorizontalAlignment.center;
                     text: @tr("Armoury settings");

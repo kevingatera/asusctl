@@ -1,12 +1,16 @@
 import { Palette, VerticalBox , StandardButton, Button, HorizontalBox, ComboBox, Switch, Slider} from "std-widgets.slint";
+import { Spacing, Typography, Radii, Shadows, Animations } from "../globals.slint";
 
 export component RogItem inherits Rectangle {
     background: Palette.control-background;
-    border-color: Palette.border;
-    border-width: 3px;
-    border-radius: 10px;
-    min-height: 48px;
-    max-height: 56px;
+    border-color: Palette.border.with-alpha(60);
+    border-width: 1px;
+    border-radius: Radii.md;
+    min-height: 52px;
+    max-height: 60px;
+    drop-shadow-blur: Shadows.sm-blur;
+    drop-shadow-color: Colors.black.with-alpha(0.08);
+    drop-shadow-offset-y: 2px;
 }
 
 export component SystemSlider inherits RogItem {
@@ -23,31 +27,34 @@ export component SystemSlider inherits RogItem {
     callback cb_do_reset();
 
     HorizontalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.md;
+
         HorizontalLayout {
             width: 40%;
             alignment: LayoutAlignment.stretch;
-            padding-left: 10px;
             HorizontalLayout {
-                spacing: 6px;
+                spacing: Spacing.sm;
                 Text {
-                    font-size: 16px;
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-medium;
                     vertical-alignment: TextVerticalAlignment.center;
                     color: Palette.control-foreground;
                     text: root.text;
                 }
 
                 Text {
-                    font-size: 16px;
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-semibold;
                     horizontal-alignment: TextHorizontalAlignment.right;
                     vertical-alignment: TextVerticalAlignment.center;
-                    color: Palette.control-foreground;
+                    color: Palette.accent-background;
                     text: "\{Math.round(root.value)}";
                 }
             }
         }
 
         HorizontalBox {
-            padding-right: 20px;
             slider := Slider {
                 enabled: root.enabled;
                 maximum: root.maximum;
@@ -60,36 +67,41 @@ export component SystemSlider inherits RogItem {
         }
 
         help_popup := PopupWindow {
-            x: help.x - self.width + help.width - 10px;
-            y: help.y - self.height + help.height - 10px;
+            x: help.x - self.width + help.width - Spacing.md;
+            y: help.y - self.height + help.height - Spacing.md;
             Rectangle {
-                drop-shadow-blur: 10px;
-                drop-shadow-color: black;
-                border-radius: 10px;
-                border-color: Palette.accent-background;
+                drop-shadow-blur: Shadows.lg-blur;
+                drop-shadow-color: Colors.black.with-alpha(0.4);
+                drop-shadow-offset-y: 4px;
+                border-radius: Radii.lg;
+                border-color: Palette.accent-background.with-alpha(0.3);
+                border-width: 1px;
                 background: Palette.background;
                 Dialog {
                     title: root.title;
                     VerticalBox {
+                        spacing: Spacing.md;
                         Text {
                             max-width: 420px;
-                            font-size: 18px;
+                            font-size: Typography.lg;
+                            font-weight: Typography.weight-semibold;
                             wrap: TextWrap.word-wrap;
                             horizontal-alignment: TextHorizontalAlignment.center;
                             text: root.title;
+                            color: Palette.foreground;
                         }
 
                         Rectangle {
                             height: 1px;
-                            border-color: black;
-                            border-width: 1px;
+                            background: Palette.border.with-alpha(60);
                         }
 
                         Text {
                             max-width: 420px;
-                            font-size: 16px;
+                            font-size: Typography.md;
                             wrap: TextWrap.word-wrap;
                             text: root.help_text;
+                            color: Palette.foreground;
                         }
                     }
 
@@ -113,17 +125,21 @@ export component SystemSlider inherits RogItem {
             x: reset.x - self.width + reset.width;
             y: reset.y - self.height + reset.height;
             Rectangle {
-                drop-shadow-blur: 10px;
-                drop-shadow-color: black;
-                border-radius: 10px;
-                border-color: Palette.accent-background;
+                drop-shadow-blur: Shadows.lg-blur;
+                drop-shadow-color: Colors.black.with-alpha(0.4);
+                drop-shadow-offset-y: 4px;
+                border-radius: Radii.lg;
+                border-color: Palette.accent-background.with-alpha(0.3);
+                border-width: 1px;
                 background: Palette.background;
                 Dialog {
                     Text {
                         max-width: 420px;
-                        font-size: 16px;
+                        font-size: Typography.md;
+                        font-weight: Typography.weight-medium;
                         wrap: TextWrap.word-wrap;
                         text: @tr("confirm_reset" => "Are you sure you want to reset this?");
+                        color: Palette.foreground;
                     }
 
                     StandardButton {
@@ -156,13 +172,23 @@ export component SystemToggle inherits RogItem {
     in property <string> text;
     in-out property <bool> checked;
     callback toggled(bool);
+
+    background: toggle_area.has-hover ? Palette.control-background.darker(0.02) : Palette.control-background;
+
+    animate background {
+        duration: Animations.fast;
+        easing: ease-in-out;
+    }
+
     HorizontalLayout {
-        spacing: 6px;
+        padding: Spacing.md;
+        spacing: Spacing.md;
+
         HorizontalLayout {
             alignment: LayoutAlignment.start;
-            padding-left: 10px;
             Text {
-                font-size: 16px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
                 text: root.text;
@@ -171,7 +197,6 @@ export component SystemToggle inherits RogItem {
 
         HorizontalLayout {
             alignment: LayoutAlignment.end;
-            padding-right: 20px;
             Switch {
                 checked <=> root.checked;
                 toggled => {
@@ -180,20 +205,34 @@ export component SystemToggle inherits RogItem {
             }
         }
     }
+
+    toggle_area := TouchArea {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 export component SystemToggleInt inherits RogItem {
     in property <string> text;
-    // in-out property <bool> checked;
     in-out property <int> checked_int;
     callback toggled(int);
+
+    background: toggle_area.has-hover ? Palette.control-background.darker(0.02) : Palette.control-background;
+
+    animate background {
+        duration: Animations.fast;
+        easing: ease-in-out;
+    }
+
     HorizontalLayout {
-        spacing: 6px;
+        padding: Spacing.md;
+        spacing: Spacing.md;
+
         HorizontalLayout {
             alignment: LayoutAlignment.start;
-            padding-left: 10px;
             Text {
-                font-size: 16px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Palette.control-foreground;
                 text: root.text;
@@ -202,7 +241,6 @@ export component SystemToggleInt inherits RogItem {
 
         HorizontalLayout {
             alignment: LayoutAlignment.end;
-            padding-right: 20px;
             Switch {
                 checked: root.checked_int != 0;
                 toggled => {
@@ -212,18 +250,34 @@ export component SystemToggleInt inherits RogItem {
             }
         }
     }
+
+    toggle_area := TouchArea {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 export component SystemToggleVert inherits RogItem {
     in property <string> text;
     in-out property <bool> checked;
     callback toggled(bool);
-    min-height: 86px;
+    min-height: 90px;
+
+    background: toggle_area.has-hover ? Palette.control-background.darker(0.02) : Palette.control-background;
+
+    animate background {
+        duration: Animations.fast;
+        easing: ease-in-out;
+    }
+
     VerticalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.sm;
         alignment: LayoutAlignment.space-around;
-        padding-top: 8px;
+
         Text {
-            font-size: 16px;
+            font-size: Typography.md;
+            font-weight: Typography.weight-medium;
             vertical-alignment: TextVerticalAlignment.bottom;
             horizontal-alignment: TextHorizontalAlignment.center;
             color: Palette.control-foreground;
@@ -232,7 +286,6 @@ export component SystemToggleVert inherits RogItem {
 
         HorizontalLayout {
             alignment: LayoutAlignment.center;
-            padding-bottom: 10px;
             Switch {
                 checked <=> root.checked;
                 toggled => {
@@ -240,6 +293,11 @@ export component SystemToggleVert inherits RogItem {
                 }
             }
         }
+    }
+
+    toggle_area := TouchArea {
+        width: 100%;
+        height: 100%;
     }
 }
 
@@ -250,12 +308,23 @@ export component SystemDropdown inherits RogItem {
     in-out property <[string]> model;
     in property <bool> enabled: true;
     callback selected(int);
+
+    background: dropdown_area.has-hover && root.enabled ? Palette.control-background.darker(0.02) : Palette.control-background;
+
+    animate background {
+        duration: Animations.fast;
+        easing: ease-in-out;
+    }
+
     HorizontalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.md;
+
         HorizontalLayout {
             alignment: LayoutAlignment.start;
-            padding-left: 10px;
             Text {
-                font-size: 16px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: root.enabled ? Palette.control-foreground : Palette.foreground.with-alpha(150);
                 text: root.text;
@@ -264,9 +333,6 @@ export component SystemDropdown inherits RogItem {
 
         HorizontalLayout {
             alignment: LayoutAlignment.end;
-            padding-right: 20px;
-            padding-top: 7px;
-            padding-bottom: 7px;
             ComboBox {
                 enabled: root.enabled;
                 model <=> root.model;
@@ -278,6 +344,11 @@ export component SystemDropdown inherits RogItem {
             }
         }
     }
+
+    dropdown_area := TouchArea {
+        width: 100%;
+        height: 100%;
+    }
 }
 
 export component PopupNotification {
@@ -288,31 +359,40 @@ export component PopupNotification {
         y: root.y;
         width: root.width;
         height: root.height;
-        // TODO: add properties to display
+
         Rectangle {
-            border-width: 2px;
-            border-color: Palette.accent-background;
+            border-width: 1px;
+            border-color: Palette.accent-background.with-alpha(0.3);
             background: Palette.background;
-            // TODO: drop shadows slow
-            // drop-shadow-offset-x: 7px;
-            // drop-shadow-offset-y: 7px;
-            // drop-shadow-color: black;
-            // drop-shadow-blur: 30px;
+            border-radius: Radii.xl;
+            drop-shadow-blur: Shadows.xl-blur;
+            drop-shadow-color: Colors.black.with-alpha(0.5);
+            drop-shadow-offset-y: 8px;
+
             VerticalLayout {
                 Dialog {
                     VerticalLayout {
                         alignment: start;
+                        spacing: Spacing.lg;
+                        padding: Spacing.md;
+
                         Text {
                             text: heading;
-                            color: Palette.control-foreground;
-                            font-size: 32px;
-                            font-weight: 900;
+                            color: Palette.foreground;
+                            font-size: Typography.xxxl;
+                            font-weight: Typography.weight-bold;
+                        }
+
+                        Rectangle {
+                            height: 2px;
+                            background: Palette.accent-background.with-alpha(0.3);
                         }
 
                         Text {
                             text: content;
-                            color: Palette.control-foreground;
-                            font-size: 18px;
+                            color: Palette.foreground;
+                            font-size: Typography.lg;
+                            wrap: word-wrap;
                         }
                     }
 

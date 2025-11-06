@@ -1,6 +1,62 @@
+// Design System: Responsive sizing
 export global AppSize {
-    out property <length> width: 900px;
-    out property <length> height: 500px;
+    out property <length> min-width: 1000px;
+    out property <length> min-height: 700px;
+    out property <length> width: 1200px;
+    out property <length> height: 800px;
+    in-out property <length> sidebar-width: 220px;  // Adjustable sidebar width
+}
+
+// Design System: Spacing scale
+export global Spacing {
+    out property <length> xs: 4px;
+    out property <length> sm: 8px;
+    out property <length> md: 12px;
+    out property <length> lg: 16px;
+    out property <length> xl: 24px;
+    out property <length> xxl: 32px;
+    out property <length> xxxl: 48px;
+}
+
+// Design System: Typography scale
+export global Typography {
+    out property <length> xs: 11px;
+    out property <length> sm: 12px;
+    out property <length> base: 14px;
+    out property <length> md: 16px;
+    out property <length> lg: 18px;
+    out property <length> xl: 22px;
+    out property <length> xxl: 28px;
+    out property <length> xxxl: 36px;
+
+    out property <int> weight-regular: 400;
+    out property <int> weight-medium: 500;
+    out property <int> weight-semibold: 600;
+    out property <int> weight-bold: 700;
+}
+
+// Design System: Border radius scale
+export global Radii {
+    out property <length> sm: 6px;
+    out property <length> md: 10px;
+    out property <length> lg: 14px;
+    out property <length> xl: 18px;
+    out property <length> full: 9999px;
+}
+
+// Design System: Shadows
+export global Shadows {
+    out property <length> sm-blur: 4px;
+    out property <length> md-blur: 8px;
+    out property <length> lg-blur: 16px;
+    out property <length> xl-blur: 24px;
+}
+
+// Design System: Animation timing
+export global Animations {
+    out property <duration> fast: 150ms;
+    out property <duration> normal: 250ms;
+    out property <duration> slow: 350ms;
 }
 
 export global IconImages {
