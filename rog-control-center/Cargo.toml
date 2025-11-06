@@ -48,7 +48,7 @@ futures-util.workspace = true
 versions.workspace = true
 
 [dependencies.slint]
-git = "https://github.com/slint-ui/slint.git"
+version = "^1.14"
 default-features = false
 features = [
     "compat-1-2",
@@ -59,7 +59,7 @@ features = [
 ]
 
 [build-dependencies.slint-build]
-git = "https://github.com/slint-ui/slint.git"
+version = "^1.14"
 
 [package.metadata.deb]
 license-file = ["../LICENSE", "4"]
