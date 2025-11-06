@@ -86,6 +86,9 @@ export global AuraPageData {
         @tr("Basic aura mode" => "Pulse"),
         @tr("Basic aura mode" => "Comet"),
         @tr("Basic aura mode" => "Flash"),
+        @tr("Basic aura mode" => "Heatmap"),
+        @tr("Basic aura mode" => "GPU Mode"),
+        @tr("Basic aura mode" => "Ambient"),
     ];
     in-out property <[string]> available_mode_names: [
         @tr("Basic aura mode" => "Static"),
@@ -96,6 +99,7 @@ export global AuraPageData {
     in-out property <[int]> supported_basic_modes: [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12];
     in-out property <int> led_mode;
     callback cb_led_mode(int);
+    callback cb_select_mode(int);
     in-out property <[string]> zone_names: [
         @tr("Aura zone" => "None"),
         @tr("Aura zone" => "Key1"),
@@ -138,7 +142,6 @@ export global AuraPageData {
     callback update_led_mode_data(AuraEffect);
     update_led_mode_data(data) => {
         led_mode_data = data;
-        current_available_mode = data.mode;
         zone = data.zone;
         speed = data.speed;
         direction = data.direction;

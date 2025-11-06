@@ -149,7 +149,10 @@ export component MainWindow inherits Window {
 
                     // Quit button with hover effect
                     quit_button := Rectangle {
-                        max-height: 44px;
+                        min-height: 44px;
+                        preferred-height: 48px;
+                        max-height: 52px;
+                        horizontal-stretch: 1;
                         background: quit_area.has-hover ? Palette.accent-background.darker(0.1) : Palette.accent-background;
                         border-radius: Radii.md;
                         drop-shadow-blur: quit_area.pressed ? Shadows.sm-blur : Shadows.md-blur;

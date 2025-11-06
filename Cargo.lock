@@ -4398,6 +4398,7 @@ dependencies = [
  "supergfxctl",
  "tokio",
  "versions",
+ "x11rb",
  "zbus",
 ]
 

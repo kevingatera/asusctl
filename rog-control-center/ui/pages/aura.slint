@@ -44,7 +44,7 @@ export component PageAura inherits Rectangle {
                         AuraPageData.led_mode_data.mode = AuraPageData.led_mode;
                         AuraPageData.led_mode_data.mode = AuraPageData.current_available_mode;
                         self.current_value = AuraPageData.available_mode_names[self.current-index];
-                        AuraPageData.cb_led_mode(AuraPageData.current_available_mode);
+                        AuraPageData.cb_select_mode(AuraPageData.current_available_mode);
                     }
                 }
             }

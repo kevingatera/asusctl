@@ -1,8 +1,9 @@
+pub mod dynamic_aura;
 pub mod setup_anime;
 pub mod setup_aura;
 pub mod setup_bottom_bar;
-pub mod setup_slash;
 pub mod setup_fans;
+pub mod setup_slash;
 pub mod setup_supergfx;
 pub mod setup_system;
 
@@ -17,8 +18,8 @@ use crate::config::Config;
 use crate::ui::setup_anime::setup_anime_page;
 use crate::ui::setup_aura::setup_aura_page;
 use crate::ui::setup_bottom_bar::setup_bottom_bar;
-use crate::ui::setup_slash::setup_slash_page;
 use crate::ui::setup_fans::setup_fan_curve_page;
+use crate::ui::setup_slash::setup_slash_page;
 use crate::ui::setup_supergfx::setup_supergfx_page;
 use crate::ui::setup_system::{setup_system_page, setup_system_page_callbacks};
 use crate::{AppSettingsPageData, MainWindow};
@@ -109,14 +110,8 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            platform_available,
-            aura_available,
-            anime_available,
-            slash_available,
-            fans_available,
-            true,
-            true,
-            true,
+            platform_available, aura_available, anime_available, slash_available, fans_available,
+            true, true, true,
         ]
         .into(),
     );

@@ -20,6 +20,7 @@ console-subscriber = { version = "^0.4", optional = true }
 
 ksni = { version = "0.3", default-features = false, features = ["async-io"] }
 image = "0.25.5"
+x11rb = "0.13.2"
 
 asusd = { path = "../asusd" }
 config-traits = { path = "../config-traits" }
