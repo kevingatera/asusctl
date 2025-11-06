@@ -2,11 +2,14 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
+use asusd::cpu_temp_monitor::CpuTempMetrics;
 use log::debug;
+use rog_dbus::zbus_fan_curves::FanCurvesProxy;
 use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
 use tokio::time::sleep;
+use zbus::Connection;
 
-use crate::{BottomBarData, MainWindow};
+use crate::{AppSettingsPageData, BottomBarData, MainWindow};
 
 #[derive(Clone, Default)]
 struct SensorConfig {
@@ -100,10 +103,11 @@ pub fn setup_bottom_bar(ui: &MainWindow) {
 
     tokio::spawn(async move {
         let mut sensors = detect_sensors();
+        let mut dbus_connection: Option<Connection> = None;
+
         loop {
             let mut entries = sensors.readings();
             if entries.is_empty() {
-                // Attempt to rediscover sensors if nothing is readable
                 sensors = detect_sensors();
                 entries = sensors.readings();
             }
@@ -112,13 +116,60 @@ pub fn setup_bottom_bar(ui: &MainWindow) {
                 entries.push("Sensors unavailable".into());
             }
 
-            let model_entries: Vec<SharedString> =
-                entries.into_iter().map(SharedString::from).collect();
+            let mut metrics: Option<CpuTempMetrics> = None;
+            if dbus_connection.is_none() {
+                match Connection::system().await {
+                    Ok(conn) => dbus_connection = Some(conn),
+                    Err(err) => debug!("BottomBar: failed to connect to system bus: {err:?}"),
+                }
+            }
+
+            if let Some(conn) = dbus_connection.as_ref() {
+                match FanCurvesProxy::new(conn).await {
+                    Ok(proxy) => match proxy.cpu_temperature_metrics().await {
+                        Ok(value) if value.sample_count > 0 => metrics = Some(value),
+                        Ok(_) => {}
+                        Err(err) => {
+                            debug!(
+                                "BottomBar: cpu_temperature_metrics call failed, resetting bus connection: {err:?}"
+                            );
+                            dbus_connection = None;
+                        }
+                    },
+                    Err(err) => {
+                        debug!(
+                            "BottomBar: failed to create FanCurves proxy, resetting bus connection: {err:?}"
+                        );
+                        dbus_connection = None;
+                    }
+                }
+            }
+
+            let metrics_for_ui = metrics;
 
             handle
                 .upgrade_in_event_loop(move |ui| {
+                    let smoothing_enabled = ui
+                        .global::<AppSettingsPageData>()
+                        .get_show_smoothed_cpu_temp();
+
+                    let final_entries: Vec<SharedString> = entries
+                        .into_iter()
+                        .map(|entry| {
+                            if smoothing_enabled && entry.starts_with("CPU Temp") {
+                                if let Some(metrics) = metrics_for_ui {
+                                    return SharedString::from(format!(
+                                        "CPU Temp: {:.1}°C (smoothed {:.1}°C)",
+                                        metrics.max, metrics.smoothed
+                                    ));
+                                }
+                            }
+                            SharedString::from(entry)
+                        })
+                        .collect();
+
                     ui.global::<BottomBarData>()
-                        .set_entries(ModelRc::new(VecModel::from(model_entries)));
+                        .set_entries(ModelRc::new(VecModel::from(final_entries)));
                 })
                 .ok();
 

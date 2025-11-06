@@ -10,6 +10,8 @@ export global AppSettingsPageData {
     callback set_enable_tray_icon(bool);
     in-out property <bool> enable_dgpu_notifications;
     callback set_enable_dgpu_notifications(bool);
+    in-out property <bool> show_smoothed_cpu_temp;
+    callback set_show_smoothed_cpu_temp(bool);
 }
 
 export component PageAppSettings inherits VerticalLayout {
@@ -53,6 +55,14 @@ export component PageAppSettings inherits VerticalLayout {
                 checked <=> AppSettingsPageData.enable_dgpu_notifications;
                 toggled => {
                     AppSettingsPageData.set_enable_dgpu_notifications(AppSettingsPageData.enable_dgpu_notifications)
+                }
+            }
+
+            SystemToggle {
+                text: @tr("Display smoothed CPU temperature");
+                checked <=> AppSettingsPageData.show_smoothed_cpu_temp;
+                toggled => {
+                    AppSettingsPageData.set_show_smoothed_cpu_temp(AppSettingsPageData.show_smoothed_cpu_temp)
                 }
             }
 

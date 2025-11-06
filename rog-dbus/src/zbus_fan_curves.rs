@@ -20,6 +20,7 @@
 //!
 //! …consequently `zbus-xmlgen` did not generate code for the above interfaces.
 
+use asusd::cpu_temp_monitor::CpuTempMetrics;
 use rog_platform::platform::PlatformProfile;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::FanCurvePU;
@@ -33,6 +34,9 @@ use zbus::proxy;
 pub trait FanCurves {
     /// Get the fan-curve data for the currently active PlatformProfile
     fn fan_curve_data(&self, profile: PlatformProfile) -> zbus::Result<Vec<CurveData>>;
+
+    /// Get the latest CPU temperature metrics sampled by the daemon.
+    fn cpu_temperature_metrics(&self) -> zbus::Result<CpuTempMetrics>;
 
     /// Reset the stored (self) and device curve to the defaults of the
     /// platform.

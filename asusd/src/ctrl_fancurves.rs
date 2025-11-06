@@ -10,9 +10,11 @@ use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
 use serde::{Deserialize, Serialize};
+use tokio::time::Duration;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
 
+use crate::cpu_temp_monitor::{CpuTempMetrics, CpuTempMonitor};
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
 
@@ -48,6 +50,8 @@ impl StdConfigLoad for FanCurveConfig {}
 pub struct CtrlFanCurveZbus {
     config: Arc<Mutex<FanCurveConfig>>,
     platform: RogPlatform,
+    cpu_monitor: Option<Arc<CpuTempMonitor>>,
+    cpu_metrics: Arc<Mutex<Option<CpuTempMetrics>>>,
 }
 
 // Non-zbus-derive impl
@@ -88,9 +92,19 @@ impl CtrlFanCurveZbus {
                 config = config.load();
             }
 
+            let cpu_monitor = match CpuTempMonitor::new() {
+                Ok(monitor) => Some(Arc::new(monitor)),
+                Err(err) => {
+                    warn!("CPU temperature monitoring unavailable: {err}");
+                    None
+                }
+            };
+
             return Ok(Self {
                 config: Arc::new(Mutex::new(config)),
                 platform,
+                cpu_monitor,
+                cpu_metrics: Arc::new(Mutex::new(None)),
             });
         }
 
@@ -182,6 +196,12 @@ impl CtrlFanCurveZbus {
         Ok(())
     }
 
+    /// Return the most recently sampled CPU temperature metrics.
+    async fn cpu_temperature_metrics(&self) -> zbus::fdo::Result<CpuTempMetrics> {
+        let metrics = self.cpu_metrics.lock().await.clone().unwrap_or_default();
+        Ok(metrics)
+    }
+
     /// Reset the stored (self) and device curves to the defaults of the
     /// platform.
     ///
@@ -268,6 +288,37 @@ impl CtrlTask for CtrlFanCurveZbus {
                 }
             }
         });
+
+        if let Some(monitor) = self.cpu_monitor.clone() {
+            let metrics_store = self.cpu_metrics.clone();
+            tokio::spawn(async move {
+                let mut last_smoothed: Option<f64> = None;
+                let mut ticker = tokio::time::interval(Duration::from_secs(5));
+
+                loop {
+                    ticker.tick().await;
+
+                    match monitor.read_metrics(last_smoothed.map(|v| v as f32)) {
+                        Some(metrics) => {
+                            last_smoothed = Some(metrics.smoothed);
+                            debug!(
+                                "CPU temp metrics - max: {:.1}°C, smoothed: {:.1}°C, avg: {:.1}°C, weighted: {:.1}°C",
+                                metrics.max, metrics.smoothed, metrics.average, metrics.weighted
+                            );
+
+                            let mut lock = metrics_store.lock().await;
+                            *lock = Some(metrics);
+                        }
+                        None => {
+                            warn!("CPU temperature metrics unavailable; retrying");
+                        }
+                    }
+                }
+            });
+            info!("CPU temperature monitoring started");
+        } else {
+            warn!("CPU temperature monitoring disabled: monitor unavailable");
+        }
 
         Ok(())
     }

@@ -4,6 +4,8 @@ pub mod config;
 pub mod ctrl_backlight;
 /// Control platform profiles + fan-curves if available
 pub mod ctrl_fancurves;
+/// CPU temperature monitoring across all cores
+pub mod cpu_temp_monitor;
 /// Control ASUS bios function such as boot sound, Optimus/Dedicated gfx mode
 pub mod ctrl_platform;
 
