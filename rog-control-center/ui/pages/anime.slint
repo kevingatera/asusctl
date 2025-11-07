@@ -106,9 +106,12 @@ export component PageAnime inherits Rectangle {
         }
     }
 
+    // Fade cover overlay - positioned as absolute overlay
     if root.show_fade_cover: Rectangle {
-        width: 100%;
-        height: 100%;
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
         background: Palette.background;
         opacity: 0.8;
         TouchArea {
@@ -127,10 +130,12 @@ export component PageAnime inherits Rectangle {
         }
     }
 
+    // Built-in animations modal - positioned as absolute overlay
     if root.show_builtin_advanced: Rectangle {
-        x: 0;
-        width: 100%;
-        height: 100%;
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
         opacity: 1;
         VerticalLayout {
             padding: 50px;
@@ -202,9 +207,12 @@ export component PageAnime inherits Rectangle {
         }
     }
 
+    // Display settings modal - positioned as absolute overlay
     if root.show_display_advanced: Rectangle {
-        width: 100%;
-        height: 100%;
+        x: 0px;
+        y: 0px;
+        width: root.width;
+        height: root.height;
         opacity: 1;
         VerticalLayout {
             padding: 50px;
