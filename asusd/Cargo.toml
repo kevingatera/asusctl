@@ -37,6 +37,8 @@ env_logger.workspace = true
 futures-util.workspace = true
 zbus.workspace = true
 logind-zbus.workspace = true
+tokio-util = { version = "0.7", features = ["rt"] }
+which = "6"
 
 # serialisation
 serde.workspace = true

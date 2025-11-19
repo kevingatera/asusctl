@@ -1,7 +1,7 @@
 use config_traits::StdConfig;
 use log::{debug, error, warn};
 use rog_slash::usb::{
-    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_lid_closed,
+    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_init, slash_pkt_lid_closed,
     slash_pkt_low_battery, slash_pkt_options, slash_pkt_save, slash_pkt_set_mode,
     slash_pkt_shutdown, slash_pkt_sleep,
 };
@@ -58,6 +58,9 @@ impl SlashZbus {
         } else {
             config.brightness
         };
+        if !enabled {
+            self.0.stop_dynamic_task().await;
+        }
         self.0
             .write_bytes(&slash_pkt_enable(config.slash_type, enabled))
             .await
@@ -78,9 +81,30 @@ impl SlashZbus {
             })
             .ok();
 
+        if enabled {
+            let mode_packets = slash_pkt_set_mode(config.slash_type, config.display_mode);
+            for pkt in &mode_packets {
+                self.0.write_bytes(pkt).await.ok();
+            }
+            self.0
+                .write_bytes(&slash_pkt_save(config.slash_type))
+                .await
+                .ok();
+        }
+
         config.enabled = enabled;
         config.brightness = brightness;
         config.write();
+        let slash_type = config.slash_type;
+        let display_mode = config.display_mode;
+        let interval = config.display_interval;
+        let enabled_state = config.enabled;
+        drop(config);
+        self.0
+            .update_dynamic_state(
+                slash_type, display_mode, enabled_state, brightness, interval,
+            )
+            .await;
     }
 
     /// Get brightness level
@@ -111,6 +135,16 @@ impl SlashZbus {
         config.enabled = enabled;
         config.brightness = brightness;
         config.write();
+        let slash_type = config.slash_type;
+        let display_mode = config.display_mode;
+        let interval = config.display_interval;
+        let enabled_state = config.enabled;
+        drop(config);
+        self.0
+            .update_dynamic_state(
+                slash_type, display_mode, enabled_state, brightness, interval,
+            )
+            .await;
     }
 
     #[zbus(property)]
@@ -135,12 +169,22 @@ impl SlashZbus {
 
         config.display_interval = interval;
         config.write();
+        let slash_type = config.slash_type;
+        let display_mode = config.display_mode;
+        let enabled_state = config.enabled;
+        let brightness_state = config.brightness;
+        drop(config);
+        self.0
+            .update_dynamic_state(
+                slash_type, display_mode, enabled_state, brightness_state, interval,
+            )
+            .await;
     }
 
     #[zbus(property)]
-    async fn mode(&self) -> zbus::fdo::Result<u8> {
+    async fn mode(&self) -> zbus::fdo::Result<SlashMode> {
         let config = self.0.lock_config().await;
-        Ok(config.display_interval)
+        Ok(config.display_mode)
     }
 
     /// Set interval between slash animations (0-255)
@@ -148,15 +192,85 @@ impl SlashZbus {
     async fn set_mode(&self, mode: SlashMode) -> zbus::Result<()> {
         let mut config = self.0.lock_config().await;
 
+        if matches!(
+            mode,
+            SlashMode::BatteryLevel | SlashMode::Audio | SlashMode::AudioSpectrum
+        ) {
+            let slash_type = config.slash_type;
+            let original_brightness = config.brightness;
+            let interval = config.display_interval;
+            let original_enabled = config.enabled;
+            let mut brightness = original_brightness;
+            let mut enabled_state = original_enabled;
+            
+            // For software modes, auto-enable device and set brightness if needed
+            if !enabled_state {
+                enabled_state = true;
+                config.enabled = true;
+            }
+            
+            if brightness == 0 {
+                brightness = 0x88;
+                config.brightness = brightness;
+            }
+            
+            config.display_mode = mode;
+            config.write();
+            drop(config);
+            
+            // Apply hardware state if we auto-enabled or changed brightness, OR if we are switching to software mode
+            // We always re-apply enable/options to ensure the device is ready for custom frames
+            self.0
+                .write_bytes(&slash_pkt_enable(slash_type, enabled_state))
+                .await
+                .map_err(|err| {
+                    warn!("ctrl_slash::enable {}", err);
+                })
+                .ok();
+            self.0
+                .write_bytes(&slash_pkt_options(
+                    slash_type,
+                    enabled_state,
+                    brightness,
+                    interval,
+                ))
+                .await
+                .map_err(|err| {
+                    warn!("ctrl_slash::set_options {}", err);
+                })
+                .ok();
+            
+            self.0
+                .update_dynamic_state(slash_type, mode, enabled_state, brightness, interval)
+                .await;
+            return Ok(());
+        }
+
+        self.0.stop_dynamic_task().await;
+
+        // Re-initialize to ensure we exit custom/software mode cleanly
+        for pkt in &slash_pkt_init(config.slash_type) {
+            self.0.write_bytes(pkt).await.ok();
+        }
+
         let command_packets = slash_pkt_set_mode(config.slash_type, mode);
-        // self.node.write_bytes(&command_packets[0])?;
-        self.0.write_bytes(&command_packets[1]).await?;
+        for pkt in &command_packets {
+            self.0.write_bytes(pkt).await?;
+        }
         self.0
             .write_bytes(&slash_pkt_save(config.slash_type))
             .await?;
 
         config.display_mode = mode;
         config.write();
+        let slash_type = config.slash_type;
+        let brightness = config.brightness;
+        let interval = config.display_interval;
+        let enabled_state = config.enabled;
+        drop(config);
+        self.0
+            .update_dynamic_state(slash_type, mode, enabled_state, brightness, interval)
+            .await;
         Ok(())
     }
 
@@ -312,6 +426,33 @@ impl Reloadable for SlashZbus {
             "show_battery_warning"
         );
 
+        let slash_type = config.slash_type;
+        let mode = config.display_mode;
+        let brightness = config.brightness;
+        let interval = config.display_interval;
+        let enabled = config.enabled;
+        drop(config);
+
+        if !matches!(
+            mode,
+            SlashMode::BatteryLevel | SlashMode::Audio | SlashMode::AudioSpectrum
+        ) {
+            let mode_packets = slash_pkt_set_mode(slash_type, mode);
+            for pkt in &mode_packets {
+                if let Err(err) = self.0.write_bytes(pkt).await {
+                    warn!("slash_set_mode {}", err);
+                }
+            }
+            self.0
+                .write_bytes(&slash_pkt_save(slash_type))
+                .await
+                .map_err(|err| warn!("slash_save {}", err))
+                .ok();
+        }
+
+        self.0
+            .update_dynamic_state(slash_type, mode, enabled, brightness, interval)
+            .await;
         Ok(())
     }
 }

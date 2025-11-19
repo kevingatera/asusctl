@@ -5,28 +5,78 @@ use log::{error, info};
 use rog_dbus::find_iface_async;
 use rog_dbus::zbus_slash::SlashProxy;
 use rog_slash::SlashMode;
-use slint::{ComponentHandle, ModelRc, SharedString, VecModel};
+use slint::{ComponentHandle, SharedString};
 
 use crate::ui::show_toast;
 use crate::{set_ui_callbacks, MainWindow, SlashPageData};
+
+fn friendly_name(mode: SlashMode) -> &'static str {
+    match mode {
+        SlashMode::Static => "Static",
+        SlashMode::Bounce => "Bounce",
+        SlashMode::Slash => "Slash",
+        SlashMode::Loading => "Loading",
+        SlashMode::BitStream => "Bit Stream",
+        SlashMode::Transmission => "Transmission",
+        SlashMode::Flow => "Flow",
+        SlashMode::Flux => "Flux",
+        SlashMode::Phantom => "Phantom",
+        SlashMode::Spectrum => "Spectrum",
+        SlashMode::Hazard => "Hazard",
+        SlashMode::Interfacing => "Interfacing",
+        SlashMode::Ramp => "Ramp",
+        SlashMode::GameOver => "Game Over",
+        SlashMode::Start => "Start",
+        SlashMode::Buzzer => "Buzzer",
+        SlashMode::Fx1 => "FX1",
+        SlashMode::Fx2 => "FX2",
+        SlashMode::Fx3 => "FX3",
+        SlashMode::BatteryLevel => "Battery level (software)",
+        SlashMode::Audio => "Audio visualizer (software)",
+        SlashMode::AudioSpectrum => "Audio spectrum (software)",
+    }
+}
 
 pub fn setup_slash_page(ui: &MainWindow) {
     let handle = ui.as_weak();
     tokio::spawn(async move {
         let Ok(slashes) = find_iface_async::<SlashProxy>("xyz.ljones.Slash").await else {
             info!("This device appears to have no slash interfaces");
+            if let Some(ui) = handle.upgrade() {
+                ui.global::<SlashPageData>().set_status_lines(
+                    [SharedString::from("Slash hardware not detected. Ensure your device supports the chassis slash lightbar.")]
+                        .as_slice()
+                        .into(),
+                );
+            }
             return;
         };
+
+        if slashes.is_empty() {
+            info!("No slash devices returned from DBus");
+            if let Some(ui) = handle.upgrade() {
+                ui.global::<SlashPageData>().set_status_lines(
+                    [SharedString::from("Slash service is available but no devices reported. Try restarting asusd.")]
+                        .as_slice()
+                        .into(),
+                );
+            }
+            return;
+        }
 
         for slash in slashes {
             let mode_pairs: Vec<(SlashMode, SharedString)> = SlashMode::list()
                 .into_iter()
-                .filter_map(|name| {
-                    SlashMode::from_str(&name)
-                        .ok()
-                        .map(|mode| (mode, SharedString::from(name)))
+                .map(|name| {
+                    let mode = SlashMode::from_str(&name)
+                        .unwrap_or_else(|_| {
+                            error!("Failed to parse slash mode: {}", name);
+                            SlashMode::Bounce
+                        });
+                    (mode, SharedString::from(friendly_name(mode)))
                 })
                 .collect();
+            
             let mode_codes: Arc<Vec<SlashMode>> =
                 Arc::new(mode_pairs.iter().map(|(mode, _)| *mode).collect());
             let mode_names: Arc<Vec<SharedString>> = Arc::new(
@@ -56,9 +106,7 @@ pub fn setup_slash_page(ui: &MainWindow) {
             handle_for_init
                 .upgrade_in_event_loop(move |handle| {
                     let global = handle.global::<SlashPageData>();
-                    global.set_mode_names(ModelRc::new(VecModel::from(
-                        (*mode_names_for_init).clone(),
-                    )));
+                    global.set_mode_names((*mode_names_for_init).as_slice().into());
                     global.set_mode_index(mode_index);
                     global.set_enabled(enabled);
                     global.set_brightness(brightness);
@@ -69,6 +117,14 @@ pub fn setup_slash_page(ui: &MainWindow) {
                     global.set_show_on_battery(show_on_battery);
                     global.set_show_battery_warning(show_battery_warning);
                     global.set_show_on_lid_closed(show_on_lid_closed);
+                    global.set_status_lines(
+                        [
+                            SharedString::from("Slash device connected"),
+                            SharedString::from("All lightbar options are now available."),
+                        ]
+                        .as_slice()
+                        .into(),
+                    );
                 })
                 .ok();
 

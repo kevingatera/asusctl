@@ -206,3 +206,52 @@ pub const fn slash_pkt_lid_closed(slash_type: SlashType, enabled: bool) -> [u8; 
         typ, 0xd8, 0x00, 0x00, 0x02, 0xa5, status,
     ]
 }
+
+#[inline]
+pub fn slash_pkt_custom_init(slash_type: SlashType) -> [SlashUsbPacket; 3] {
+    let mut pkt1 = [0; PACKET_SIZE];
+    pkt1[0] = report_id(slash_type);
+    pkt1[1] = 0xd2;
+    pkt1[2] = 0x02;
+    pkt1[3] = 0x01;
+    pkt1[4] = 0x08;
+    pkt1[5] = 0xac;
+
+    let mut pkt2 = [0; PACKET_SIZE];
+    pkt2[0] = report_id(slash_type);
+    pkt2[1] = 0xd3;
+    pkt2[2] = 0x03;
+    pkt2[3] = 0x01;
+    pkt2[4] = 0x08;
+    pkt2[5] = 0xac;
+    pkt2[6] = 0xff;
+    pkt2[7] = 0xff;
+    pkt2[8] = 0x01;
+    pkt2[9] = 0x05;
+    pkt2[10] = 0xff;
+    pkt2[11] = 0xff;
+
+    let mut pkt3 = [0; PACKET_SIZE];
+    pkt3[0] = report_id(slash_type);
+    pkt3[1] = 0xd4;
+    pkt3[2] = 0x00;
+    pkt3[3] = 0x00;
+    pkt3[4] = 0x01;
+    pkt3[5] = 0xac;
+
+    [
+        pkt1, pkt2, pkt3,
+    ]
+}
+
+#[inline]
+pub fn slash_pkt_custom_payload(slash_type: SlashType, data: &[u8; 7]) -> SlashUsbPacket {
+    let mut pkt = [0; PACKET_SIZE];
+    pkt[0] = report_id(slash_type);
+    pkt[1] = 0xd3;
+    pkt[2] = 0x00;
+    pkt[3] = 0x00;
+    pkt[4] = 0x07;
+    pkt[5..12].copy_from_slice(data);
+    pkt
+}

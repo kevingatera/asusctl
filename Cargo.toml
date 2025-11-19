@@ -37,6 +37,8 @@ tokio = { version = "^1.39.0", default-features = false, features = [
   "time",
   "rt",
   "rt-multi-thread",
+  "io-util",
+  "process",
 ] }
 concat-idents = "^1.1"
 dirs = "^4.0"

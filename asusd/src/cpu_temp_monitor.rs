@@ -1,5 +1,5 @@
-use std::path::{Path, PathBuf};
 use std::fs;
+use std::path::{Path, PathBuf};
 
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
@@ -42,7 +42,7 @@ impl CpuTempMonitor {
                 let name = Self::read_trimmed(path.join("name"));
                 if name.contains("coretemp") {
                     debug!("Found coretemp device at {:?}", path);
-                    
+
                     // Look for temperature sensors
                     for index in 1..=20 {
                         let temp_input = path.join(format!("temp{index}_input"));
@@ -52,7 +52,7 @@ impl CpuTempMonitor {
 
                         let label_path = path.join(format!("temp{index}_label"));
                         let label = Self::read_trimmed(label_path);
-                        
+
                         if label.contains("Package") || label.contains("Core") {
                             if label.contains("Package") {
                                 package_temp_path = Some(temp_input.clone());
@@ -83,19 +83,21 @@ impl CpuTempMonitor {
     /// Read all CPU core temperatures and return them
     pub fn read_core_temps(&self) -> Vec<f32> {
         let mut temps = Vec::new();
-        
+
         for path in &self.temp_paths {
             if let Some(temp) = Self::read_temp(path) {
                 temps.push(temp);
             }
         }
-        
+
         temps
     }
 
     /// Read package temperature if available
     pub fn read_package_temp(&self) -> Option<f32> {
-        self.package_temp_path.as_ref().and_then(|p| Self::read_temp(p))
+        self.package_temp_path
+            .as_ref()
+            .and_then(|p| Self::read_temp(p))
     }
 
     /// Read core temperatures and calculate aggregated metrics, including smoothed average

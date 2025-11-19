@@ -68,6 +68,7 @@ impl FromStr for SlashType {
 #[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum SlashMode {
+    Static = 0x06,
     Bounce = 0x10,
     Slash = 0x12,
     Loading = 0x13,
@@ -84,6 +85,12 @@ pub enum SlashMode {
     GameOver = 0x42,
     Start = 0x43,
     Buzzer = 0x44,
+    Fx1 = 0x60,
+    Fx2 = 0x61,
+    Fx3 = 0x62,
+    BatteryLevel = 0xf0,
+    Audio = 0xef,
+    AudioSpectrum = 0xee,
 }
 
 impl FromStr for SlashMode {
@@ -91,6 +98,7 @@ impl FromStr for SlashMode {
 
     fn from_str(s: &str) -> Result<Self, SlashError> {
         match s {
+            "Static" => Ok(SlashMode::Static),
             "Bounce" => Ok(SlashMode::Bounce),
             "Slash" => Ok(SlashMode::Slash),
             "Loading" => Ok(SlashMode::Loading),
@@ -106,6 +114,12 @@ impl FromStr for SlashMode {
             "GameOver" => Ok(SlashMode::GameOver),
             "Start" => Ok(SlashMode::Start),
             "Buzzer" => Ok(SlashMode::Buzzer),
+            "Fx1" | "FX1" => Ok(SlashMode::Fx1),
+            "Fx2" | "FX2" => Ok(SlashMode::Fx2),
+            "Fx3" | "FX3" => Ok(SlashMode::Fx3),
+            "BatteryLevel" => Ok(SlashMode::BatteryLevel),
+            "Audio" => Ok(SlashMode::Audio),
+            "AudioSpectrum" => Ok(SlashMode::AudioSpectrum),
             _ => Ok(SlashMode::Bounce),
         }
     }
@@ -114,6 +128,7 @@ impl FromStr for SlashMode {
 impl Display for SlashMode {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match &self {
+            SlashMode::Static => String::from("Static"),
             SlashMode::Bounce => String::from("Bounce"),
             SlashMode::Slash => String::from("Slash"),
             SlashMode::Loading => String::from("Loading"),
@@ -129,14 +144,21 @@ impl Display for SlashMode {
             SlashMode::GameOver => String::from("GameOver"),
             SlashMode::Start => String::from("Start"),
             SlashMode::Buzzer => String::from("Buzzer"),
+            SlashMode::Fx1 => String::from("FX1"),
+            SlashMode::Fx2 => String::from("FX2"),
+            SlashMode::Fx3 => String::from("FX3"),
+            SlashMode::BatteryLevel => String::from("BatteryLevel"),
+            SlashMode::Audio => String::from("Audio"),
+            SlashMode::AudioSpectrum => String::from("AudioSpectrum"),
         };
         write!(f, "{}", str)
     }
 }
 
 impl SlashMode {
-    pub fn list() -> [String; 15] {
+    pub fn list() -> [String; 22] {
         [
+            SlashMode::Static.to_string(),
             SlashMode::Bounce.to_string(),
             SlashMode::Slash.to_string(),
             SlashMode::Loading.to_string(),
@@ -152,6 +174,12 @@ impl SlashMode {
             SlashMode::GameOver.to_string(),
             SlashMode::Start.to_string(),
             SlashMode::Buzzer.to_string(),
+            SlashMode::Fx1.to_string(),
+            SlashMode::Fx2.to_string(),
+            SlashMode::Fx3.to_string(),
+            SlashMode::BatteryLevel.to_string(),
+            SlashMode::Audio.to_string(),
+            SlashMode::AudioSpectrum.to_string(),
         ]
     }
 }
