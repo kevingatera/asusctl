@@ -1,4 +1,5 @@
 import { Palette, GroupBox, ComboBox, Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Theme, Spacing, Typography, Radii } from "../globals.slint";
 
 export global SupergfxPageData {
     in-out property <bool> available: false;
@@ -17,24 +18,28 @@ export global SupergfxPageData {
 }
 
 export component PageSupergfx inherits Rectangle {
-    background: Palette.background;
+    background: Theme.background;
 
     VerticalLayout {
-        padding: 20px;
-        spacing: 16px;
+        padding: Spacing.xl;
+        spacing: Spacing.lg;
+        
         if !SupergfxPageData.available: GroupBox {
             title: @tr("Supergfx Status");
             VerticalLayout {
-                padding: 12px;
+                padding: Spacing.md;
                 Text {
                     wrap: TextWrap.word-wrap;
                     text: @tr("The supergfxctl daemon is not available. Ensure supergfxctl 5.2.0 or newer is installed and running.");
+                    color: Theme.text-primary;
+                    font-size: Typography.md;
                 }
                 Text {
                     visible: SupergfxPageData.status_message != "";
                     text: SupergfxPageData.status_message;
-                    color: Palette.accent-foreground;
+                    color: Theme.text-secondary;
                     wrap: TextWrap.word-wrap;
+                    font-size: Typography.sm;
                 }
             }
         }
@@ -42,15 +47,15 @@ export component PageSupergfx inherits Rectangle {
         if SupergfxPageData.available: GroupBox {
             title: @tr("Graphics Mode Control");
             VerticalLayout {
-                padding: 12px;
-                spacing: 12px;
+                padding: Spacing.md;
+                spacing: Spacing.md;
                 ComboBox {
                     model <=> SupergfxPageData.modes;
                     current_index <=> SupergfxPageData.selected_mode;
                     enabled: SupergfxPageData.apply_enabled && !SupergfxPageData.busy;
                 }
                 HorizontalBox {
-                    spacing: 10px;
+                    spacing: Spacing.md;
                     Button {
                         text: @tr("Refresh");
                         enabled: !SupergfxPageData.busy;
@@ -65,8 +70,9 @@ export component PageSupergfx inherits Rectangle {
                 Text {
                     visible: SupergfxPageData.status_message != "";
                     wrap: TextWrap.word-wrap;
-                    color: Palette.accent-foreground;
+                    color: Theme.text-secondary;
                     text: SupergfxPageData.status_message;
+                    font-size: Typography.sm;
                 }
             }
         }
@@ -74,21 +80,35 @@ export component PageSupergfx inherits Rectangle {
         if SupergfxPageData.available: GroupBox {
             title: @tr("Current Status");
             VerticalLayout {
-                padding: 12px;
-                spacing: 8px;
-                Text { text: @tr("Current mode: {0}", SupergfxPageData.current_mode); }
-                Text { text: @tr("Power state: {0}", SupergfxPageData.power_state); }
+                padding: Spacing.md;
+                spacing: Spacing.sm;
+                Text { 
+                    text: @tr("Current mode: {0}", SupergfxPageData.current_mode); 
+                    color: Theme.text-primary;
+                    font-size: Typography.md;
+                }
+                Text { 
+                    text: @tr("Power state: {0}", SupergfxPageData.power_state); 
+                    color: Theme.text-primary;
+                    font-size: Typography.md;
+                }
                 Text {
                     text: @tr("Pending mode: {0}", SupergfxPageData.pending_mode);
                     visible: SupergfxPageData.pending_mode != "" && SupergfxPageData.pending_mode != SupergfxPageData.current_mode;
+                    color: Theme.text-secondary;
+                    font-size: Typography.md;
                 }
                 Text {
                     text: @tr("Pending action: {0}", SupergfxPageData.pending_action);
                     visible: SupergfxPageData.pending_action != "" && SupergfxPageData.pending_action != @tr("No action required");
+                    color: Theme.text-secondary;
+                    font-size: Typography.md;
                 }
                 Text {
                     text: @tr("dGPU vendor: {0}", SupergfxPageData.vendor);
                     visible: SupergfxPageData.vendor != "";
+                    color: Theme.text-secondary;
+                    font-size: Typography.md;
                 }
             }
         }

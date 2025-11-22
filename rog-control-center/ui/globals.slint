@@ -4,30 +4,58 @@ export global AppSize {
     out property <length> min-height: 700px;
     out property <length> width: 1200px;
     out property <length> height: 800px;
-    in-out property <length> sidebar-width: 220px;  // Adjustable sidebar width
+    in-out property <length> sidebar-width: 260px;
+}
+
+// Design System: Colors (ROG Theme)
+export global Theme {
+    out property <color> background: #0a0a0a;
+    out property <color> surface: #141414;
+    out property <color> surface-hover: #1f1f1f;
+    out property <color> surface-active: #2a2a2a;
+    
+    in-out property <color> primary: #ff0033; // ROG Red
+    out property <color> primary-hover: primary.brighter(10%);
+    out property <color> primary-active: primary.darker(10%);
+    
+    in-out property <color> secondary: #404040; // Neutral grey instead of blue
+    
+    out property <color> text-primary: #ffffff;
+    out property <color> text-secondary: #a0a0a0;
+    out property <color> text-tertiary: #666666;
+    
+    out property <color> border: #2a2a2a;
+    out property <color> border-focus: primary;
+    
+    out property <color> success: #107c10;
+    out property <color> warning: #d83b01;
+    out property <color> error: #c50f1f;
+    
+    out property <brush> background-gradient: @linear-gradient(180deg, #141414 0%, #0a0a0a 100%);
+    out property <brush> surface-gradient: @linear-gradient(180deg, #1f1f1f 0%, #141414 100%);
 }
 
 // Design System: Spacing scale
 export global Spacing {
     out property <length> xs: 4px;
     out property <length> sm: 8px;
-    out property <length> md: 12px;
-    out property <length> lg: 16px;
-    out property <length> xl: 24px;
-    out property <length> xxl: 32px;
-    out property <length> xxxl: 48px;
+    out property <length> md: 16px;
+    out property <length> lg: 24px;
+    out property <length> xl: 32px;
+    out property <length> xxl: 48px;
+    out property <length> xxxl: 64px;
 }
 
 // Design System: Typography scale
 export global Typography {
-    out property <length> xs: 11px;
-    out property <length> sm: 12px;
+    out property <length> xs: 12px;
+    out property <length> sm: 13px;
     out property <length> base: 14px;
     out property <length> md: 16px;
-    out property <length> lg: 18px;
-    out property <length> xl: 22px;
-    out property <length> xxl: 28px;
-    out property <length> xxxl: 36px;
+    out property <length> lg: 20px;
+    out property <length> xl: 24px;
+    out property <length> xxl: 32px;
+    out property <length> xxxl: 48px;
 
     out property <int> weight-regular: 400;
     out property <int> weight-medium: 500;
@@ -37,26 +65,30 @@ export global Typography {
 
 // Design System: Border radius scale
 export global Radii {
-    out property <length> sm: 6px;
-    out property <length> md: 10px;
-    out property <length> lg: 14px;
-    out property <length> xl: 18px;
+    out property <length> sm: 4px;
+    out property <length> md: 8px;
+    out property <length> lg: 12px;
+    out property <length> xl: 16px;
     out property <length> full: 9999px;
 }
 
 // Design System: Shadows
 export global Shadows {
     out property <length> sm-blur: 4px;
-    out property <length> md-blur: 8px;
-    out property <length> lg-blur: 16px;
-    out property <length> xl-blur: 24px;
+    out property <length> md-blur: 12px;
+    out property <length> lg-blur: 24px;
+    out property <length> xl-blur: 48px;
+    
+    out property <color> color: #000000;
+    out property <float> opacity: 0.5;
 }
 
 // Design System: Animation timing
 export global Animations {
     out property <duration> fast: 150ms;
     out property <duration> normal: 250ms;
-    out property <duration> slow: 350ms;
+    out property <duration> slow: 400ms;
+    out property <easing> ease: cubic-bezier(0.25, 0.1, 0.25, 1.0);
 }
 
 export global IconImages {

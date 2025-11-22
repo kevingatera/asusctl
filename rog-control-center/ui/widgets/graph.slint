@@ -1,4 +1,5 @@
 import { Palette } from "std-widgets.slint";
+import { Theme, Typography, Spacing, Radii, Shadows } from "../globals.slint";
 
 export struct Node { x: length, y: length}
 
@@ -6,24 +7,21 @@ export component Graph inherits Rectangle {
     in-out property <[Node]> nodes;
     in property <Node> node_min: { x: 0px, y: 0px };
     in property <Node> node_max: { x: 100px, y: 255px };
-    property <length> graph_padding: 40px;
-    property <length> axis_font_size: 14px;
-    // Text {
-    //     x: 0;
-    //     text: "Fan PWM";
-    // }
+    property <length> graph_padding: Spacing.xxl;
+    property <length> axis_font_size: Typography.sm;
+    in property <int> max-rpm: 6000; // Estimated max RPM for display
 
-    // Text {
-    //     x: root.width / 2;
-    //     y: root.height - self.height;
-    //     text: "Temperature";
-    // }
+    background: Theme.surface;
+    border-radius: Radii.lg;
+    border-width: 1px;
+    border-color: Theme.border;
 
     graph := Rectangle {
         width: root.width - root.graph_padding * 2;
         height: root.height - root.graph_padding * 2;
         x: root.graph_padding;
         y: root.graph_padding;
+        
         function scale_x_to_graph(x: length) -> length {
             ((x - node_min.x) / (node_max.x - node_min.x)) * graph.width
         }
@@ -41,63 +39,77 @@ export component Graph inherits Rectangle {
         }
         //
 
+        // Grid lines vertical
         for n in 11: Path {
             viewbox-width: self.width / 1px;
             viewbox-height: self.height / 1px;
-            stroke: Palette.alternate-foreground.darker(200%);
+            stroke: Theme.border;
             stroke-width: 1px;
             MoveTo {
                 x: scale_x_to_graph(n * 10px) / 1px;
                 y: 0;
-                // scale_y_to_graph(n*1px) / 1px;
             }
 
             LineTo {
                 x: scale_x_to_graph(n * 10px) / 1px;
                 y: graph.height / 1px;
-                //scale_y_to_graph(n*1px) / 1px;
             }
         }
 
+        // X axis labels (Temp)
         for n in 11: Text {
-            color: Palette.accent-background;
+            color: Theme.text-secondary;
             font-size <=> root.axis_font_size;
             text: "\{n * 10}c";
-            x: scale_x_to_graph(n * 10px) - self.width / 3;
-            y: graph.height + 2px;
+            x: scale_x_to_graph(n * 10px) - self.width / 2; // Centered
+            y: graph.height + Spacing.sm;
         }
 
+        // Grid lines horizontal
         for n in 11: Path {
             viewbox-width: self.width / 1px;
             viewbox-height: self.height / 1px;
-            stroke: Palette.alternate-foreground.darker(200%);
+            stroke: Theme.border;
             stroke-width: 1px;
             MoveTo {
                 x: 0;
-                //scale_x_to_graph(n*10px) / 1px;
                 y: scale_y_to_graph(n * 25.5px) / 1px;
             }
 
             LineTo {
                 x: graph.width / 1px;
-                //scale_x_to_graph(n*10px) / 1px;
                 y: scale_y_to_graph(n * 25.5px) / 1px;
             }
         }
 
+        // Y axis labels (PWM %)
         for n in 11: Text {
-            color: Palette.accent-background;
+            color: Theme.text-secondary;
             font-size <=> root.axis_font_size;
             text: "\{n * 10}%";
-            x: - self.width;
+            x: - self.width - Spacing.sm;
             y: graph.height - scale_y_to_graph(n * 25.5px) - self.height / 2;
         }
 
+        // Y axis labels (Estimated RPM) - Right side
+        if root.max-rpm > 0: Rectangle {
+            width: 100%;
+            height: 100%;
+            for n in 6: Text {
+                color: Theme.text-secondary.with-alpha(0.5);
+                font-size: Typography.xs;
+                text: "\{Math.round((n * 20) / 100.0 * root.max-rpm)}";
+                x: graph.width + Spacing.sm;
+                y: graph.height - scale_y_to_graph(n * 51px) - self.height / 2;
+            }
+        }
+
+        // The line connecting nodes
         for l[idx] in nodes: path := Rectangle {
             if idx + 1 != nodes.length: Path {
                 viewbox-width: self.width / 1px;
                 viewbox-height: self.height / 1px;
-                stroke: Palette.control-foreground;
+                stroke: Theme.primary;
                 stroke-width: 2px;
                 MoveTo {
                     x: scale_x_to_graph(nodes[idx].x) / 1px;
@@ -111,28 +123,33 @@ export component Graph inherits Rectangle {
             }
         }
 
+        // The nodes themselves
         for n[idx] in nodes: Rectangle {
             states [
                 pressed when touch.pressed: {
-                    point.background: Palette.selection-background;
-                    tip.background: Palette.selection-background;
+                    point.background: Theme.primary-active;
+                    tip.background: Theme.surface-active;
                     tip.opacity: 1.0;
+                    tip.border-color: Theme.primary;
                 }
                 hover when touch.has-hover: {
-                    point.background: Palette.accent-background;
-                    tip.background: Palette.accent-background;
+                    point.background: Theme.primary-hover;
+                    tip.background: Theme.surface-hover;
                     tip.opacity: 1.0;
+                    tip.border-color: Theme.primary;
                 }
             ]
             //
             point := Rectangle {
-                background: Palette.control-foreground;
+                background: Theme.primary;
                 x: scale_x_to_graph(n.x) - self.width / 2;
                 y: graph.height - scale_y_to_graph(n.y) - self.height / 2;
-                width: 18px;
+                width: 14px;
                 height: self.width;
                 border-radius: self.width / 2;
                 property <length> pad: 1px;
+                border-width: 2px;
+                border-color: Theme.surface;
 
                 touch := TouchArea {
                     function check() {
@@ -189,21 +206,27 @@ export component Graph inherits Rectangle {
             }
 
             tip := Rectangle {
-                background: Palette.control-foreground;
-                opacity: 0.3;
+                background: Theme.surface;
+                opacity: 0.0;
                 x: final_x_pos();
                 y: final_y_pos();
-                width: label.preferred-width;
-                height: label.preferred-height;
+                width: label.preferred-width + Spacing.md;
+                height: label.preferred-height + Spacing.sm;
+                border-radius: Radii.sm;
+                border-width: 1px;
+                border-color: Theme.border;
+                drop-shadow-blur: Shadows.sm-blur;
+                drop-shadow-color: Shadows.color;
+                
                 function x_pos() -> length {
-                    scale_x_to_graph(n.x) - label.preferred-width - 8px
+                    scale_x_to_graph(n.x) - label.preferred-width - 12px
                 }
                 //
                 function final_x_pos() -> length {
                     if x_pos() > 0 {
                         x_pos()
                     } else {
-                        x_pos() + label.preferred-width
+                        x_pos() + label.preferred-width + 20px
                     }
                 }
                 //
@@ -215,18 +238,23 @@ export component Graph inherits Rectangle {
                     if y_pos() > 0 {
                         y_pos()
                     } else {
-                        y_pos() + label.preferred-height
+                        y_pos() + label.preferred-height + 10px
                     }
                 }
                 //
                 function fan_pct() -> int {
                     Math.floor(n.y / 1px) / 255 * 100
                 }
+                function est_rpm() -> int {
+                    Math.round((fan_pct() / 100.0) * root.max-rpm)
+                }
                 //
                 label := Text {
-                    color: Palette.accent-foreground;
-                    font-size: 16px;
-                    text: "\{Math.floor(n.x / 1px)}c, \{fan_pct()}%";
+                    color: Theme.text-primary;
+                    font-size: Typography.sm;
+                    text: "\{Math.floor(n.x / 1px)}°C, \{fan_pct()}% (~\{est_rpm()} RPM)";
+                    vertical-alignment: center;
+                    horizontal-alignment: center;
                 }
             }
         }

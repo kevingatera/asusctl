@@ -1,6 +1,7 @@
 import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
-import { Spacing, Typography, Radii } from "../globals.slint";
+import { Spacing, Typography, Radii, Theme } from "../globals.slint";
+import { Modal } from "../widgets/modal.slint";
 
 export struct AttrMinMax {
   min: int,
@@ -142,27 +143,28 @@ export global SystemPageData {
 }
 
 export component PageSystem inherits Rectangle {
-    property <bool> show_fade_cover: false;
     property <bool> show_throttle_advanced: false;
     clip: true;
-    //padding only has effect on layout elements
-    //padding: 8px;
+    
     ScrollView {
         VerticalLayout {
             padding: Spacing.lg;
             spacing: Spacing.lg;
             alignment: LayoutAlignment.start;
+            
             Rectangle {
-                background: Palette.alternate-background;
-                border-color: Palette.accent-background;
-                border-width: 2px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
                 border-radius: Radii.md;
                 height: 48px;
+                
                 Text {
                     font-size: Typography.lg;
                     font-weight: Typography.weight-semibold;
-                    color: Palette.control-foreground;
+                    color: Theme.text-primary;
                     horizontal-alignment: TextHorizontalAlignment.center;
+                    vertical-alignment: center;
                     text: @tr("Power settings");
                 }
             }
@@ -181,7 +183,7 @@ export component PageSystem inherits Rectangle {
             }
 
             if SystemPageData.platform_profile != -1: HorizontalLayout {
-                spacing: 10px;
+                spacing: Spacing.md;
                 SystemDropdown {
                     text: @tr("Platform Profile");
                     current_index <=> SystemPageData.platform_profile;
@@ -195,7 +197,6 @@ export component PageSystem inherits Rectangle {
                 Button {
                     text: @tr("Advanced");
                     clicked => {
-                        root.show_fade_cover = true;
                         root.show_throttle_advanced = true;
                     }
                 }
@@ -203,16 +204,17 @@ export component PageSystem inherits Rectangle {
 
             if SystemPageData.screenpad_brightness != -1: RogItem {
                 HorizontalLayout {
-                    padding-left: 10px;
-                    padding-right: 20px;
+                    padding-left: Spacing.md;
+                    padding-right: Spacing.lg;
+                    
                     HorizontalLayout {
                         width: 38%;
                         alignment: LayoutAlignment.space-between;
-                        padding-right: 15px;
+                        padding-right: Spacing.md;
                         Text {
-                            font-size: 16px;
+                            font-size: Typography.md;
                             vertical-alignment: TextVerticalAlignment.center;
-                            color: Palette.control-foreground;
+                            color: Theme.text-primary;
                             text: @tr("Screenpad brightness");
                         }
                     }
@@ -226,15 +228,14 @@ export component PageSystem inherits Rectangle {
                             maximum: 100;
                             value: SystemPageData.screenpad_brightness;
                             released(value) => {
-                                // SystemPageData.screenpad_brightness = self.value;
                                 SystemPageData.cb_screenpad_brightness(Math.floor(self.value));
                             }
                         }
                     }
 
                     HorizontalLayout {
-                    width: 20%;
-                    padding-left: 10px;
+                        width: 20%;
+                        padding-left: Spacing.md;
                         alignment: LayoutAlignment.stretch;
                         Switch {
                             text: @tr("Sync with primary");
@@ -248,34 +249,42 @@ export component PageSystem inherits Rectangle {
             }
 
             Rectangle {
-                background: Palette.alternate-background;
-                border-color: Palette.accent-background;
-                border-width: 2px;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
                 border-radius: Radii.md;
                 height: 48px;
                 Text {
                     font-size: Typography.lg;
                     font-weight: Typography.weight-semibold;
-                    color: Palette.control-foreground;
+                    color: Theme.text-primary;
                     horizontal-alignment: TextHorizontalAlignment.center;
+                    vertical-alignment: center;
                     text: @tr("Armoury settings");
                 }
             }
 
             if !SystemPageData.asus_armoury_loaded: Rectangle {
-                border-width: 3px;
-                border-color: red;
-                max-height: 30px;
+                border-width: 1px;
+                border-color: Theme.error;
+                border-radius: Radii.sm;
+                max-height: 60px;
+                background: Theme.error.with-alpha(0.1);
+                
                 VerticalBox {
+                    padding: Spacing.sm;
                     Text {
                         text: @tr("no_asus_armoury_driver_1" => "The asus-armoury driver is not loaded");
-                        font-size: 16px;
+                        font-size: Typography.md;
+                        color: Theme.error;
                         horizontal-alignment: TextHorizontalAlignment.center;
+                        font-weight: Typography.weight-bold;
                     }
 
                     Text {
                         text: @tr("no_asus_armoury_driver_2" => "For advanced features you will require a kernel with this driver added.");
-                        font-size: 16px;
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
                         horizontal-alignment: TextHorizontalAlignment.center;
                     }
                 }
@@ -283,7 +292,7 @@ export component PageSystem inherits Rectangle {
 
             HorizontalBox {
                 padding: 0px;
-                spacing: 10px;
+                spacing: Spacing.md;
                 if SystemPageData.panel_overdrive != -1: SystemToggleInt {
                     text: @tr("Panel Overdrive");
                     checked_int <=> SystemPageData.panel_overdrive;
@@ -326,13 +335,14 @@ export component PageSystem inherits Rectangle {
             }
 
             if (SystemPageData.ppt_pl1_spl.max > 0 && SystemPageData.ppt_pl1_spl.current != -1) || (SystemPageData.ppt_pl2_sppt.max > 0 && SystemPageData.ppt_pl2_sppt.current != -1) || (SystemPageData.ppt_pl3_fppt.max > 0 && SystemPageData.ppt_pl3_fppt.current != -1) || (SystemPageData.ppt_fppt.max > 0 && SystemPageData.ppt_fppt.current != -1) || (SystemPageData.ppt_apu_sppt.max > 0 && SystemPageData.ppt_apu_sppt.current != -1) || (SystemPageData.nv_temp_target.max > 0 && SystemPageData.nv_temp_target.current != -1) || (SystemPageData.nv_dynamic_boost.max > 0 && SystemPageData.nv_dynamic_boost.current != -1): HorizontalLayout {
-                padding-right: 10px;
-                padding-left: 10px;
+                padding-right: Spacing.md;
+                padding-left: Spacing.md;
                 alignment: LayoutAlignment.space-between;
                 Rectangle {
                     height: 32px;
                     Text {
-                        font-size: 16px;
+                        font-size: Typography.md;
+                        color: Theme.text-secondary;
                         text: @tr("ppt_warning" => "The following settings are not applied until the toggle is enabled.");
                     }
                 }
@@ -499,43 +509,23 @@ export component PageSystem inherits Rectangle {
         }
     }
 
-    if root.show_fade_cover: Rectangle {
-        width: 100%;
-        height: 100%;
-        background: Palette.background;
-        opacity: 0.9;
-        TouchArea {
-            height: 100%;
-            width: 100%;
-            clicked => {
-                // toolbar-dropdown.close();
-                if (root.show_throttle_advanced) {
-                    root.show_throttle_advanced = false;
-                }
-                root.show_fade_cover = false;
-            }
+    Modal {
+        title: "Advanced Settings";
+        open: root.show_throttle_advanced;
+        close => {
+            root.show_throttle_advanced = false;
         }
-    }
-
-    if root.show_throttle_advanced: Rectangle {
-        width: 100%;
-        height: 100%;
-        opacity: 1;
+        
         ScrollView {
             VerticalLayout {
-                padding: 50px;
-                padding-top: 5px;
-                padding-bottom: 100px;
-                spacing: 10px;
+                padding: 0;
+                spacing: Spacing.md;
+                
                 GroupBox {
+                    title: @tr("Energy Performance Preference linked to Throttle Policy");
+                    
                     VerticalBox {
-                        spacing: 10px;
-                        Text {
-                            font-size: 18px;
-                            horizontal-alignment: TextHorizontalAlignment.center;
-                            vertical-alignment: TextVerticalAlignment.center;
-                            text: @tr("Energy Performance Preference linked to Throttle Policy");
-                        }
+                        spacing: Spacing.md;
 
                         SystemToggle {
                             text: @tr("Change EPP based on Throttle Policy");
@@ -578,17 +568,13 @@ export component PageSystem inherits Rectangle {
                 }
 
                 GroupBox {
+                    title: @tr("Throttle Policy for power state");
+                    
                     VerticalBox {
-                        spacing: 10px;
-                        Text {
-                            font-size: 18px;
-                            horizontal-alignment: TextHorizontalAlignment.center;
-                            vertical-alignment: TextVerticalAlignment.center;
-                            text: @tr("Throttle Policy for power state");
-                        }
-
+                        spacing: Spacing.md;
+                        
                         HorizontalLayout {
-                            spacing: 10px;
+                            spacing: Spacing.md;
                             SystemDropdown {
                                 text: @tr("Throttle Policy on Battery");
                                 current_index <=> SystemPageData.platform_profile_on_battery;
@@ -609,7 +595,7 @@ export component PageSystem inherits Rectangle {
                         }
 
                         HorizontalLayout {
-                            spacing: 10px;
+                            spacing: Spacing.md;
                             SystemDropdown {
                                 text: @tr("Throttle Policy on AC");
                                 current_index <=> SystemPageData.platform_profile_on_ac;
@@ -630,17 +616,6 @@ export component PageSystem inherits Rectangle {
                         }
                     }
                 }
-            }
-        }
-
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_throttle_advanced = false;
-                root.show_fade_cover = false;
             }
         }
     }

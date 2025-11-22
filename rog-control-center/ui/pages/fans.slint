@@ -2,7 +2,7 @@ import { Palette, TabWidget, Button, CheckBox, ScrollView } from "std-widgets.sl
 import { Graph, Node } from "../widgets/graph.slint";
 import { SystemToggle } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
-import { Spacing, Typography } from "../globals.slint";
+import { Spacing, Typography, Theme } from "../globals.slint";
 
 component FanTab inherits Rectangle {
     in-out property <bool> enabled: false;
@@ -24,6 +24,7 @@ component FanTab inherits Rectangle {
             vertical-stretch: 1;
             if root.tab_enabled: Graph {
                 nodes <=> root.nodes;
+                max-rpm: FanPageData.max_rpm;
             }
             if !root.tab_enabled: Rectangle {
                 VerticalLayout {
@@ -31,6 +32,7 @@ component FanTab inherits Rectangle {
                     Text {
                         font-size: Typography.xl;
                         font-weight: Typography.weight-medium;
+                        color: Theme.text-secondary;
                         text: @tr("This fan is not avilable on this machine");
                         horizontal-alignment: center;
                     }

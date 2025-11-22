@@ -1,5 +1,8 @@
-import { Palette } from "std-widgets.slint";
-import { SystemToggle } from "../widgets/common.slint";
+import { Palette, Button, VerticalBox } from "std-widgets.slint";
+import { SystemToggle, RogItem } from "../widgets/common.slint";
+import { Theme, Spacing, Typography, Radii, Shadows } from "../globals.slint";
+import { ColourSlider } from "../widgets/colour_picker.slint";
+import { Modal } from "../widgets/modal.slint";
 
 export global AppSettingsPageData {
     in-out property <bool> run_in_background;
@@ -12,20 +15,54 @@ export global AppSettingsPageData {
     callback set_enable_dgpu_notifications(bool);
     in-out property <bool> show_smoothed_cpu_temp;
     callback set_show_smoothed_cpu_temp(bool);
+    
+    callback set_accent_color(color);
+    callback cb_hex_to_colour(string) -> color;
+    callback cb_hex_from_colour(color) -> string;
+    
+    in-out property <bool> show_color_picker: false;
 }
 
 export component PageAppSettings inherits VerticalLayout {
     Rectangle {
         clip: true;
-        // TODO: slow with border-radius
-        //padding only has effect on layout elements
-        //padding: 8px;
-
-        // height: parent.height - infobar.height - mainview.padding - self.padding * 2;
-        // TODO: border-radius: 8px;
+        
         mainview := VerticalLayout {
-            padding: 10px;
-            spacing: 10px;
+            padding: Spacing.lg;
+            spacing: Spacing.lg;
+            
+            RogItem {
+                HorizontalLayout {
+                    padding: Spacing.md;
+                    spacing: Spacing.md;
+                    alignment: space-between;
+                    
+                    Text {
+                        text: @tr("Accent Color");
+                        font-size: Typography.md;
+                        font-weight: Typography.weight-medium;
+                        vertical-alignment: center;
+                        color: Theme.text-primary;
+                    }
+                    
+                    Button {
+                        text: "Change";
+                        clicked => {
+                            AppSettingsPageData.show_color_picker = true;
+                        }
+                    }
+                    
+                    Rectangle {
+                        width: 24px;
+                        height: 24px;
+                        border-radius: Radii.sm;
+                        background: Theme.primary;
+                        border-width: 1px;
+                        border-color: Theme.border;
+                    }
+                }
+            }
+
             SystemToggle {
                 text: @tr("Run in background after closing");
                 checked <=> AppSettingsPageData.run_in_background;
@@ -68,6 +105,9 @@ export component PageAppSettings inherits VerticalLayout {
 
             Text {
                 text: "WIP: some features like notifications are not complete";
+                font-size: Typography.sm;
+                color: Theme.text-secondary;
+                horizontal-alignment: center;
             }
         }
     }

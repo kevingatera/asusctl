@@ -1,5 +1,5 @@
 import { Palette, Button, VerticalBox } from "std-widgets.slint";
-import { AppSize, Spacing, Typography, Radii, Shadows, Animations } from "globals.slint";
+import { AppSize, Spacing, Typography, Radii, Shadows, Animations, Theme } from "globals.slint";
 import { PageSystem, SystemPageData, AttrMinMax } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
@@ -9,6 +9,8 @@ import { RogItem } from "widgets/common.slint";
 import { PageAura } from "pages/aura.slint";
 import { PageSlash, SlashPageData } from "pages/slash.slint";
 import { Node } from "widgets/graph.slint";
+import { Modal } from "widgets/modal.slint";
+import { ColourSlider } from "widgets/colour_picker.slint";
 export { Node }
 import { FanPageData, FanType, Profile } from "types/fan_types.slint";
 export { FanPageData, FanType, Profile }
@@ -17,7 +19,7 @@ export { AuraPageData, AuraDevType, LaptopAuraPower, AuraPowerState, PowerZones,
 import { PageAppSettings, AppSettingsPageData } from "pages/app_settings.slint";
 import { PageSupergfx, SupergfxPageData } from "pages/supergfx.slint";
 
-export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData, SupergfxPageData, SlashPageData }
+export { AppSize, AttrMinMax, SystemPageData, AnimePageData, AppSettingsPageData, SupergfxPageData, SlashPageData, Theme }
 
 export global BottomBarData {
     in-out property <[string]> entries: [];
@@ -25,13 +27,12 @@ export global BottomBarData {
 
 export component MainWindow inherits Window {
     title: "ROG Control Center";
-    always-on-top: true;
+    always-on-top: false;
     default-font-family: "Noto Sans";
     default-font-size: Typography.base;
     default-font-weight: Typography.weight-regular;
     icon: @image-url("../data/rog-control-center.png");
 
-    // Responsive window sizing
     preferred-width: AppSize.width;
     preferred-height: AppSize.height;
     min-height: AppSize.min-height;
@@ -53,7 +54,6 @@ export component MainWindow inherits Window {
     callback show_notification(bool);
     show_notification(yes) => {
         show_notif = yes;
-        fade_cover = yes;
     }
     callback external_colour_change();
     external_colour_change() => {
@@ -61,36 +61,38 @@ export component MainWindow inherits Window {
         aura.external_colour_change();
     }
 
-    // Beautiful gradient background
-    background: @linear-gradient(180deg, Palette.background.darker(0.3) 0%, Palette.background.darker(0.15) 100%);
+    background: Theme.background;
+
     VerticalLayout {
         spacing: 0px;
-        padding: Spacing.md;
+        padding: 0px;
+        
         HorizontalLayout {
             horizontal-stretch: 1;
             vertical-stretch: 1;
-            spacing: Spacing.lg;
+            spacing: 0px;
 
-            // Sidebar container with shadow and resizable handle
             sidebar_container := Rectangle {
-                width: Math.max(180px, Math.min(400px, AppSize.sidebar-width));
-                background: Palette.background.darker(0.08);
-                border-radius: Radii.lg;
-                drop-shadow-blur: Shadows.lg-blur;
-                drop-shadow-color: Colors.black.with-alpha(0.3);
-                drop-shadow-offset-y: 4px;
+                width: Math.max(200px, Math.min(400px, AppSize.sidebar-width));
+                background: Theme.surface;
+                
+                Rectangle {
+                    width: 1px;
+                    height: 100%;
+                    x: parent.width - 1px;
+                    background: Theme.border;
+                }
 
-                // Resize handle on the right edge
                 resize_handle := Rectangle {
                     x: parent.width - 4px;
                     width: 8px;
                     height: parent.height;
-                    background: resize_area.has-hover ? Palette.accent-background.with-alpha(0.3) : transparent;
-                    border-radius: 4px;
+                    background: resize_area.has-hover ? Theme.primary.with-alpha(0.5) : transparent;
+                    z: 100;
 
                     animate background {
                         duration: Animations.fast;
-                        easing: ease-in-out;
+                        easing: Animations.ease;
                     }
 
                     resize_area := TouchArea {
@@ -100,77 +102,76 @@ export component MainWindow inherits Window {
 
                         moved => {
                             if (self.pressed) {
-                                AppSize.sidebar-width = Math.max(180px, Math.min(400px, self.mouse-x + sidebar_container.x));
+                                AppSize.sidebar-width = Math.max(200px, Math.min(400px, AppSize.sidebar-width + self.mouse-x - self.pressed-x));
                             }
                         }
                     }
                 }
 
                 VerticalLayout {
-                    spacing: Spacing.md;
-                    padding: Spacing.md;
+                    spacing: Spacing.lg;
+                    padding: Spacing.lg;
+                    
                     side-bar := SideBar {
-                    title: @tr("ROG");
-                    model: [
-                        @tr("Menu1" => "System Control"),
-                        @tr("Menu2" => "Keyboard Aura"),
-                        @tr("Menu3" => "AniMe Matrix"),
-                        @tr("Menu4" => "Slash Control"),
-                        @tr("Menu5" => "Fan Curves"),
-                        @tr("Menu6" => "Supergfx Control"),
-                        @tr("Menu7" => "App Settings"),
-                        @tr("Menu8" => "About"),
-                    ];
+                        title: @tr("ROG");
+                        model: [
+                            @tr("Menu1" => "System Control"),
+                            @tr("Menu2" => "Keyboard Aura"),
+                            @tr("Menu3" => "AniMe Matrix"),
+                            @tr("Menu4" => "Slash Control"),
+                            @tr("Menu5" => "Fan Curves"),
+                            @tr("Menu6" => "Supergfx Control"),
+                            @tr("Menu7" => "App Settings"),
+                            @tr("Menu8" => "About"),
+                        ];
                         available: root.sidebar_items_avilable;
                         vertical-stretch: 1;
                     }
 
-                    // Status panel with improved styling
                     status_panel := Rectangle {
                         visible: BottomBarData.entries.length > 0;
-                        border-radius: Radii.lg;
+                        border-radius: Radii.md;
+                        background: Theme.surface-active;
                         border-width: 1px;
-                        border-color: Palette.border.with-alpha(80);
-                        background: Palette.accent-background.with-alpha(0.1);
-                        drop-shadow-blur: Shadows.sm-blur;
-                        drop-shadow-color: Colors.black.with-alpha(0.2);
+                        border-color: Theme.border;
 
                         entries_layout := VerticalLayout {
                             padding: Spacing.md;
-                            spacing: Spacing.sm;
+                            spacing: Spacing.xs;
                             for entry[index] in BottomBarData.entries: Text {
-                                color: Palette.control-foreground;
-                                font-size: Typography.sm;
+                                color: Theme.text-secondary;
+                                font-size: Typography.xs;
                                 font-weight: Typography.weight-medium;
                                 text: entry;
                             }
                         }
                     }
 
-                    // Quit button with hover effect
                     quit_button := Rectangle {
-                        min-height: 44px;
-                        preferred-height: 48px;
-                        max-height: 52px;
+                        min-height: 40px;
+                        preferred-height: 40px;
+                        max-height: 40px;
                         horizontal-stretch: 1;
-                        background: quit_area.has-hover ? Palette.accent-background.darker(0.1) : Palette.accent-background;
+                        background: quit_area.has-hover ? Theme.surface-hover : transparent;
                         border-radius: Radii.md;
-                        drop-shadow-blur: quit_area.pressed ? Shadows.sm-blur : Shadows.md-blur;
-                        drop-shadow-color: Colors.black.with-alpha(0.3);
-                        drop-shadow-offset-y: quit_area.pressed ? 1px : 2px;
+                        border-width: 1px;
+                        border-color: quit_area.has-hover ? Theme.border : transparent;
 
-                        animate background, drop-shadow-blur, drop-shadow-offset-y {
+                        animate background, border-color {
                             duration: Animations.fast;
-                            easing: ease-in-out;
+                            easing: Animations.ease;
                         }
 
-                        Text {
-                            vertical-alignment: center;
-                            horizontal-alignment: center;
-                            text: @tr("Quit App");
-                            font-size: Typography.md;
-                            font-weight: Typography.weight-semibold;
-                            color: Colors.white;
+                        HorizontalLayout {
+                            alignment: center;
+                            spacing: Spacing.sm;
+                            Text {
+                                vertical-alignment: center;
+                                text: @tr("Quit App");
+                                font-size: Typography.sm;
+                                font-weight: Typography.weight-medium;
+                                color: quit_area.has-hover ? Theme.text-primary : Theme.text-secondary;
+                            }
                         }
 
                         quit_area := TouchArea {
@@ -182,16 +183,11 @@ export component MainWindow inherits Window {
                 }
             }
 
-            // Main content area with card styling
             content_card := Rectangle {
                 horizontal-stretch: 1;
-                background: Palette.background;
-                border-radius: Radii.lg;
-                drop-shadow-blur: Shadows.xl-blur;
-                drop-shadow-color: Colors.black.with-alpha(0.25);
-                drop-shadow-offset-y: 6px;
+                background: Theme.background;
+                clip: true;
 
-                // Content pages
                 if(side-bar.current-item == 0): page := PageSystem {
                     width: parent.width;
                     height: parent.height;
@@ -238,18 +234,18 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Modern backdrop blur effect
+    // Modern backdrop blur effect for custom overlays if needed
     if fade_cover: Rectangle {
         x: 0px;
         y: 0px;
         width: root.width;
         height: root.height;
-        background: Colors.black.with-alpha(0.5);
+        background: Theme.background.with-alpha(0.8);
         opacity: fade_cover ? 1.0 : 0.0;
 
         animate opacity {
             duration: Animations.normal;
-            easing: ease-in-out;
+            easing: Animations.ease;
         }
 
         TouchArea {
@@ -264,29 +260,33 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Beautiful toast notification
+    // Streamlined Toast Notification
     if toast: Rectangle {
-        x: Spacing.xl;
-        y: Spacing.xl;
-        width: root.width - (Spacing.xl * 2);
+        x: root.width / 2 - self.width / 2;
+        y: root.height - self.height - Spacing.xxl;
+        width: Math.min(400px, root.width - Spacing.xl * 2);
         height: 48px;
+        z: 1000;
 
         Rectangle {
             height: 100%;
             width: 100%;
-            background: @linear-gradient(90deg, Palette.accent-background 0%, Palette.accent-background.darker(0.2) 100%);
-            border-radius: Radii.md;
+            background: Theme.surface;
+            border-radius: Radii.lg;
+            border-width: 1px;
+            border-color: Theme.primary.with-alpha(0.5);
             drop-shadow-blur: Shadows.lg-blur;
-            drop-shadow-color: Colors.black.with-alpha(0.4);
+            drop-shadow-color: Shadows.color;
             drop-shadow-offset-y: 4px;
 
             HorizontalLayout {
-                padding: Spacing.md;
+                padding-left: Spacing.lg;
+                padding-right: Spacing.lg;
                 spacing: Spacing.md;
-                alignment: LayoutAlignment.start;
+                alignment: LayoutAlignment.center;
 
                 Text {
-                    color: Colors.white;
+                    color: Theme.text-primary;
                     text: root.toast_text;
                     font-size: Typography.md;
                     font-weight: Typography.weight-medium;
@@ -304,40 +304,28 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Modern notification modal
-    if show_notif: Rectangle {
-        x: root.width / 8;
-        y: root.height / 8;
-        height: (root.height / 8) * 6;
-        width: (root.width / 8) * 6;
+    // Notification Modal
+    Modal {
+        title: "Notification";
+        open: show_notif;
+        close => {
+            show_notif = false;
+            exit-app();
+        }
 
-        Rectangle {
-            height: 100%;
-            width: 100%;
-            background: Palette.background;
-            border-radius: Radii.xl;
-            drop-shadow-blur: Shadows.xl-blur;
-            drop-shadow-color: Colors.black.with-alpha(0.5);
-            border-width: 1px;
-            border-color: Palette.accent-background.with-alpha(0.3);
-
-            VerticalLayout {
-                padding: Spacing.xxl;
-                spacing: Spacing.xl;
-                alignment: LayoutAlignment.center;
-
-                Text {
-                    text: "Click here to exit";
-                    font-size: Typography.xxl;
-                    font-weight: Typography.weight-bold;
-                    horizontal-alignment: center;
-                    color: Palette.foreground;
-                }
+        VerticalBox {
+            alignment: center;
+            spacing: Spacing.xl;
+            
+            Text {
+                text: "Click close or outside to exit";
+                font-size: Typography.lg;
+                horizontal-alignment: center;
+                color: Theme.text-primary;
             }
-
-            TouchArea {
-                height: 100%;
-                width: 100%;
+            
+            Button {
+                text: "OK";
                 clicked => {
                     show_notif = false;
                     exit-app();
@@ -346,50 +334,69 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Beautiful error display
-    if SomeError.error_message != "": Rectangle {
-        x: Spacing.xxl;
-        y: Spacing.xxl;
-        width: root.width - (Spacing.xxl * 2);
-        height: root.height - (Spacing.xxl * 2);
+    // Error Modal
+    Modal {
+        title: "Error";
+        open: SomeError.error_message != "";
+        close => {
+            // Cannot close error modal easily without clearing error
+        }
+        
+        VerticalBox {
+            spacing: Spacing.lg;
+            alignment: center;
 
-        Rectangle {
-            background: Palette.background;
-            border-radius: Radii.xl;
-            drop-shadow-blur: Shadows.xl-blur;
-            drop-shadow-color: Colors.black.with-alpha(0.6);
-            border-width: 2px;
-            border-color: Colors.red.with-alpha(0.5);
+            Text {
+                text: SomeError.error_message;
+                font-size: Typography.lg;
+                font-weight: Typography.weight-bold;
+                color: Theme.error;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+            }
 
-            VerticalLayout {
-                padding: Spacing.xxl;
-                spacing: Spacing.xl;
+            Text {
+                text: SomeError.error_help;
+                font-size: Typography.md;
+                horizontal-alignment: center;
+                wrap: word-wrap;
+                color: Theme.text-secondary;
+            }
+        }
+    }
 
-                Rectangle {
-                    background: Colors.red.with-alpha(0.1);
-                    border-radius: Radii.md;
-                    min-height: 60px;
-
-                    VerticalLayout {
-                        padding: Spacing.lg;
-                        Text {
-                            text <=> SomeError.error_message;
-                            font-size: Typography.xl;
-                            font-weight: Typography.weight-bold;
-                            color: Colors.red;
-                            horizontal-alignment: center;
-                            wrap: word-wrap;
-                        }
-                    }
+    // Accent Color Picker Modal
+    Modal {
+        title: "Pick Accent Color";
+        open: AppSettingsPageData.show_color_picker;
+        close => {
+            AppSettingsPageData.show_color_picker = false;
+        }
+        
+        VerticalBox {
+            alignment: center;
+            spacing: Spacing.lg;
+            
+            ColourSlider {
+                enabled: true;
+                final_colour: Theme.primary;
+                colourbox: Theme.primary;
+                released => {
+                    Theme.primary = self.final_colour;
+                    AppSettingsPageData.set_accent_color(self.final_colour);
                 }
-
-                Text {
-                    text <=> SomeError.error_help;
-                    font-size: Typography.md;
-                    horizontal-alignment: center;
-                    vertical-alignment: center;
-                    wrap: word-wrap;
-                    color: Palette.foreground;
+                hex_to_colour(s) => {
+                    return AppSettingsPageData.cb_hex_to_colour(s);
+                }
+                set_hex_from_colour(c) => {
+                    return AppSettingsPageData.cb_hex_from_colour(c);
+                }
+            }
+            
+            Button {
+                text: "Done";
+                clicked => {
+                    AppSettingsPageData.show_color_picker = false;
                 }
             }
         }

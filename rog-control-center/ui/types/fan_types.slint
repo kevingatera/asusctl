@@ -34,6 +34,8 @@ export global FanPageData {
     in-out property <bool> quiet_cpu_enabled: true;
     in-out property <bool> quiet_gpu_enabled: true;
     in-out property <bool> quiet_mid_enabled: false;
+    
+    in-out property <int> max_rpm: 7000; // Default estimated max RPM
 
     callback set_fan_data(FanType, Profile, bool, [Node]);
     callback set_profile_default(Profile);

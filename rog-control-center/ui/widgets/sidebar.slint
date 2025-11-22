@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: MIT
 
 import { Palette, HorizontalBox, VerticalBox } from "std-widgets.slint";
-import { Spacing, Typography, Radii, Shadows, Animations } from "../globals.slint";
+import { Spacing, Typography, Radii, Shadows, Animations, Theme } from "../globals.slint";
 
 component SideBarItem inherits Rectangle {
     in property <bool> selected;
@@ -15,19 +15,21 @@ component SideBarItem inherits Rectangle {
     states [
         pressed when touch.pressed: {
             state.opacity: 0.95;
-            state.background: Palette.accent-background.darker(0.15);
+            state.background: Theme.surface-active;
         }
         hover when touch.has-hover: {
             state.opacity: 0.8;
-            state.background: Palette.accent-background.with-alpha(0.15);
+            state.background: Theme.surface-hover;
         }
         selected when root.selected: {
             state.opacity: 1;
-            state.background: Palette.accent-background;
+            state.background: Theme.primary.with-alpha(0.1);
+            state.border-color: Theme.primary;
+            state.border-width: 1px;
         }
         focused when root.has-focus: {
             state.opacity: 0.9;
-            state.background: Palette.accent-background.with-alpha(0.2);
+            state.background: Theme.surface-hover;
         }
     ]
 
@@ -35,28 +37,23 @@ component SideBarItem inherits Rectangle {
         opacity: 0;
         border-width: 0px;
         border-radius: Radii.md;
-        border-color: Palette.accent-background;
-        background: Palette.alternate-background;
-        drop-shadow-blur: root.selected ? Shadows.md-blur : 0px;
-        drop-shadow-color: Palette.accent-background.with-alpha(0.4);
-        drop-shadow-offset-y: 2px;
+        border-color: transparent;
+        background: transparent;
 
-        animate opacity { duration: Animations.fast; easing: ease-in-out; }
-        animate background { duration: Animations.fast; easing: ease-in-out; }
-        animate drop-shadow-blur { duration: Animations.fast; easing: ease-in-out; }
+        animate opacity, background, border-color { duration: Animations.fast; easing: Animations.ease; }
     }
 
     l := HorizontalBox {
         padding: Spacing.md;
         spacing: Spacing.sm;
         label := Text {
-            color: root.selected ? Colors.white : Palette.foreground;
+            color: root.selected ? Theme.primary : Theme.text-secondary;
             vertical-alignment: center;
             font-size: Typography.base;
-            font-weight: root.selected ? Typography.weight-semibold : Typography.weight-medium;
+            font-weight: root.selected ? Typography.weight-bold : Typography.weight-medium;
 
-            animate color { duration: Animations.fast; easing: ease-in-out; }
-            animate font-weight { duration: Animations.fast; easing: ease-in-out; }
+            animate color { duration: Animations.fast; easing: Animations.ease; }
+            animate font-weight { duration: Animations.fast; easing: Animations.ease; }
         }
     }
 
@@ -115,12 +112,12 @@ export component SideBar inherits Rectangle {
             font-size: Typography.xl;
             font-weight: Typography.weight-bold;
             horizontal-alignment: center;
-            color: Palette.foreground;
+            color: Theme.primary;
         }
 
         // Navigation items with spacing
         navigation := VerticalLayout {
-            spacing: Spacing.sm;
+            spacing: Spacing.xs;
             alignment: start;
             vertical-stretch: 0;
             for item[index] in root.model: SideBarItem {

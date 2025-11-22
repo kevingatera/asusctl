@@ -4,6 +4,7 @@ import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, Scrol
 import { ColourSlider } from "../widgets/colour_picker.slint";
 import { AuraPageData, AuraDevType, PowerZones, LaptopAuraPower, AuraEffect } from "../types/aura_types.slint";
 import { AuraPowerGroup, AuraPowerGroupOld } from "../widgets/aura_power.slint";
+import { Spacing, Typography, Theme, Radii } from "../globals.slint";
 
 export component PageAura inherits Rectangle {
     property <bool> show_fade_cover: false;
@@ -19,11 +20,11 @@ export component PageAura inherits Rectangle {
     }
     ScrollView {
         VerticalLayout {
-            padding: 10px;
-            spacing: 10px;
+            padding: Spacing.lg;
+            spacing: Spacing.lg;
             alignment: LayoutAlignment.start;
             HorizontalLayout {
-                spacing: 10px;
+                spacing: Spacing.md;
                 SystemDropdown {
                     text: @tr("Brightness");
                     current_index <=> AuraPageData.brightness;
@@ -53,10 +54,14 @@ export component PageAura inherits Rectangle {
                 min-height: 220px;
                 max-height: 400px;
                 HorizontalLayout {
-                    spacing: 10px;
+                    padding: Spacing.lg;
+                    spacing: Spacing.lg;
                     VerticalBox {
                         Text {
                             text: @tr("Colour 1");
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-medium;
+                            color: Theme.text-primary;
                             vertical-alignment: TextVerticalAlignment.center;
                             horizontal-alignment: TextHorizontalAlignment.center;
                         }
@@ -83,6 +88,9 @@ export component PageAura inherits Rectangle {
                     VerticalBox {
                         Text {
                             text: @tr("Colour 2");
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-medium;
+                            color: Theme.text-primary;
                             vertical-alignment: TextVerticalAlignment.center;
                             horizontal-alignment: TextHorizontalAlignment.center;
                         }
@@ -109,15 +117,15 @@ export component PageAura inherits Rectangle {
             }
 
             HorizontalLayout {
-                spacing: 10px;
+                spacing: Spacing.md;
                 min-height: 80px;
                 max-height: 90px;
                 RogItem {
-                    //padding only has effect on layout elements
-                    //padding: 0px;
                     VerticalBox {
                         Text {
                             text: @tr("Zone");
+                            font-size: Typography.md;
+                            color: Theme.text-primary;
                             vertical-alignment: TextVerticalAlignment.center;
                             horizontal-alignment: TextHorizontalAlignment.center;
                         }
@@ -137,11 +145,11 @@ export component PageAura inherits Rectangle {
                 }
 
                 RogItem {
-                    //padding only has effect on layout elements
-                    //padding: 0px;
                     VerticalBox {
                         Text {
                             text: @tr("Direction");
+                            font-size: Typography.md;
+                            color: Theme.text-primary;
                             vertical-alignment: TextVerticalAlignment.center;
                             horizontal-alignment: TextHorizontalAlignment.center;
                         }
@@ -160,11 +168,11 @@ export component PageAura inherits Rectangle {
                 }
 
                 RogItem {
-                    //padding only has effect on layout elements
-                    //padding: 0px;
                     VerticalBox {
                         Text {
                             text: @tr("Speed");
+                            font-size: Typography.md;
+                            color: Theme.text-primary;
                             vertical-alignment: TextVerticalAlignment.center;
                             horizontal-alignment: TextHorizontalAlignment.center;
                         }
@@ -201,8 +209,9 @@ export component PageAura inherits Rectangle {
         y: 0px;
         width: root.width;
         height: root.height;
-        background: Palette.background;
-        opacity: 0.8;
+        background: Theme.background.with-alpha(0.8);
+        opacity: 1.0;
+        
         TouchArea {
             height: 100%;
             width: 100%;
@@ -215,12 +224,12 @@ export component PageAura inherits Rectangle {
         y: 0px;
         width: root.width;
         height: root.height;
-        opacity: 1;
+        
         ScrollView {
             VerticalLayout {
-                padding: 30px;
-                padding-top: 10px;
-                spacing: 10px;
+                padding: Spacing.xxl;
+                padding-top: Spacing.lg;
+                spacing: Spacing.md;
                 alignment: LayoutAlignment.start;
 
                 for state[idx] in AuraPageData.led_power.states: zone := AuraPowerGroup {
@@ -268,16 +277,18 @@ export component PageAura inherits Rectangle {
         y: 0px;
         width: root.width;
         height: root.height;
-        opacity: 1;
+        
         ScrollView {
             VerticalLayout {
-                padding: 30px;
-                padding-top: 10px;
-                spacing: 10px;
+                padding: Spacing.xxl;
+                padding-top: Spacing.lg;
+                spacing: Spacing.md;
                 alignment: LayoutAlignment.start;
 
                 Text {
                     text: "TODO: In progress";
+                    font-size: Typography.lg;
+                    color: Theme.text-secondary;
                 }
 
                 for state[idx] in AuraPageData.led_power.states: old_zone := AuraPowerGroupOld {

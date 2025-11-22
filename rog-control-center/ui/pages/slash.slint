@@ -1,5 +1,5 @@
 import { Palette, ScrollView, HorizontalBox } from "std-widgets.slint";
-import { Spacing, Typography } from "../globals.slint";
+import { Spacing, Typography, Theme, Radii } from "../globals.slint";
 import { RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
 
 export global SlashPageData {
@@ -29,28 +29,29 @@ export global SlashPageData {
 
 export component PageSlash inherits ScrollView {
     VerticalLayout {
-        padding: 12px;
-        spacing: 12px;
+        padding: Spacing.lg;
+        spacing: Spacing.lg;
 
         RogItem {
             min-height: 96px;
             max-height: 120px;
             HorizontalBox {
-                padding-left: 16px;
-                padding-right: 20px;
-                spacing: 12px;
+                padding-left: Spacing.lg;
+                padding-right: Spacing.xl;
+                spacing: Spacing.lg;
                 alignment: LayoutAlignment.stretch;
                 VerticalLayout {
-                    spacing: 6px;
+                    spacing: Spacing.sm;
                     Text {
-                        font-size: 18px;
-                        color: Palette.control-foreground;
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-medium;
+                        color: Theme.text-primary;
                         text: @tr("SlashHead" => "Slash lightbar");
                     }
                     Text {
                         wrap: TextWrap.word-wrap;
-                        font-size: 12px;
-                        color: Palette.foreground.with-alpha(180);
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
                         text: @tr("SlashIntro" => "Customize the chassis slash lightbar, including effects, brightness, and when it appears.");
                     }
                 }
@@ -152,12 +153,12 @@ export component PageSlash inherits ScrollView {
             min-height: 80px;
             max-height: 160px;
             VerticalLayout {
-                padding: 12px;
-                spacing: 6px;
+                padding: Spacing.lg;
+                spacing: Spacing.sm;
                 for line[index] in SlashPageData.status_lines: Text {
                     wrap: TextWrap.word-wrap;
-                    font-size: 12px;
-                    color: Palette.foreground.with-alpha(200);
+                    font-size: Typography.sm;
+                    color: Theme.text-secondary;
                     text: line;
                 }
             }
