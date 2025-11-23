@@ -212,6 +212,14 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
         }
     });
     let config_copy = config.clone();
+    global.on_set_toast_timeout_seconds(move |seconds| {
+        if let Ok(mut lock) = config_copy.try_lock() {
+            let clamped = seconds.max(0.0).min(10.0).round();
+            lock.toast_timeout_ms = (clamped as u32) * 1000;
+            lock.write();
+        }
+    });
+    let config_copy = config.clone();
     global.on_set_show_smoothed_cpu_temp(move |enable| {
         if let Ok(mut lock) = config_copy.try_lock() {
             lock.show_smoothed_cpu_temp = enable;
@@ -237,6 +245,7 @@ pub fn setup_app_settings_page(ui: &MainWindow, config: Arc<Mutex<Config>>) {
         global.set_enable_tray_icon(lock.enable_tray_icon);
         global.set_enable_dgpu_notifications(lock.notifications.enabled);
         global.set_show_smoothed_cpu_temp(lock.show_smoothed_cpu_temp);
+        global.set_toast_timeout_seconds(lock.toast_timeout_ms as f32 / 1000.0);
 
         // Set initial accent color
         if !lock.accent_color.is_empty() {

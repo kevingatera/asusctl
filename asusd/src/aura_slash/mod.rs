@@ -28,7 +28,6 @@ pub mod config;
 pub mod trait_impls;
 
 struct DynamicTask {
-    mode: SlashMode,
     cancel: CancellationToken,
     handle: JoinHandle<()>,
 }
@@ -180,7 +179,6 @@ impl Slash {
         });
 
         *self.dynamic_task.lock().await = Some(DynamicTask {
-            mode,
             cancel,
             handle,
         });

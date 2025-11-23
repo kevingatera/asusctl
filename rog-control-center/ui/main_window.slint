@@ -44,11 +44,24 @@ export component MainWindow inherits Window {
     private property <bool> toast: false;
     private property <string> toast_text: "I show when something is waiting";
     private property <bool> sidebar_collapsed: false;
+    toast_timer := Timer {
+        interval: AppSettingsPageData.toast_timeout_seconds * 1000ms;
+        running: false;
+        triggered => {
+            toast = false;
+            toast_timer.running = false;
+        }
+    }
 
     callback show_toast(string);
     show_toast(text) => {
         toast = text != "";
         toast_text = text;
+        if (toast && AppSettingsPageData.toast_timeout_seconds > 0) {
+            toast_timer.start();
+        } else {
+            toast_timer.stop();
+        }
     }
     callback exit-app();
     callback show_notification(bool);

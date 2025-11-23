@@ -1,5 +1,5 @@
 import { Palette, Button, VerticalBox } from "std-widgets.slint";
-import { SystemToggle, RogItem } from "../widgets/common.slint";
+import { SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
 import { Theme, Spacing, Typography, Radii, Shadows } from "../globals.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -15,6 +15,8 @@ export global AppSettingsPageData {
     callback set_enable_dgpu_notifications(bool);
     in-out property <bool> show_smoothed_cpu_temp;
     callback set_show_smoothed_cpu_temp(bool);
+    in-out property <float> toast_timeout_seconds: 4;
+    callback set_toast_timeout_seconds(float);
     
     callback set_accent_color(color);
     callback cb_hex_to_colour(string) -> color;
@@ -100,6 +102,22 @@ export component PageAppSettings inherits VerticalLayout {
                 checked <=> AppSettingsPageData.show_smoothed_cpu_temp;
                 toggled => {
                     AppSettingsPageData.set_show_smoothed_cpu_temp(AppSettingsPageData.show_smoothed_cpu_temp)
+                }
+            }
+
+            SystemSlider {
+                text: @tr("Notification auto-dismiss (seconds)");
+                minimum: 0;
+                maximum: 10;
+                value <=> AppSettingsPageData.toast_timeout_seconds;
+                has_reset: true;
+                cb_do_reset => {
+                    AppSettingsPageData.toast_timeout_seconds = 4;
+                    AppSettingsPageData.set_toast_timeout_seconds(AppSettingsPageData.toast_timeout_seconds);
+                }
+                released(value) => {
+                    AppSettingsPageData.toast_timeout_seconds = Math.round(value);
+                    AppSettingsPageData.set_toast_timeout_seconds(AppSettingsPageData.toast_timeout_seconds);
                 }
             }
 

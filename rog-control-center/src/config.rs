@@ -14,6 +14,8 @@ pub struct Config {
     pub startup_in_background: bool,
     pub enable_tray_icon: bool,
     pub show_smoothed_cpu_temp: bool,
+    #[serde(default = "default_toast_timeout_ms")]
+    pub toast_timeout_ms: u32,
     pub ac_command: String,
     pub bat_command: String,
     pub dark_mode: bool,
@@ -34,6 +36,7 @@ impl Default for Config {
             startup_in_background: false,
             enable_tray_icon: true,
             show_smoothed_cpu_temp: false,
+            toast_timeout_ms: default_toast_timeout_ms(),
             dark_mode: true,
             start_fullscreen: false,
             fullscreen_width: 1920,
@@ -92,6 +95,7 @@ impl From<Config461> for Config {
             startup_in_background: c.startup_in_background,
             enable_tray_icon: true,
             show_smoothed_cpu_temp: false,
+            toast_timeout_ms: default_toast_timeout_ms(),
             ac_command: c.ac_command,
             bat_command: c.bat_command,
             dark_mode: true,
@@ -102,4 +106,8 @@ impl From<Config461> for Config {
             notifications: c.enabled_notifications,
         }
     }
+}
+
+fn default_toast_timeout_ms() -> u32 {
+    4000
 }
