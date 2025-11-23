@@ -2,7 +2,8 @@ import { Palette, VerticalBox , StandardButton, Button, HorizontalBox, ComboBox,
 import { Spacing, Typography, Radii, Shadows, Animations, Theme } from "../globals.slint";
 
 export component RogItem inherits Rectangle {
-    width: 100%;
+    min-width: 0px;
+    horizontal-stretch: 1;
     background: Theme.surface;
     border-color: Theme.border;
     border-width: 1px;
