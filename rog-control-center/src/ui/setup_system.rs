@@ -566,9 +566,8 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                 .ok();
         } else {
             error!(
-                "The kernel module asus-armoury is required, if you do not have this you will \
-                 need to either build or install a kernel which includes the patchwork. This \
-                 driver is in process of being upstreamed"
+                "The kernel module asus-armoury is required. You will need a kernel >= 6.19 as \
+                 asus-armoury was accepted upstream"
             );
             return;
         }

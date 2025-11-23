@@ -282,7 +282,7 @@ export component PageSystem inherits Rectangle {
                     }
 
                     Text {
-                        text: @tr("no_asus_armoury_driver_2" => "For advanced features you will require a kernel with this driver added.");
+                        text: @tr("no_asus_armoury_driver_2" => "You will need a kernel >= 6.19 as asus-armoury was accepted upstream.");
                         font-size: Typography.sm;
                         color: Theme.text-secondary;
                         horizontal-alignment: TextHorizontalAlignment.center;
@@ -573,8 +573,9 @@ export component PageSystem inherits Rectangle {
                     VerticalBox {
                         spacing: Spacing.md;
                         
-                        HorizontalLayout {
+                        VerticalLayout {
                             spacing: Spacing.md;
+                            
                             SystemDropdown {
                                 text: @tr("Throttle Policy on Battery");
                                 current_index <=> SystemPageData.platform_profile_on_battery;
@@ -594,8 +595,9 @@ export component PageSystem inherits Rectangle {
                             }
                         }
 
-                        HorizontalLayout {
+                        VerticalLayout {
                             spacing: Spacing.md;
+                            
                             SystemDropdown {
                                 text: @tr("Throttle Policy on AC");
                                 current_index <=> SystemPageData.platform_profile_on_ac;

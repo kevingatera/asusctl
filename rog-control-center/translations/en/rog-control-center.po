@@ -259,7 +259,7 @@ msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:269
 msgctxt "no_asus_armoury_driver_2"
-msgid "For advanced features you will require a kernel with this driver added."
+msgid "You will need a kernel >= 6.19 as asus-armoury was accepted upstream."
 msgstr ""
 
 #: rog-control-center/ui/pages/system.slint:280
@@ -786,5 +786,65 @@ msgstr ""
 #: rog-control-center/ui/types/aura_types.slint:120
 msgctxt "Aura speed"
 msgid "High"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:49
+msgctxt "SlashHead"
+msgid "Slash lightbar"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:55
+msgctxt "SlashIntro"
+msgid "Customize the chassis slash lightbar, including effects, brightness, and when it appears."
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:62
+msgctxt "SlashEnable"
+msgid "Enable slash lightbar"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:70
+msgctxt "SlashMode"
+msgid "Lightbar effect"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:81
+msgctxt "SlashBrightness"
+msgid "Brightness"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:93
+msgctxt "SlashInterval"
+msgid "Effect interval"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:105
+msgctxt "SlashBoot"
+msgid "Show on boot"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:113
+msgctxt "SlashShutdown"
+msgid "Show on shutdown"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:121
+msgctxt "SlashSleep"
+msgid "Show on sleep"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:129
+msgctxt "SlashBattery"
+msgid "Show when on battery"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:137
+msgctxt "SlashWarning"
+msgid "Show low battery warning"
+msgstr ""
+
+#: rog-control-center/ui/pages/slash.slint:145
+msgctxt "SlashLidClosed"
+msgid "Show when lid is closed"
 msgstr ""
 
