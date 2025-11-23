@@ -2,6 +2,7 @@ import { Palette, VerticalBox , StandardButton, Button, HorizontalBox, ComboBox,
 import { Spacing, Typography, Radii, Shadows, Animations, Theme } from "../globals.slint";
 
 export component RogItem inherits Rectangle {
+    width: 100%;
     background: Theme.surface;
     border-color: Theme.border;
     border-width: 1px;
@@ -178,43 +179,54 @@ export component SystemSlider inherits RogItem {
     in property <bool> has_reset: false;
     callback cb_do_reset();
 
+    min-height: 56px;
+    max-height: 72px;
+
     HorizontalLayout {
+        width: 100%;
+        min-width: 0px;
         padding: Spacing.md;
         spacing: Spacing.md;
+        alignment: LayoutAlignment.stretch;
 
+        // label + value
         HorizontalLayout {
-            width: 40%;
+            width: 35%;
+            min-width: 140px;
+            spacing: Spacing.sm;
             alignment: LayoutAlignment.stretch;
-            HorizontalLayout {
-                spacing: Spacing.sm;
-                Text {
-                    font-size: Typography.md;
-                    font-weight: Typography.weight-medium;
-                    vertical-alignment: TextVerticalAlignment.center;
-                    color: root.enabled ? Theme.text-primary : Theme.text-secondary;
-                    text: root.text;
-                }
 
-                Text {
-                    font-size: Typography.md;
-                    font-weight: Typography.weight-bold;
-                    horizontal-alignment: TextHorizontalAlignment.right;
-                    vertical-alignment: TextVerticalAlignment.center;
-                    color: root.enabled ? Theme.primary : Theme.text-secondary;
-                    text: "\{Math.round(root.value)}";
-                }
+            Text {
+                horizontal-stretch: 1;
+                font-size: Typography.md;
+                font-weight: Typography.weight-medium;
+                vertical-alignment: TextVerticalAlignment.center;
+                color: root.enabled ? Theme.text-primary : Theme.text-secondary;
+                text: root.text;
+                overflow: TextOverflow.elide;
+            }
+
+            Text {
+                horizontal-stretch: 0;
+                min-width: 36px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-bold;
+                horizontal-alignment: TextHorizontalAlignment.right;
+                vertical-alignment: TextVerticalAlignment.center;
+                color: root.enabled ? Theme.primary : Theme.text-secondary;
+                text: "\{Math.round(root.value)}";
             }
         }
 
-        HorizontalBox {
-            slider := PrimarySlider {
-                enabled: root.enabled;
-                maximum: root.maximum;
-                minimum: root.minimum;
-                value <=> root.value;
-                released(value) => {
-                    root.released(value)
-                }
+        // slider takes remaining space
+        slider := PrimarySlider {
+            min-width: 100px;
+            enabled: root.enabled;
+            maximum: root.maximum;
+            minimum: root.minimum;
+            value <=> root.value;
+            released(value) => {
+                root.released(value)
             }
         }
 
@@ -264,56 +276,70 @@ export component SystemSlider inherits RogItem {
             }
         }
 
-        help := HorizontalBox {
-            if (help_text != ""): StandardButton {
-                kind: StandardButtonKind.help;
-                clicked => {
-                    help_popup.show();
+        // trailing actions stay compact
+        HorizontalLayout {
+            spacing: Spacing.md;
+            horizontal-stretch: 0;
+            min-width: 0px;
+            alignment: LayoutAlignment.end;
+
+            help := Rectangle {
+                width: help_text != "" ? 60px : 0px;
+                if (help_text != ""): StandardButton {
+                    kind: StandardButtonKind.help;
+                    width: 100%;
+                    height: 32px;
+                    clicked => {
+                        help_popup.show();
+                    }
                 }
             }
-        }
 
-        reset_popup := PopupWindow {
-            x: reset.x - self.width + reset.width;
-            y: reset.y - self.height + reset.height;
-            Rectangle {
-                drop-shadow-blur: Shadows.lg-blur;
-                drop-shadow-color: Shadows.color;
-                drop-shadow-offset-y: 4px;
-                border-radius: Radii.lg;
-                border-color: Theme.border;
-                border-width: 1px;
-                background: Theme.surface;
-                Dialog {
-                    Text {
-                        max-width: 420px;
-                        font-size: Typography.md;
-                        font-weight: Typography.weight-medium;
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("confirm_reset" => "Are you sure you want to reset this?");
-                        color: Theme.text-primary;
-                    }
+            reset_popup := PopupWindow {
+                x: reset.x - self.width + reset.width;
+                y: reset.y - self.height + reset.height;
+                Rectangle {
+                    drop-shadow-blur: Shadows.lg-blur;
+                    drop-shadow-color: Shadows.color;
+                    drop-shadow-offset-y: 4px;
+                    border-radius: Radii.lg;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    background: Theme.surface;
+                    Dialog {
+                        Text {
+                            max-width: 420px;
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-medium;
+                            wrap: TextWrap.word-wrap;
+                            text: @tr("confirm_reset" => "Are you sure you want to reset this?");
+                            color: Theme.text-primary;
+                        }
 
-                    StandardButton {
-                        kind: ok;
-                        clicked => {
-                            root.cb_do_reset();
+                        StandardButton {
+                            kind: ok;
+                            clicked => {
+                                root.cb_do_reset();
+                            }
+                        }
+
+                        StandardButton {
+                            kind: cancel;
                         }
                     }
-
-                    StandardButton {
-                        kind: cancel;
-                    }
                 }
             }
-        }
 
-        reset := HorizontalBox {
-            if (has_reset): StandardButton {
-                kind: StandardButtonKind.reset;
-                enabled: root.enabled;
-                clicked => {
-                    reset_popup.show();
+            reset := Rectangle {
+                width: has_reset ? 60px : 0px;
+                if (has_reset): StandardButton {
+                    kind: StandardButtonKind.reset;
+                    enabled: root.enabled;
+                    width: 100%;
+                    height: 32px;
+                    clicked => {
+                        reset_popup.show();
+                    }
                 }
             }
         }

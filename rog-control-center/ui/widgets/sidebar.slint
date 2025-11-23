@@ -9,7 +9,7 @@ component SideBarItem inherits Rectangle {
     in property <bool> has-focus;
     in-out property <string> text <=> label.text;
     callback clicked <=> touch.clicked;
-    min-height: self.visible ? 44px : 0px;
+    min-height: self.visible ? 50px : 0px;
     border-radius: Radii.md;
 
     states [
