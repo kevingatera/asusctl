@@ -27,37 +27,39 @@ impl SensorConfig {
 
         if let Some(temp) = &self.cpu_temp {
             if let Some(value) = temp.read() {
-                entries.push(format!("{}: {value}", temp.label));
+                entries.push(format!("{}: {value}", friendly_temp_label(&temp.label, "CPU Temp")));
             }
         }
 
         if let Some(temp) = &self.gpu_temp {
             if let Some(value) = temp.read() {
-                entries.push(format!("{}: {value}", temp.label));
+                entries.push(format!("{}: {value}", friendly_temp_label(&temp.label, "GPU Temp")));
             }
         }
 
-        for temp in self.extra_temps.iter().take(2) {
+        for temp in self.extra_temps.iter().take(1) {
             if let Some(value) = temp.read() {
-                entries.push(format!("{}: {value}", temp.label));
+                let label = friendly_temp_label(&temp.label, "System Temp");
+                entries.push(format!("{label}: {value}"));
             }
         }
 
         if let Some(fan) = &self.cpu_fan {
             if let Some(value) = fan.read() {
-                entries.push(format!("{}: {value}", fan.label));
+                entries.push(format!("{}: {value}", friendly_fan_label(&fan.label, "CPU Fan")));
             }
         }
 
         if let Some(fan) = &self.gpu_fan {
             if let Some(value) = fan.read() {
-                entries.push(format!("{}: {value}", fan.label));
+                entries.push(format!("{}: {value}", friendly_fan_label(&fan.label, "GPU Fan")));
             }
         }
 
-        for fan in self.extra_fans.iter().take(2) {
+        for fan in self.extra_fans.iter().take(1) {
             if let Some(value) = fan.read() {
-                entries.push(format!("{}: {value}", fan.label));
+                let label = friendly_fan_label(&fan.label, "Chassis Fan");
+                entries.push(format!("{label}: {value}"));
             }
         }
 
@@ -78,7 +80,7 @@ impl TempSensor {
             return None;
         }
         let celsius = raw as f32 / 1000.0;
-        Some(format!("{celsius:.1}°C"))
+        Some(format!("{celsius:.0}°C"))
     }
 }
 
@@ -86,6 +88,7 @@ impl TempSensor {
 struct FanSensor {
     label: String,
     path: PathBuf,
+    max_rpm: Option<i64>,
 }
 
 impl FanSensor {
@@ -94,7 +97,13 @@ impl FanSensor {
         if raw <= 0 {
             return None;
         }
-        Some(format!("{raw} RPM"))
+        let rounded = (raw + 5) / 10 * 10;
+        if let Some(max) = self.max_rpm {
+            let pct = ((rounded as f32 / max as f32) * 100.0).clamp(0.0, 200.0);
+            Some(format!("{rounded} RPM ({pct:.0}%)"))
+        } else {
+            Some(format!("{rounded} RPM"))
+        }
     }
 }
 
@@ -159,7 +168,7 @@ pub fn setup_bottom_bar(ui: &MainWindow) {
                             if smoothing_enabled && entry.starts_with("CPU Temp") {
                                 if let Some(metrics) = metrics_for_ui {
                                     return SharedString::from(format!(
-                                        "CPU Temp: {:.1}°C (smoothed {:.1}°C)",
+                                        "CPU Temp: {:.0}°C (smoothed avg {:.0}°C)",
                                         metrics.max, metrics.smoothed
                                     ));
                                 }
@@ -232,6 +241,7 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
             continue;
         }
 
+        let max_rpm = read_i64(&base.join(format!("fan{index}_max"))).filter(|v| *v > 0);
         let label = read_label(base, "fan", index);
         let fallback_label = if label.is_empty() {
             format!("Fan {index}")
@@ -247,6 +257,7 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
             config.cpu_fan = Some(FanSensor {
                 label: "CPU Fan".into(),
                 path,
+                max_rpm,
             });
             continue;
         }
@@ -255,6 +266,7 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
             config.gpu_fan = Some(FanSensor {
                 label: "GPU Fan".into(),
                 path,
+                max_rpm,
             });
             continue;
         }
@@ -262,6 +274,7 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
         config.extra_fans.push(FanSensor {
             label: fallback_label,
             path,
+            max_rpm,
         });
     }
 }
@@ -319,6 +332,47 @@ fn read_trimmed(path: PathBuf) -> String {
     fs::read_to_string(path)
         .map(|s| s.trim().to_string())
         .unwrap_or_default()
+}
+
+fn friendly_temp_label(label: &str, default_label: &str) -> String {
+    let lower = label.to_ascii_lowercase();
+    if label.is_empty()
+        || lower.starts_with("temp")
+        || lower.starts_with("sensor")
+        || lower.starts_with("aux")
+    {
+        default_label.to_string()
+    } else {
+        label.to_string()
+    }
+}
+
+fn friendly_fan_label(label: &str, default_label: &str) -> String {
+    let lower = label.to_ascii_lowercase();
+    if label.is_empty()
+        || lower.starts_with("fan")
+        || lower.contains("unknown")
+        || lower.contains("hwmon")
+    {
+        default_label.to_string()
+    } else {
+        prettify_label(label)
+    }
+}
+
+fn prettify_label(label: &str) -> String {
+    let cleaned = label.replace(['_', '-'], " ");
+    cleaned
+        .split_whitespace()
+        .map(|part| {
+            let mut chars = part.chars();
+            match chars.next() {
+                Some(first) => format!("{}{}", first.to_uppercase(), chars.as_str().to_lowercase()),
+                None => String::new(),
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(" ")
 }
 
 fn read_label(base: &Path, prefix: &str, index: usize) -> String {

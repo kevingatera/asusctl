@@ -73,7 +73,7 @@ export component MainWindow inherits Window {
             spacing: 0px;
 
             sidebar_container := Rectangle {
-                width: Math.max(200px, Math.min(400px, AppSize.sidebar-width));
+                width: Math.max(240px, Math.min(520px, AppSize.sidebar-width));
                 background: Theme.surface;
                 
                 Rectangle {
@@ -139,9 +139,9 @@ export component MainWindow inherits Window {
                             padding: Spacing.md;
                             spacing: Spacing.xs;
                             for entry[index] in BottomBarData.entries: Text {
-                                color: Theme.text-secondary;
-                                font-size: Typography.xs;
-                                font-weight: Typography.weight-medium;
+                                color: Theme.text-primary;
+                                font-size: Typography.sm;
+                                font-weight: Typography.weight-semibold;
                                 text: entry;
                             }
                         }
