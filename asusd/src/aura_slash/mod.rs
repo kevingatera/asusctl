@@ -202,6 +202,16 @@ impl Slash {
         let packet = slash_pkt_custom_payload(slash_type, data);
         self.write_bytes(&packet).await
     }
+
+    pub fn audio_capture_available() -> Result<(), RogError> {
+        if which("pw-cat").is_ok() || which("parec").is_ok() {
+            Ok(())
+        } else {
+            Err(RogError::MissingFunction(
+                "Audio capture requires pw-cat or parec in PATH".to_string(),
+            ))
+        }
+    }
 }
 
 fn battery_capacity_paths() -> &'static Vec<PathBuf> {
@@ -384,8 +394,7 @@ async fn capture_audio_stream(
 fn build_audio_command() -> Result<tokio::process::Command, String> {
     if which("pw-cat").is_ok() {
         let mut cmd = Command::new("pw-cat");
-        cmd.env("PULSE_SERVER", "unix:/run/user/1000/pulse/native");
-        cmd.env("PIPEWIRE_RUNTIME_DIR", "/run/user/1000");
+        apply_audio_env(&mut cmd);
         cmd.args([
             "--record",
             "-",
@@ -398,7 +407,7 @@ fn build_audio_command() -> Result<tokio::process::Command, String> {
     }
     if which("parec").is_ok() {
         let mut cmd = Command::new("parec");
-        cmd.env("PULSE_SERVER", "unix:/run/user/1000/pulse/native");
+        apply_audio_env(&mut cmd);
         cmd.args([
             "--format=s16le",
             "--rate=16000",
@@ -408,6 +417,18 @@ fn build_audio_command() -> Result<tokio::process::Command, String> {
         return Ok(cmd);
     }
     Err("Neither pw-cat nor parec found in PATH".into())
+}
+
+fn apply_audio_env(cmd: &mut Command) {
+    let runtime_dir = std::env::var("XDG_RUNTIME_DIR").ok();
+    if std::env::var_os("PULSE_SERVER").is_none() {
+        if let Some(dir) = runtime_dir.as_ref() {
+            cmd.env("PULSE_SERVER", format!("unix:{}/pulse/native", dir));
+        }
+    }
+    if let Some(dir) = runtime_dir {
+        cmd.env("PIPEWIRE_RUNTIME_DIR", dir);
+    }
 }
 
 struct AudioAggregator {

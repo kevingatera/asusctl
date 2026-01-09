@@ -139,7 +139,7 @@ pub const fn slash_pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [Slas
     pkt2[5] = 0x01;
     pkt2[6] = mode as u8;
     pkt2[7] = 0x02;
-    pkt2[8] = 0x19; // difference, GA605 = 0x10
+    pkt2[8] = slash_mode_profile_byte(slash_type);
     pkt2[9] = 0x03;
     pkt2[10] = 0x13;
     pkt2[11] = 0x04;
@@ -152,6 +152,13 @@ pub const fn slash_pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [Slas
     [
         pkt1, pkt2,
     ]
+}
+
+const fn slash_mode_profile_byte(slash_type: SlashType) -> u8 {
+    match slash_type {
+        SlashType::GA605 => 0x10,
+        _ => 0x19,
+    }
 }
 
 pub const fn slash_pkt_options(

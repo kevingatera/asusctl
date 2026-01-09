@@ -201,6 +201,10 @@ impl SlashZbus {
             mode,
             SlashMode::BatteryLevel | SlashMode::Audio | SlashMode::AudioSpectrum
         ) {
+            if matches!(mode, SlashMode::Audio | SlashMode::AudioSpectrum) {
+                Slash::audio_capture_available()
+                    .map_err(|err| zbus::fdo::Error::Failed(format!("{err}")))?;
+            }
             let slash_type = config.slash_type;
             let original_brightness = config.brightness;
             let interval = config.display_interval;
