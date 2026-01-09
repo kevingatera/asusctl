@@ -27,6 +27,7 @@ use crate::error::RogError;
 pub mod config;
 pub mod trait_impls;
 
+#[derive(Debug)]
 struct DynamicTask {
     cancel: CancellationToken,
     handle: JoinHandle<()>,

@@ -2773,8 +2773,6 @@ checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 [[package]]
 name = "ksni"
 version = "0.3.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5b29c089f14ce24c5b25d9bdcb265413b5e0c3df0871823e0d96bd83bc52a24"
 dependencies = [
  "async-executor",
  "async-io",
@@ -2786,6 +2784,7 @@ dependencies = [
  "pastey 0.2.1",
  "serde",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -2963,11 +2962,10 @@ checksum = "5e5032e24019045c762d3c0f28f5b6b8bbf38563a65908389bf7978758920897"
 [[package]]
 name = "logind-zbus"
 version = "5.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "469c962578b549a82f3d0cc72d0f77d1123780fa7121e2b03d78b0780f6ccac6"
 dependencies = [
  "serde",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4404,6 +4402,7 @@ dependencies = [
  "versions",
  "x11rb",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4470,6 +4469,7 @@ dependencies = [
  "serde",
  "udev 0.8.0",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]

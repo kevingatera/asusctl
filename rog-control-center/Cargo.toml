@@ -40,6 +40,7 @@ env_logger.workspace = true
 tokio.workspace = true
 serde.workspace = true
 zbus.workspace = true
+zvariant.workspace = true
 dirs.workspace = true
 notify-rust.workspace = true
 concat-idents.workspace = true

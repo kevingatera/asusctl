@@ -273,6 +273,12 @@ pub enum AuraModeNum {
     Flash = 12,
 }
 
+#[cfg(feature = "dbus")]
+impl zvariant::Basic for AuraModeNum {
+    const SIGNATURE_CHAR: char = u32::SIGNATURE_CHAR;
+    const SIGNATURE_STR: &'static str = u32::SIGNATURE_STR;
+}
+
 impl Display for AuraModeNum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", <&str>::from(self))

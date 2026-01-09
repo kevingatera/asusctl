@@ -10,7 +10,7 @@ edition.workspace = true
 
 [features]
 default = ["dbus"]
-dbus = ["zbus"]
+dbus = ["zbus", "zvariant"]
 
 [dependencies]
 log.workspace = true
@@ -19,3 +19,4 @@ serde.workspace = true
 rog_platform = { path = "../rog-platform" }
 
 zbus = { workspace = true, optional = true }
+zvariant = { workspace = true, optional = true }
