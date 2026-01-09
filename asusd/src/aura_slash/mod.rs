@@ -5,7 +5,6 @@ use std::sync::{Arc, OnceLock};
 use std::time::{Duration as StdDuration, Instant};
 
 use config::SlashConfig;
-use futures_util::lock::{Mutex, MutexGuard};
 use log::warn;
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
@@ -17,6 +16,7 @@ use rog_slash::{SlashMode, SlashType};
 use tokio::io::AsyncReadExt;
 use tokio::process::Command;
 use tokio::sync::mpsc;
+use tokio::sync::{Mutex, MutexGuard};
 use tokio::task::JoinHandle;
 use tokio::time::{interval, Duration};
 use tokio_util::sync::CancellationToken;

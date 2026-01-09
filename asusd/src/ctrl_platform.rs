@@ -3,12 +3,12 @@ use std::process::Command;
 use std::sync::Arc;
 
 use config_traits::StdConfig;
-use futures_util::lock::Mutex;
 use log::{debug, error, info, warn};
 use rog_platform::asus_armoury::{AttrValue, FirmwareAttribute, FirmwareAttributes};
 use rog_platform::cpu::{CPUControl, CPUGovernor, CPUEPP};
 use rog_platform::platform::{PlatformProfile, Properties, RogPlatform};
 use rog_platform::power::AsusPower;
+use tokio::sync::Mutex;
 use zbus::fdo::Error as FdoErr;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
@@ -51,6 +51,7 @@ pub struct CtrlPlatform {
 }
 
 impl CtrlPlatform {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         platform: RogPlatform,
         power: AsusPower,
@@ -380,16 +381,39 @@ impl CtrlPlatform {
 
     #[zbus(property)]
     fn charge_control_end_threshold(&self) -> Result<u8, FdoErr> {
-        let limit = self.power.get_charge_control_end_threshold()?;
+        if !self.power.has_charge_control_end_threshold() {
+            return Err(FdoErr::NotSupported(
+                "RogPlatform: charge_control_end_threshold not supported".to_owned(),
+            ));
+        }
+
+        let limit = self.power.get_charge_control_end_threshold().map_err(|e| {
+            FdoErr::Failed(format!(
+                "Could not read charge_control_end_threshold: {e:?}"
+            ))
+        })?;
+
         Ok(limit)
     }
 
     #[zbus(property)]
     async fn set_charge_control_end_threshold(&mut self, limit: u8) -> Result<(), FdoErr> {
+        if !self.power.has_charge_control_end_threshold() {
+            return Err(FdoErr::NotSupported(
+                "RogPlatform: charge_control_end_threshold not supported".to_owned(),
+            ));
+        }
+
         if !(20..=100).contains(&limit) {
             return Err(RogError::ChargeLimit(limit))?;
         }
-        self.power.set_charge_control_end_threshold(limit)?;
+
+        self.power
+            .set_charge_control_end_threshold(limit)
+            .map_err(|e| {
+                FdoErr::Failed(format!("Could not set charge_control_end_threshold: {e:?}"))
+            })?;
+
         self.config.lock().await.charge_control_end_threshold = limit;
         self.config.lock().await.base_charge_control_end_threshold = limit;
         self.config.lock().await.write();
@@ -397,12 +421,22 @@ impl CtrlPlatform {
     }
 
     async fn one_shot_full_charge(&self) -> Result<(), FdoErr> {
+        if !self.power.has_charge_control_end_threshold() {
+            return Err(FdoErr::NotSupported(
+                "RogPlatform: charge_control_end_threshold not supported".to_owned(),
+            ));
+        }
+
         let base_limit = std::mem::replace(
             &mut self.config.lock().await.charge_control_end_threshold,
             100,
         );
         if base_limit != 100 {
-            self.power.set_charge_control_end_threshold(100)?;
+            self.power
+                .set_charge_control_end_threshold(100)
+                .map_err(|e| {
+                    FdoErr::Failed(format!("Could not set one_shot_full_charge: {e:?}"))
+                })?;
             self.config.lock().await.base_charge_control_end_threshold = base_limit;
             self.config.lock().await.write();
         }

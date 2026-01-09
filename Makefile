@@ -59,10 +59,17 @@ clean:
 distclean:
 	rm -rf .cargo vendor vendor.tar.xz
 
-target/$(TARGET)/$(BIN_D): build
-target/$(TARGET)/$(BIN_C): build
-target/$(TARGET)/$(BIN_U): build
-target/$(TARGET)/$(BIN_ROG): build
+target/$(TARGET)/$(BIN_D): $(SRC)
+	$(MAKE) build
+
+target/$(TARGET)/$(BIN_C): $(SRC)
+	$(MAKE) build
+
+target/$(TARGET)/$(BIN_U): $(SRC)
+	$(MAKE) build
+
+target/$(TARGET)/$(BIN_ROG): $(SRC)
+	$(MAKE) build
 
 install-asusd: target/$(TARGET)/$(BIN_D)
 	$(INSTALL_PROGRAM) "./target/$(TARGET)/$(BIN_D)" "$(DESTDIR)$(bindir)/$(BIN_D)"
@@ -113,7 +120,7 @@ install-data-asusd_user:
 
 .PHONY: install-data-asusd install-data-asusd_user
 
-install-data: install-data-asusd install-data-rog_gui
+install-data: install-data-asusd install-data-asusd_user install-data-rog_gui
 
 install: install-program install-data
 	$(INSTALL_DATA) "./LICENSE" "$(DESTDIR)$(datarootdir)/asusctl/LICENSE"
@@ -151,6 +158,8 @@ vendor:
 	mv .cargo/config ./cargo-config
 	rm -rf .cargo
 	rm -rf vendor
+	# Ensure cargo-vendor-filterer is installed (CI installs it already)
+	command -v cargo-vendor-filterer >/dev/null 2>&1 || cargo install --locked cargo-vendor-filterer
 	cargo vendor-filterer --all-features --platform x86_64-unknown-linux-gnu vendor
 	tar pcfJ vendor_asusctl_$(VERSION).tar.xz vendor
 	rm -rf vendor

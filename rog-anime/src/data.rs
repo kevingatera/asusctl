@@ -63,6 +63,8 @@ pub enum AnimeType {
     GA401,
     GA402,
     GU604,
+    G635L,
+    G835LW,
     #[default]
     Unsupported,
 }
@@ -71,10 +73,12 @@ impl FromStr for AnimeType {
     type Err = AnimeError;
 
     fn from_str(s: &str) -> std::result::Result<Self, Self::Err> {
-        Ok(match s {
-            "ga401" | "GA401" => Self::GA401,
-            "ga402" | "GA402" => Self::GA402,
-            "gu604" | "GU604" => Self::GU604,
+        Ok(match s.to_uppercase().as_str() {
+            "GA401" => Self::GA401,
+            "GA402" => Self::GA402,
+            "GU604" => Self::GU604,
+            "G635L" => Self::G635L,
+            "G835LW" => Self::G835LW,
             _ => Self::Unsupported,
         })
     }
@@ -89,6 +93,8 @@ impl AnimeType {
             AnimeType::GA402
         } else if board_name.contains("GU604V") {
             AnimeType::GU604
+        } else if board_name.contains("G635L") || board_name.contains("G635L") {
+            AnimeType::G635L
         } else {
             AnimeType::Unsupported
         }
@@ -98,6 +104,7 @@ impl AnimeType {
     pub fn width(&self) -> usize {
         match self {
             AnimeType::GU604 => 70,
+            AnimeType::G835LW => 74,
             _ => 74,
         }
     }
@@ -107,6 +114,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => 36,
             AnimeType::GU604 => 43,
+            AnimeType::G835LW => 39,
             _ => 39,
         }
     }
@@ -116,6 +124,7 @@ impl AnimeType {
         match self {
             AnimeType::GA401 => PANE_LEN * 2,
             AnimeType::GU604 => PANE_LEN * 3,
+            AnimeType::G835LW => PANE_LEN * 3,
             _ => PANE_LEN * 3,
         }
     }
@@ -180,7 +189,13 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         let mut buffers = match anime.anime {
             AnimeType::GA401 => vec![[0; 640]; 2],
-            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported => vec![[0; 640]; 3],
+            AnimeType::GA402
+            | AnimeType::GU604
+            | AnimeType::G635L
+            | AnimeType::G835LW
+            | AnimeType::Unsupported => {
+                vec![[0; 640]; 3]
+            }
         };
 
         for (idx, chunk) in anime.data.as_slice().chunks(PANE_LEN).enumerate() {
@@ -191,7 +206,11 @@ impl TryFrom<AnimeDataBuffer> for AnimePacketType {
 
         if matches!(
             anime.anime,
-            AnimeType::GA402 | AnimeType::GU604 | AnimeType::Unsupported
+            AnimeType::GA402
+                | AnimeType::GU604
+                | AnimeType::G635L
+                | AnimeType::G835LW
+                | AnimeType::Unsupported
         ) {
             buffers[2][..7].copy_from_slice(&USB_PREFIX3);
         }

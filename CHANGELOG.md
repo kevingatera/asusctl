@@ -2,6 +2,49 @@
 
 ## [Unreleased]
 
+## [6.2.0]
+
+## Changed
+- Added aura support for FX607V: thanks @jomp16
+- Added testing support for G835LW
+- Added support for GU605C models slash lighting: thanks @Otters
+- Restore fedora: thanks @ali205412
+- Add support to G614F models slash lighting
+
+## [6.1.22]
+
+### Changed
+- Allow configuration of nv_tgp
+- Treat dGPU attributes as power profiles
+- Add EXPERTBOOK DMI match to ensure the service is loaded
+- Support G815L thanks to @solost !
+
+## [6.1.21]
+
+### Changed
+- Kill Fedora: screw your cursed cargo bullshit
+- Restore CI building
+
+## [6.1.20]
+
+### Changed
+- Addded support for G635L: thanks @luca_pisl !
+- Suppress verbose output in applications too, not just daemon
+
+## [6.1.18]
+
+### Changed
+- Add aura support for G614FR (ROG Strix G16 2025)
+- all notifications now respects the timeout 
+- improve udev daemon-starting rule
+- reduce log noise
+
+## [v6.1.17]
+
+### Changed
+- Fix Makefile
+- Share a single HID device
+
 ## [v6.1.16]
 
 ### Changed

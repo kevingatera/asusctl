@@ -9,7 +9,7 @@ use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
 use gumdrop::{Opt, Options};
-use log::{error, info};
+use log::{error, info, LevelFilter};
 use rog_anime::usb::get_anime_type;
 use rog_anime::{AnimTime, AnimeDataBuffer, AnimeDiagonal, AnimeGif, AnimeImage, AnimeType, Vec2};
 use rog_aura::keyboard::{AuraPowerState, LaptopAuraPower};
@@ -44,12 +44,16 @@ mod scsi_cli;
 mod slash_cli;
 
 fn main() {
+    // Ensure tracing spans are quiet by default unless user overrides
+    if std::env::var_os("RUST_LOG").is_none() {
+        std::env::set_var("RUST_LOG", "warn,tracing=error,zbus=error");
+    }
     let mut logger = env_logger::Builder::new();
     logger
         .parse_default_env()
-        .target(env_logger::Target::Stdout)
+        .filter_level(LevelFilter::Info)
+        .target(env_logger::Target::Stderr)
         .format_timestamp(None)
-        .filter_level(log::LevelFilter::Debug)
         .init();
 
     let self_version = env!("CARGO_PKG_VERSION");
@@ -979,7 +983,13 @@ fn handle_throttle_profile(
         return Err(ProfileError::NotSupported.into());
     }
 
-    if !cmd.next && !cmd.list && cmd.profile_set.is_none() && !cmd.profile_get {
+    if !cmd.next
+        && !cmd.list
+        && cmd.profile_set.is_none()
+        && !cmd.profile_get
+        && cmd.profile_set_ac.is_none()
+        && cmd.profile_set_bat.is_none()
+    {
         if !cmd.help {
             println!("Missing arg or command\n");
         }
@@ -999,6 +1009,10 @@ fn handle_throttle_profile(
         proxy.set_platform_profile(PlatformProfile::next(current, &choices))?;
     } else if let Some(profile) = cmd.profile_set {
         proxy.set_platform_profile(profile)?;
+    } else if let Some(profile) = cmd.profile_set_ac {
+        proxy.set_platform_profile_on_ac(profile)?;
+    } else if let Some(profile) = cmd.profile_set_bat {
+        proxy.set_platform_profile_on_battery(profile)?;
     }
 
     if cmd.list {
@@ -1009,6 +1023,11 @@ fn handle_throttle_profile(
 
     if cmd.profile_get {
         println!("Active profile is {current:?}");
+        println!("Profile on AC is {:?}", proxy.platform_profile_on_ac()?);
+        println!(
+            "Profile on Battery is {:?}",
+            proxy.platform_profile_on_battery()?
+        );
     }
 
     Ok(())
@@ -1169,11 +1188,12 @@ fn print_firmware_attr(attr: &AsusArmouryProxyBlocking) -> Result<(), Box<dyn st
     Ok(())
 }
 
+#[allow(clippy::manual_is_multiple_of, clippy::nonminimal_bool)]
 fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error::Error>> {
     {
-        if cmd.free.is_empty() || !cmd.free.len().is_multiple_of(2) || cmd.help {
+        if cmd.free.is_empty() || (cmd.free.len() % 2 != 0) || cmd.help {
             const USAGE: &str = "Usage: asusctl platform panel_overdrive 1 nv_dynamic_boost 5";
-            if !cmd.free.len().is_multiple_of(2) {
+            if cmd.free.len() % 2 != 0 {
                 println!(
                     "Incorrect number of args, each attribute label must be paired with a setting:"
                 );
