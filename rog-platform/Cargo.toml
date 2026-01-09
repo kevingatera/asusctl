@@ -12,6 +12,7 @@ edition.workspace = true
 log.workspace = true
 serde.workspace = true
 zbus.workspace = true
+zvariant.workspace = true
 concat-idents.workspace = true
 udev.workspace = true
 inotify.workspace = true

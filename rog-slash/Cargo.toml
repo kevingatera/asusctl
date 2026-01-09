@@ -14,7 +14,7 @@ exclude = ["data"]
 
 [features]
 default = ["dbus", "detect"]
-dbus = ["zbus"]
+dbus = ["zbus", "zvariant"]
 detect = ["dmi_id"]
 
 [lib]
@@ -24,4 +24,5 @@ path = "src/lib.rs"
 [dependencies]
 serde.workspace = true
 zbus = { workspace = true, optional = true }
+zvariant = { workspace = true, optional = true }
 dmi_id = { path = "../dmi-id", optional = true }

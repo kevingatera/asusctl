@@ -27,13 +27,19 @@ impl SensorConfig {
 
         if let Some(temp) = &self.cpu_temp {
             if let Some(value) = temp.read() {
-                entries.push(format!("{}: {value}", friendly_temp_label(&temp.label, "CPU Temp")));
+                entries.push(format!(
+                    "{}: {value}",
+                    friendly_temp_label(&temp.label, "CPU Temp")
+                ));
             }
         }
 
         if let Some(temp) = &self.gpu_temp {
             if let Some(value) = temp.read() {
-                entries.push(format!("{}: {value}", friendly_temp_label(&temp.label, "GPU Temp")));
+                entries.push(format!(
+                    "{}: {value}",
+                    friendly_temp_label(&temp.label, "GPU Temp")
+                ));
             }
         }
 
@@ -46,13 +52,19 @@ impl SensorConfig {
 
         if let Some(fan) = &self.cpu_fan {
             if let Some(value) = fan.read() {
-                entries.push(format!("{}: {value}", friendly_fan_label(&fan.label, "CPU Fan")));
+                entries.push(format!(
+                    "{}: {value}",
+                    friendly_fan_label(&fan.label, "CPU Fan")
+                ));
             }
         }
 
         if let Some(fan) = &self.gpu_fan {
             if let Some(value) = fan.read() {
-                entries.push(format!("{}: {value}", friendly_fan_label(&fan.label, "GPU Fan")));
+                entries.push(format!(
+                    "{}: {value}",
+                    friendly_fan_label(&fan.label, "GPU Fan")
+                ));
             }
         }
 

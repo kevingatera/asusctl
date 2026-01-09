@@ -178,10 +178,7 @@ impl Slash {
             }
         });
 
-        *self.dynamic_task.lock().await = Some(DynamicTask {
-            cancel,
-            handle,
-        });
+        *self.dynamic_task.lock().await = Some(DynamicTask { cancel, handle });
         Ok(())
     }
 
@@ -323,7 +320,9 @@ async fn run_audio_effect(
     };
 
     let handle = slash.runtime_handle.clone();
-    let capture = handle.spawn(capture_audio_stream(mode, brightness, tx, cancel.clone())).await;
+    let capture = handle
+        .spawn(capture_audio_stream(mode, brightness, tx, cancel.clone()))
+        .await;
 
     writer.abort();
 
@@ -396,12 +395,7 @@ fn build_audio_command() -> Result<tokio::process::Command, String> {
         let mut cmd = Command::new("pw-cat");
         apply_audio_env(&mut cmd);
         cmd.args([
-            "--record",
-            "-",
-            "--format=s16",
-            "--rate=16000",
-            "--channels=1",
-            "--raw",
+            "--record", "-", "--format=s16", "--rate=16000", "--channels=1", "--raw",
         ]);
         return Ok(cmd);
     }
@@ -493,7 +487,7 @@ impl AudioAggregator {
             payload[6 - idx] = (level * self.brightness as f32).clamp(0.0, 255.0) as u8;
         }
         if peak > 0.001 {
-             log::debug!("Audio peak: {:.4}, payload: {:?}", peak, payload);
+            log::debug!("Audio peak: {:.4}, payload: {:?}", peak, payload);
         }
         Some(payload)
     }

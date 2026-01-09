@@ -139,14 +139,8 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
     ui.set_sidebar_items_avilable(
         [
             // Needs to match the order of slint sidebar items
-            platform_available,
-            aura_available,
-            anime_available,
-            slash_available,
-            fans_available,
-            true,
-            true,
-            true,
+            platform_available, aura_available, anime_available, slash_available, fans_available,
+            true, true, true,
         ]
         .into(),
     );

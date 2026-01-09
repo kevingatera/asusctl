@@ -12,12 +12,13 @@ edition.workspace = true
 
 [features]
 default = ["dbus", "ron"]
-dbus = ["zbus"]
+dbus = ["zbus", "zvariant"]
 
 [dependencies]
 sg.workspace = true
 serde.workspace = true
 zbus = { workspace = true, optional = true }
+zvariant = { workspace = true, optional = true }
 
 # cli and logging
 

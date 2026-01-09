@@ -1,9 +1,9 @@
 use config_traits::StdConfig;
 use log::{debug, error, warn};
 use rog_slash::usb::{
-    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_init, slash_pkt_lid_closed,
-    slash_pkt_low_battery, slash_pkt_options, slash_pkt_save, slash_pkt_set_mode,
-    slash_pkt_shutdown, slash_pkt_sleep,
+    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_init,
+    slash_pkt_lid_closed, slash_pkt_low_battery, slash_pkt_options, slash_pkt_save,
+    slash_pkt_set_mode, slash_pkt_shutdown, slash_pkt_sleep,
 };
 use rog_slash::{DeviceState, SlashMode};
 use zbus::zvariant::OwnedObjectPath;
@@ -211,22 +211,22 @@ impl SlashZbus {
             let original_enabled = config.enabled;
             let mut brightness = original_brightness;
             let mut enabled_state = original_enabled;
-            
+
             // For software modes, auto-enable device and set brightness if needed
             if !enabled_state {
                 enabled_state = true;
                 config.enabled = true;
             }
-            
+
             if brightness == 0 {
                 brightness = 0x88;
                 config.brightness = brightness;
             }
-            
+
             config.display_mode = mode;
             config.write();
             drop(config);
-            
+
             // Apply hardware state if we auto-enabled or changed brightness, OR if we are switching to software mode
             // We always re-apply enable/options to ensure the device is ready for custom frames
             self.0
@@ -238,17 +238,14 @@ impl SlashZbus {
                 .ok();
             self.0
                 .write_bytes(&slash_pkt_options(
-                    slash_type,
-                    enabled_state,
-                    brightness,
-                    interval,
+                    slash_type, enabled_state, brightness, interval,
                 ))
                 .await
                 .map_err(|err| {
                     warn!("ctrl_slash::set_options {}", err);
                 })
                 .ok();
-            
+
             self.0
                 .update_dynamic_state(slash_type, mode, enabled_state, brightness, interval)
                 .await;
@@ -275,10 +272,7 @@ impl SlashZbus {
             .ok();
         self.0
             .write_bytes(&slash_pkt_options(
-                slash_type,
-                enabled_state,
-                brightness,
-                interval,
+                slash_type, enabled_state, brightness, interval,
             ))
             .await
             .map_err(|err| {
@@ -290,9 +284,7 @@ impl SlashZbus {
         for pkt in &command_packets {
             self.0.write_bytes(pkt).await?;
         }
-        self.0
-            .write_bytes(&slash_pkt_save(slash_type))
-            .await?;
+        self.0.write_bytes(&slash_pkt_save(slash_type)).await?;
 
         config.display_mode = mode;
         config.write();

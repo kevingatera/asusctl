@@ -68,15 +68,14 @@ pub fn setup_slash_page(ui: &MainWindow) {
             let mode_pairs: Vec<(SlashMode, SharedString)> = SlashMode::list()
                 .into_iter()
                 .map(|name| {
-                    let mode = SlashMode::from_str(&name)
-                        .unwrap_or_else(|_| {
-                            error!("Failed to parse slash mode: {}", name);
-                            SlashMode::Bounce
-                        });
+                    let mode = SlashMode::from_str(&name).unwrap_or_else(|_| {
+                        error!("Failed to parse slash mode: {}", name);
+                        SlashMode::Bounce
+                    });
                     (mode, SharedString::from(friendly_name(mode)))
                 })
                 .collect();
-            
+
             let mode_codes: Arc<Vec<SlashMode>> =
                 Arc::new(mode_pairs.iter().map(|(mode, _)| *mode).collect());
             let mode_names: Arc<Vec<SharedString>> = Arc::new(

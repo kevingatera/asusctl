@@ -4418,6 +4418,7 @@ dependencies = [
  "png_pong",
  "serde",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4429,6 +4430,7 @@ dependencies = [
  "ron",
  "serde",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4456,6 +4458,7 @@ dependencies = [
  "serde",
  "udev 0.8.0",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4477,6 +4480,7 @@ dependencies = [
  "serde",
  "sg",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
@@ -4496,6 +4500,7 @@ dependencies = [
  "dmi_id",
  "serde",
  "zbus",
+ "zvariant",
 ]
 
 [[package]]
