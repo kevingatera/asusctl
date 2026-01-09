@@ -83,7 +83,12 @@ impl FromStr for SlashType {
     }
 }
 
-#[cfg_attr(feature = "dbus", derive(Type, Value, OwnedValue))]
+#[repr(u8)]
+#[cfg_attr(
+    feature = "dbus",
+    derive(Type, Value, OwnedValue),
+    zvariant(signature = "y")
+)]
 #[derive(Debug, Default, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
 pub enum SlashMode {
     Static = 0x06,
