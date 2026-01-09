@@ -6,6 +6,8 @@ use std::time::{Duration as StdDuration, Instant};
 
 use config::SlashConfig;
 use log::warn;
+use logind_zbus::manager::ManagerProxyBlocking;
+use logind_zbus::session::{SessionProxyBlocking, SessionType};
 use rog_platform::hid_raw::HidRaw;
 use rog_platform::usb_raw::USBRaw;
 use rog_slash::usb::{
@@ -20,6 +22,7 @@ use tokio::task::JoinHandle;
 use tokio::time::{interval, Duration};
 use tokio_util::sync::CancellationToken;
 use which::which;
+use zbus::blocking::Connection as BlockingConnection;
 
 use crate::error::RogError;
 
@@ -391,14 +394,6 @@ async fn capture_audio_stream(
 }
 
 fn build_audio_command() -> Result<tokio::process::Command, String> {
-    if which("pw-cat").is_ok() {
-        let mut cmd = Command::new("pw-cat");
-        apply_audio_env(&mut cmd);
-        cmd.args([
-            "--record", "-", "--format=s16", "--rate=16000", "--channels=1", "--raw",
-        ]);
-        return Ok(cmd);
-    }
     if which("parec").is_ok() {
         let mut cmd = Command::new("parec");
         apply_audio_env(&mut cmd);
@@ -410,19 +405,73 @@ fn build_audio_command() -> Result<tokio::process::Command, String> {
         ]);
         return Ok(cmd);
     }
+    if which("pw-cat").is_ok() {
+        let mut cmd = Command::new("pw-cat");
+        apply_audio_env(&mut cmd);
+        cmd.args([
+            "--record", "-", "--format=s16", "--rate=16000", "--channels=1", "--raw",
+        ]);
+        return Ok(cmd);
+    }
     Err("Neither pw-cat nor parec found in PATH".into())
 }
 
 fn apply_audio_env(cmd: &mut Command) {
-    let runtime_dir = std::env::var("XDG_RUNTIME_DIR").ok();
-    if std::env::var_os("PULSE_SERVER").is_none() {
-        if let Some(dir) = runtime_dir.as_ref() {
-            cmd.env("PULSE_SERVER", format!("unix:{}/pulse/native", dir));
+    let runtime_dir = resolve_audio_runtime_dir();
+    if let Some(dir) = runtime_dir {
+        let dir_str = dir.to_string_lossy();
+        cmd.env("XDG_RUNTIME_DIR", dir_str.as_ref());
+        cmd.env("PIPEWIRE_RUNTIME_DIR", dir_str.as_ref());
+        if std::env::var_os("PULSE_SERVER").is_none() {
+            cmd.env("PULSE_SERVER", format!("unix:{}/pulse/native", dir_str));
+        }
+    } else {
+        warn!("Slash audio: unable to resolve XDG_RUNTIME_DIR for audio capture");
+    }
+}
+
+fn resolve_audio_runtime_dir() -> Option<PathBuf> {
+    if let Ok(dir) = std::env::var("XDG_RUNTIME_DIR") {
+        let path = PathBuf::from(dir);
+        if path.exists() {
+            return Some(path);
         }
     }
-    if let Some(dir) = runtime_dir {
-        cmd.env("PIPEWIRE_RUNTIME_DIR", dir);
+
+    let connection = BlockingConnection::system().ok()?;
+    let manager = ManagerProxyBlocking::new(&connection).ok()?;
+    let sessions = manager.list_sessions().ok()?;
+
+    for session in &sessions {
+        let session_proxy = SessionProxyBlocking::builder(&connection)
+            .path(session.path())
+            .ok()?
+            .build()
+            .ok()?;
+
+        if session_proxy.active().ok()? {
+            if let Ok(session_type) = session_proxy.type_() {
+                if matches!(
+                    session_type,
+                    SessionType::X11 | SessionType::Wayland | SessionType::MIR
+                ) {
+                    let dir = PathBuf::from(format!("/run/user/{}", session.uid()));
+                    if dir.exists() {
+                        return Some(dir);
+                    }
+                }
+            }
+        }
     }
+
+    for session in sessions {
+        let dir = PathBuf::from(format!("/run/user/{}", session.uid()));
+        if dir.exists() {
+            return Some(dir);
+        }
+    }
+
+    None
 }
 
 struct AudioAggregator {
