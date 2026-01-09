@@ -398,6 +398,8 @@ fn build_audio_command() -> Result<tokio::process::Command, String> {
         let mut cmd = Command::new("parec");
         apply_audio_env(&mut cmd);
         cmd.args([
+            "--record",
+            "--raw",
             "--format=s16le",
             "--rate=16000",
             "--channels=1",
