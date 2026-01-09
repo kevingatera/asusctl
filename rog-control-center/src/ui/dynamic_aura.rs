@@ -12,8 +12,7 @@ use tokio::select;
 use tokio::sync::oneshot;
 use tokio::time::{interval, Duration};
 use x11rb::connection::Connection as _;
-use x11rb::protocol::xproto::ConnectionExt as _;
-use x11rb::protocol::xproto::ImageFormat;
+use x11rb::protocol::xproto::{ConnectionExt as _, ImageFormat};
 use zbus::Connection;
 
 use crate::MainWindow;

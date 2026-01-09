@@ -44,9 +44,14 @@ pub fn setup_slash_page(ui: &MainWindow) {
             info!("This device appears to have no slash interfaces");
             if let Some(ui) = handle.upgrade() {
                 ui.global::<SlashPageData>().set_status_lines(
-                    [SharedString::from("Slash hardware not detected. Ensure your device supports the chassis slash lightbar.")]
-                        .as_slice()
-                        .into(),
+                    [
+                        SharedString::from(
+                            "Slash hardware not detected. Ensure your device supports the chassis \
+                             slash lightbar.",
+                        ),
+                    ]
+                    .as_slice()
+                    .into(),
                 );
             }
             return;
@@ -56,9 +61,14 @@ pub fn setup_slash_page(ui: &MainWindow) {
             info!("No slash devices returned from DBus");
             if let Some(ui) = handle.upgrade() {
                 ui.global::<SlashPageData>().set_status_lines(
-                    [SharedString::from("Slash service is available but no devices reported. Try restarting asusd.")]
-                        .as_slice()
-                        .into(),
+                    [
+                        SharedString::from(
+                            "Slash service is available but no devices reported. Try restarting \
+                             asusd.",
+                        ),
+                    ]
+                    .as_slice()
+                    .into(),
                 );
             }
             return;

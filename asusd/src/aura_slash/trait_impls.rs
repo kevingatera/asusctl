@@ -227,8 +227,9 @@ impl SlashZbus {
             config.write();
             drop(config);
 
-            // Apply hardware state if we auto-enabled or changed brightness, OR if we are switching to software mode
-            // We always re-apply enable/options to ensure the device is ready for custom frames
+            // Apply hardware state if we auto-enabled or changed brightness, OR if we are
+            // switching to software mode We always re-apply enable/options to
+            // ensure the device is ready for custom frames
             self.0
                 .write_bytes(&slash_pkt_enable(slash_type, enabled_state))
                 .await

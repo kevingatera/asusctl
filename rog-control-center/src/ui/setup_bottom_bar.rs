@@ -152,14 +152,16 @@ pub fn setup_bottom_bar(ui: &MainWindow) {
                         Ok(_) => {}
                         Err(err) => {
                             debug!(
-                                "BottomBar: cpu_temperature_metrics call failed, resetting bus connection: {err:?}"
+                                "BottomBar: cpu_temperature_metrics call failed, resetting bus \
+                                 connection: {err:?}"
                             );
                             dbus_connection = None;
                         }
                     },
                     Err(err) => {
                         debug!(
-                            "BottomBar: failed to create FanCurves proxy, resetting bus connection: {err:?}"
+                            "BottomBar: failed to create FanCurves proxy, resetting bus \
+                             connection: {err:?}"
                         );
                         dbus_connection = None;
                     }

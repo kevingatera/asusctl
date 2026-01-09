@@ -100,7 +100,8 @@ impl CpuTempMonitor {
             .and_then(|p| Self::read_temp(p))
     }
 
-    /// Read core temperatures and calculate aggregated metrics, including smoothed average
+    /// Read core temperatures and calculate aggregated metrics, including
+    /// smoothed average
     pub fn read_metrics(&self, last_smoothed: Option<f32>) -> Option<CpuTempMetrics> {
         let mut temps = self.read_core_temps();
 

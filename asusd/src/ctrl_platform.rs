@@ -238,10 +238,12 @@ impl CtrlPlatform {
 
         if !should_change_profile {
             debug!(
-                "Power status changed but change_platform_profile_on_{} set false. Not setting the profile",
+                "Power status changed but change_platform_profile_on_{} set false. Not setting \
+                 the profile",
                 if power_plugged { "ac" } else { "battery" }
             );
-            // Still emit signal even if not changing profile, so UI is notified of power change
+            // Still emit signal even if not changing profile, so UI is notified of power
+            // change
             if let Some(ctxt) = signal_ctxt {
                 if let Ok(_current_profile) = self.platform.get_platform_profile() {
                     debug!("Emitting platform_profile_changed signal (no profile change)");
@@ -861,7 +863,8 @@ impl crate::Reloadable for CtrlPlatform {
                     )
                     .await;
                 } else {
-                    // At startup (no change detected), use saved profile if available, otherwise use configured default
+                    // At startup (no change detected), use saved profile if available, otherwise
+                    // use configured default
                     let throttle = {
                         let config = self.config.lock().await;
                         if power_plugged > 0 {

@@ -302,7 +302,8 @@ impl CtrlTask for CtrlFanCurveZbus {
                         Some(metrics) => {
                             last_smoothed = Some(metrics.smoothed);
                             debug!(
-                                "CPU temp metrics - max: {:.1}°C, smoothed: {:.1}°C, avg: {:.1}°C, weighted: {:.1}°C",
+                                "CPU temp metrics - max: {:.1}°C, smoothed: {:.1}°C, avg: \
+                                 {:.1}°C, weighted: {:.1}°C",
                                 metrics.max, metrics.smoothed, metrics.average, metrics.weighted
                             );
 
