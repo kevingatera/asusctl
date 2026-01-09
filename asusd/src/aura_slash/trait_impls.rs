@@ -81,7 +81,12 @@ impl SlashZbus {
             })
             .ok();
 
-        if enabled {
+        if enabled
+            && !matches!(
+                config.display_mode,
+                SlashMode::BatteryLevel | SlashMode::Audio | SlashMode::AudioSpectrum
+            )
+        {
             let mode_packets = slash_pkt_set_mode(config.slash_type, config.display_mode);
             for pkt in &mode_packets {
                 self.0.write_bytes(pkt).await.ok();
@@ -253,12 +258,36 @@ impl SlashZbus {
             self.0.write_bytes(pkt).await.ok();
         }
 
-        let command_packets = slash_pkt_set_mode(config.slash_type, mode);
+        let slash_type = config.slash_type;
+        let enabled_state = config.enabled;
+        let brightness = config.brightness;
+        let interval = config.display_interval;
+        self.0
+            .write_bytes(&slash_pkt_enable(slash_type, enabled_state))
+            .await
+            .map_err(|err| {
+                warn!("ctrl_slash::enable {}", err);
+            })
+            .ok();
+        self.0
+            .write_bytes(&slash_pkt_options(
+                slash_type,
+                enabled_state,
+                brightness,
+                interval,
+            ))
+            .await
+            .map_err(|err| {
+                warn!("ctrl_slash::set_options {}", err);
+            })
+            .ok();
+
+        let command_packets = slash_pkt_set_mode(slash_type, mode);
         for pkt in &command_packets {
             self.0.write_bytes(pkt).await?;
         }
         self.0
-            .write_bytes(&slash_pkt_save(config.slash_type))
+            .write_bytes(&slash_pkt_save(slash_type))
             .await?;
 
         config.display_mode = mode;
