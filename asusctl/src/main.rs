@@ -216,7 +216,10 @@ fn do_parsed(
                 && !parsed.prev_kbd_bright
                 && !parsed.one_shot_chg
             {
-                println!("No command given. Run 'asusctl --help' for usage and 'asusctl <command> --help' for subcommands.");
+                println!(
+                    "No command given. Run 'asusctl --help' for usage and 'asusctl <command> \
+                     --help' for subcommands."
+                );
             }
         }
     }
@@ -409,7 +412,10 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 AnimeActions::PixelImage(image) => {
                     if image.path.is_empty() {
-                        println!("Missing arg or command; run 'asusctl anime pixel-image --help' for usage");
+                        println!(
+                            "Missing arg or command; run 'asusctl anime pixel-image --help' for \
+                             usage"
+                        );
                         return Ok(());
                     }
                     verify_brightness(image.bright);
@@ -458,7 +464,10 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
                 }
                 AnimeActions::PixelGif(gif) => {
                     if gif.path.is_empty() {
-                        println!("Missing arg or command; run 'asusctl anime pixel-gif --help' for usage");
+                        println!(
+                            "Missing arg or command; run 'asusctl anime pixel-gif --help' for \
+                             usage"
+                        );
                         return Ok(());
                     }
                     verify_brightness(gif.bright);

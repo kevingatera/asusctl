@@ -56,7 +56,8 @@ pub enum AnimeActions {
 pub struct Builtins {
     #[argh(
         option,
-        description = "default is used if unspecified, <default:GlitchConstruction, StaticEmergence>"
+        description = "default is used if unspecified, <default:GlitchConstruction, \
+                       StaticEmergence>"
     )]
     pub boot: AnimBooting,
     #[argh(

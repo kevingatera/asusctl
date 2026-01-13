@@ -20,13 +20,15 @@ pub struct FanCurveCommand {
 
     #[argh(
         option,
-        description = "enable or disable <true/false> fan all curves for a profile; --mod_profile required"
+        description = "enable or disable <true/false> fan all curves for a profile; --mod_profile \
+                       required"
     )]
     pub enable_fan_curves: Option<bool>,
 
     #[argh(
         option,
-        description = "enable or disable <true/false> a single fan curve for a profile; --mod_profile and --fan required"
+        description = "enable or disable <true/false> a single fan curve for a profile; \
+                       --mod_profile and --fan required"
     )]
     pub enable_fan_curve: Option<bool>,
 
@@ -38,7 +40,8 @@ pub struct FanCurveCommand {
 
     #[argh(
         option,
-        description = "data format = 30c:1%,49c:2%,...; --mod-profile required. If '%' is omitted the fan range is 0-255"
+        description = "data format = 30c:1%,49c:2%,...; --mod-profile required. If '%' is omitted \
+                       the fan range is 0-255"
     )]
     pub data: Option<CurveData>,
 }
