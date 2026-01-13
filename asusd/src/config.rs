@@ -8,8 +8,9 @@ use serde::{Deserialize, Serialize};
 
 const CONFIG_FILE: &str = "asusd.ron";
 
-/// Default value for base_charge_control_end_threshold when not present in config.
-/// Returns 0 so restore_charge_limit() skips restoration for upgraded configs.
+/// Default value for base_charge_control_end_threshold when not present in
+/// config. Returns 0 so restore_charge_limit() skips restoration for upgraded
+/// configs.
 fn default_base_charge_limit() -> u8 {
     0
 }

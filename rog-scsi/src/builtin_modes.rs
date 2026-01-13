@@ -178,9 +178,9 @@ pub enum AuraMode {
 }
 
 #[cfg(feature = "dbus")]
-impl zvariant::Basic for AuraMode {
-    const SIGNATURE_CHAR: char = u32::SIGNATURE_CHAR;
-    const SIGNATURE_STR: &'static str = u32::SIGNATURE_STR;
+impl zbus::zvariant::Basic for AuraMode {
+    const SIGNATURE_CHAR: char = 'u';
+    const SIGNATURE_STR: &'static str = "u";
 }
 
 impl AuraMode {

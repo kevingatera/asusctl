@@ -211,7 +211,11 @@ impl crate::Reloadable for AsusArmouryAttribute {
                     tune
                 );
             } else {
-                info!("Ignored restoring PPT armoury setting {} as tuning group is disabled or no saved value", self.attr.name());
+                info!(
+                    "Ignored restoring PPT armoury setting {} as tuning group is disabled or no \
+                     saved value",
+                    self.attr.name()
+                );
             }
         } else {
             // Handle non-PPT attributes (boolean and other settings)
