@@ -4,7 +4,6 @@ use std::process::Command;
 use std::thread::sleep;
 
 use anime_cli::{AnimeActions, AnimeCommand};
-use argh;
 use aura_cli::{LedPowerCommand1, LedPowerCommand2};
 use dmi_id::DMIID;
 use fan_curve_cli::FanCurveCommand;
@@ -373,7 +372,7 @@ fn handle_anime(cmd: &AnimeCommand) -> Result<(), Box<dyn std::error::Error>> {
             proxy.set_builtins_enabled(enable)?;
         }
         if let Some(bright) = cmd.brightness {
-            proxy.set_brightness(bright.into())?;
+            proxy.set_brightness(bright)?;
         }
         if let Some(enable) = cmd.off_when_lid_closed {
             proxy.set_off_when_lid_closed(enable)?;
@@ -867,7 +866,7 @@ fn handle_throttle_profile(
         }
         crate::cli_opts::ProfileSubCommand::Get(_) => {
             println!("Active profile: {current:?}");
-            println!("");
+            println!();
             println!("AC profile {:?}", proxy.platform_profile_on_ac()?);
             println!("Battery profile {:?}", proxy.platform_profile_on_battery()?);
         }
@@ -1034,7 +1033,7 @@ fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error
                     print_firmware_attr(attr)?;
                 }
             }
-            return Ok(());
+            Ok(())
         }
         ArmourySubCommand::Get(g) => {
             if let Ok(attrs) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {
@@ -1045,7 +1044,7 @@ fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error
                     }
                 }
             }
-            return Ok(());
+            Ok(())
         }
         ArmourySubCommand::Set(s) => {
             if let Ok(attrs) = find_iface::<AsusArmouryProxyBlocking>("xyz.ljones.AsusArmoury") {
@@ -1062,7 +1061,7 @@ fn handle_armoury_command(cmd: &ArmouryCommand) -> Result<(), Box<dyn std::error
                     }
                 }
             }
-            return Ok(());
+            Ok(())
         }
     }
 }
