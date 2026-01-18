@@ -244,6 +244,33 @@ export component MainWindow inherits Window {
                     height: parent.height;
                 }
             }
+
+            if toast: Rectangle {
+                x: 0px;
+                y: root.height - self.height;
+                width: root.width - side-bar.width;
+                height: 40px;
+                opacity: 1.0;
+                background: Palette.selection-background;
+                clip: true;
+                TouchArea {
+                    height: 100%;
+                    width: 100%;
+                    clicked => {
+                        toast = false;
+                    }
+                }
+
+                Rectangle {
+                    height: 100%;
+                    width: 100%;
+                    background: Palette.control-background;
+                    Text {
+                        color: Palette.control-foreground;
+                        text: root.toast_text;
+                    }
+                }
+            }
         }
     }
 
