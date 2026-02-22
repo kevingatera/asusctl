@@ -3,6 +3,7 @@ import { Spacing, Typography, Theme, Radii } from "../globals.slint";
 import { RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
 
 export global SlashPageData {
+    in-out property <bool> initialized: false;
     in-out property <bool> enabled: false;
     callback cb_enabled(bool);
     in-out property <float> brightness: 128;
@@ -62,7 +63,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashEnable" => "Enable slash lightbar");
             checked <=> SlashPageData.enabled;
             toggled => {
-                SlashPageData.cb_enabled(SlashPageData.enabled);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_enabled(SlashPageData.enabled);
+                }
             }
         }
 
@@ -73,7 +76,9 @@ export component PageSlash inherits ScrollView {
             model <=> SlashPageData.mode_names;
             enabled: SlashPageData.enabled && SlashPageData.mode_names.length > 0;
             selected => {
-                SlashPageData.cb_mode(SlashPageData.mode_index);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_mode(SlashPageData.mode_index);
+                }
             }
         }
 
@@ -85,7 +90,9 @@ export component PageSlash inherits ScrollView {
             enabled: SlashPageData.enabled;
             released => {
                 SlashPageData.brightness = self.value;
-                SlashPageData.cb_brightness(Math.round(self.value));
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_brightness(Math.round(self.value));
+                }
             }
         }
 
@@ -97,7 +104,9 @@ export component PageSlash inherits ScrollView {
             enabled: SlashPageData.enabled;
             released => {
                 SlashPageData.interval = self.value;
-                SlashPageData.cb_interval(Math.round(self.value));
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_interval(Math.round(self.value));
+                }
             }
         }
 
@@ -105,7 +114,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashBoot" => "Show on boot");
             checked <=> SlashPageData.show_on_boot;
             toggled => {
-                SlashPageData.cb_show_on_boot(SlashPageData.show_on_boot);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_on_boot(SlashPageData.show_on_boot);
+                }
             }
         }
 
@@ -113,7 +124,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashShutdown" => "Show on shutdown");
             checked <=> SlashPageData.show_on_shutdown;
             toggled => {
-                SlashPageData.cb_show_on_shutdown(SlashPageData.show_on_shutdown);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_on_shutdown(SlashPageData.show_on_shutdown);
+                }
             }
         }
 
@@ -121,7 +134,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashSleep" => "Show on sleep");
             checked <=> SlashPageData.show_on_sleep;
             toggled => {
-                SlashPageData.cb_show_on_sleep(SlashPageData.show_on_sleep);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_on_sleep(SlashPageData.show_on_sleep);
+                }
             }
         }
 
@@ -129,7 +144,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashBattery" => "Show when on battery");
             checked <=> SlashPageData.show_on_battery;
             toggled => {
-                SlashPageData.cb_show_on_battery(SlashPageData.show_on_battery);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_on_battery(SlashPageData.show_on_battery);
+                }
             }
         }
 
@@ -137,7 +154,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashWarning" => "Show low battery warning");
             checked <=> SlashPageData.show_battery_warning;
             toggled => {
-                SlashPageData.cb_show_battery_warning(SlashPageData.show_battery_warning);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_battery_warning(SlashPageData.show_battery_warning);
+                }
             }
         }
 
@@ -145,7 +164,9 @@ export component PageSlash inherits ScrollView {
             text: @tr("SlashLidClosed" => "Show when lid is closed");
             checked <=> SlashPageData.show_on_lid_closed;
             toggled => {
-                SlashPageData.cb_show_on_lid_closed(SlashPageData.show_on_lid_closed);
+                if (SlashPageData.initialized) {
+                    SlashPageData.cb_show_on_lid_closed(SlashPageData.show_on_lid_closed);
+                }
             }
         }
 

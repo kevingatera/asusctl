@@ -20,3 +20,7 @@ desktop-extensions/gnome*/@types/gir-generated
 desktop-extensions/gnome*/node_modules
 desktop-extensions/gnome*/schemas/gschemas.compiled
 desktop-extensions/gnome*/*.zip
+
+# Local agent continuity log
+continuity.md
+AGENTS.md

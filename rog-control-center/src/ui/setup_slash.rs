@@ -32,8 +32,8 @@ fn friendly_name(mode: SlashMode) -> &'static str {
         SlashMode::Fx2 => "FX2",
         SlashMode::Fx3 => "FX3",
         SlashMode::BatteryLevel => "Battery level (software)",
-        SlashMode::Audio => "Audio visualizer (software)",
-        SlashMode::AudioSpectrum => "Audio spectrum (software)",
+        SlashMode::Audio => "System audio visualizer (software)",
+        SlashMode::AudioSpectrum => "Microphone visualizer (software)",
     }
 }
 
@@ -126,6 +126,7 @@ pub fn setup_slash_page(ui: &MainWindow) {
                     global.set_show_on_battery(show_on_battery);
                     global.set_show_battery_warning(show_battery_warning);
                     global.set_show_on_lid_closed(show_on_lid_closed);
+                    global.set_initialized(true);
                     global.set_status_lines(
                         [
                             SharedString::from("Slash device connected"),
