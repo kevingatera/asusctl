@@ -342,80 +342,176 @@ async fn capture_audio_stream(
     tx: mpsc::UnboundedSender<[u8; 7]>,
     cancel: CancellationToken,
 ) -> Result<(), String> {
-    let mut command = build_audio_command()?;
-    command.stdout(Stdio::piped());
-    let mut child = command
-        .spawn()
-        .map_err(|e| format!("Failed to start audio capture: {e}"))?;
-    let stdout = child
-        .stdout
-        .take()
-        .ok_or_else(|| "Audio capture produced no stdout".to_string())?;
-    let mut reader = tokio::io::BufReader::new(stdout);
-    let mut buffer = vec![0u8; 4096];
     let mut carry = Vec::new();
-    let mut aggregator = AudioAggregator::new(brightness, 2048, mode);
+    // 16kHz capture: 640 samples ~= 40ms analysis window for snappier response.
+    let mut aggregator = AudioAggregator::new(brightness, 640, mode);
     let _ = tx.send([0; 7]);
 
     loop {
-        tokio::select! {
-            _ = cancel.cancelled() => break,
-            read = reader.read(&mut buffer) => {
-                let read = read.map_err(|e| format!("Audio read failed: {e}"))?;
-                if read == 0 {
-                    break;
-                }
-                carry.extend_from_slice(&buffer[..read]);
+        if cancel.is_cancelled() {
+            break;
+        }
 
-                let mut samples = Vec::with_capacity(carry.len() / 2);
-                let mut idx = 0;
-                while idx + 1 < carry.len() {
-                    let value = i16::from_le_bytes([carry[idx], carry[idx + 1]]);
-                    samples.push(value as f32 / i16::MAX as f32);
-                    idx += 2;
-                }
-                carry.drain(..idx);
+        if let Err(err) = capture_audio_once(mode, &tx, &cancel, &mut carry, &mut aggregator).await
+        {
+            warn!("Slash audio capture restart due to error: {err}");
+        }
 
-                if !samples.is_empty() {
-                    if let Some(payload) = aggregator.process_samples(&samples) {
-                        let _ = tx.send(payload);
+        if cancel.is_cancelled() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(100)).await;
+    }
+
+    Ok(())
+}
+
+async fn capture_audio_once(
+    mode: SlashMode,
+    tx: &mpsc::UnboundedSender<[u8; 7]>,
+    cancel: &CancellationToken,
+    carry: &mut Vec<u8>,
+    aggregator: &mut AudioAggregator,
+) -> Result<(), String> {
+    let mut errors = Vec::new();
+    for mut command in build_audio_commands(mode) {
+        command.stdout(Stdio::piped());
+        let mut child = match command.spawn() {
+            Ok(child) => child,
+            Err(err) => {
+                errors.push(format!("Failed to start audio capture command: {err}"));
+                continue;
+            }
+        };
+        let stdout = match child.stdout.take() {
+            Some(stdout) => stdout,
+            None => {
+                errors.push("Audio capture produced no stdout".to_string());
+                continue;
+            }
+        };
+
+        let mut reader = tokio::io::BufReader::new(stdout);
+        let mut buffer = vec![0u8; 4096];
+
+        loop {
+            tokio::select! {
+                _ = cancel.cancelled() => break,
+                read = reader.read(&mut buffer) => {
+                    let read = match read {
+                        Ok(read) => read,
+                        Err(err) => {
+                            errors.push(format!("Audio read failed: {err}"));
+                            break;
+                        }
+                    };
+                    if read == 0 {
+                        break;
+                    }
+                    carry.extend_from_slice(&buffer[..read]);
+
+                    let mut samples = Vec::with_capacity(carry.len() / 2);
+                    let mut idx = 0;
+                    while idx + 1 < carry.len() {
+                        let value = i16::from_le_bytes([carry[idx], carry[idx + 1]]);
+                        samples.push(value as f32 / i16::MAX as f32);
+                        idx += 2;
+                    }
+                    carry.drain(..idx);
+
+                    if !samples.is_empty() {
+                        if let Some(payload) = aggregator.process_samples(&samples) {
+                            let _ = tx.send(payload);
+                        }
                     }
                 }
             }
         }
+
+        if let Some(id) = child.id() {
+            if let Err(err) = child.kill().await {
+                warn!("Failed to stop audio capture ({id}): {err}");
+            }
+        }
+
+        return Ok(());
     }
 
-    if let Some(id) = child.id() {
-        if let Err(err) = child.kill().await {
-            warn!("Failed to stop audio capture ({id}): {err}");
-        }
+    if errors.is_empty() {
+        Err("Neither pw-cat nor parec found in PATH".to_string())
+    } else {
+        Err(errors.join("; "))
     }
-    Ok(())
 }
 
-fn build_audio_command() -> Result<tokio::process::Command, String> {
-    if which("parec").is_ok() {
-        let mut cmd = Command::new("parec");
-        apply_audio_env(&mut cmd);
-        cmd.args([
-            "--record",
-            "--raw",
-            "--format=s16le",
-            "--rate=16000",
-            "--channels=1",
-            "--device=@DEFAULT_SINK@.monitor",
-        ]);
-        return Ok(cmd);
+fn audio_target_candidates(mode: SlashMode) -> Vec<String> {
+    let mut targets = Vec::new();
+    let override_env = match mode {
+        SlashMode::Audio => "SLASH_AUDIO_DEVICE",
+        SlashMode::AudioSpectrum => "SLASH_MIC_DEVICE",
+        _ => "SLASH_AUDIO_DEVICE",
+    };
+    if let Ok(override_target) = std::env::var(override_env) {
+        if !override_target.is_empty() {
+            targets.push(override_target);
+        }
     }
+    match mode {
+        // Audio = system playback monitor
+        SlashMode::Audio => {
+            targets.push("@DEFAULT_MONITOR@".to_string());
+            targets.push("@DEFAULT_SINK@.monitor".to_string());
+        }
+        // AudioSpectrum = microphone input
+        SlashMode::AudioSpectrum => {
+            targets.push("@DEFAULT_SOURCE@".to_string());
+            // Some setups expose this name as the selected capture source.
+            targets.push("@DEFAULT_MICROPHONE@".to_string());
+        }
+        _ => {
+            targets.push("@DEFAULT_MONITOR@".to_string());
+        }
+    }
+    targets
+}
+
+fn build_audio_commands(mode: SlashMode) -> Vec<tokio::process::Command> {
+    let mut commands = Vec::new();
+    let targets = audio_target_candidates(mode);
+
+    // Prefer PipeWire native capture first for lower and more stable latency.
     if which("pw-cat").is_ok() {
-        let mut cmd = Command::new("pw-cat");
-        apply_audio_env(&mut cmd);
-        cmd.args([
-            "--record", "-", "--format=s16", "--rate=16000", "--channels=1", "--raw",
-        ]);
-        return Ok(cmd);
+        for target in &targets {
+            let mut cmd = Command::new("pw-cat");
+            apply_audio_env(&mut cmd);
+            cmd.args([
+                "--record", "-", "--format=s16", "--rate=16000", "--channels=1", "--raw",
+                "--latency", "16ms", "--target", target,
+            ]);
+            commands.push(cmd);
+        }
     }
-    Err("Neither pw-cat nor parec found in PATH".into())
+
+    if which("parec").is_ok() {
+        for target in &targets {
+            let mut cmd = Command::new("parec");
+            apply_audio_env(&mut cmd);
+            cmd.args([
+                "--record",
+                "--raw",
+                "--format=s16le",
+                "--rate=16000",
+                "--channels=1",
+                "--latency-msec=16",
+                "--process-time-msec=8",
+                "--device",
+                target,
+            ]);
+            commands.push(cmd);
+        }
+    }
+
+    commands
 }
 
 fn apply_audio_env(cmd: &mut Command) {
@@ -502,7 +598,8 @@ impl AudioAggregator {
         if self.samples.len() < self.chunk_size {
             return None;
         }
-        if self.last_emit.elapsed() < StdDuration::from_millis(40) {
+        // Target ~60 FPS output updates for better perceived responsiveness.
+        if self.last_emit.elapsed() < StdDuration::from_millis(16) {
             self.samples.clear();
             return None;
         }
@@ -526,7 +623,8 @@ impl AudioAggregator {
             .iter()
             .copied()
             .fold(0.0f32, |acc, value| value.max(acc));
-        self.avg_peak = (self.avg_peak * 0.9) + (peak * 0.1).max(0.05);
+        // Faster adaptation to sudden changes than the previous 0.9/0.1 smoothing.
+        self.avg_peak = (self.avg_peak * 0.75) + (peak * 0.25).max(0.05);
         let mut payload = [0u8; 7];
         let exponent = match self.mode {
             SlashMode::AudioSpectrum => 1.5,
@@ -535,7 +633,16 @@ impl AudioAggregator {
         for (idx, bucket) in buckets.iter().enumerate() {
             let mut level = (bucket / self.avg_peak).clamp(0.0, 1.5);
             level = level.powf(exponent).min(1.0);
-            payload[6 - idx] = (level * self.brightness as f32).clamp(0.0, 255.0) as u8;
+            // Better use of the configured brightness range:
+            // - keep a tiny floor while audio is active so low settings remain visible
+            // - preserve headroom for peaks up to configured brightness
+            let max_out = self.brightness as f32;
+            let floor = if level > 0.02 && max_out > 0.0 {
+                (max_out * 0.08).min(24.0)
+            } else {
+                0.0
+            };
+            payload[6 - idx] = (floor + level * (max_out - floor)).clamp(0.0, 255.0) as u8;
         }
         if peak > 0.001 {
             log::debug!("Audio peak: {:.4}, payload: {:?}", peak, payload);
