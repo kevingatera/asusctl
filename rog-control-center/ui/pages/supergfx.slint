@@ -49,6 +49,12 @@ export component PageSupergfx inherits Rectangle {
             VerticalLayout {
                 padding: Spacing.md;
                 spacing: Spacing.md;
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-secondary;
+                    font-size: Typography.sm;
+                    text: @tr("Mode changes may require logout or reboot before they fully take effect. The status section below reflects the current committed mode.");
+                }
                 ComboBox {
                     model <=> SupergfxPageData.modes;
                     current_index <=> SupergfxPageData.selected_mode;
