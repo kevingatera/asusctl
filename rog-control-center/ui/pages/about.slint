@@ -1,32 +1,35 @@
-import { AboutSlint, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import {
+    AboutSlint,
+    VerticalBox,
+    HorizontalBox,
+    ScrollView,
+} from "std-widgets.slint";
 import { Theme, Spacing, Typography } from "../globals.slint";
 
 export component PageAbout inherits VerticalLayout {
     padding: Spacing.lg;
     spacing: Spacing.lg;
 
-    VerticalBox {
-        spacing: Spacing.xl;
-        alignment: center;
-
-        Text {
-            vertical-alignment: TextVerticalAlignment.center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: "A UI for asusctl made with slint";
-            font-size: Typography.xxl;
-            font-weight: Typography.weight-bold;
-            color: Theme.primary;
-        }
-
+    ScrollView {
         HorizontalBox {
             alignment: LayoutAlignment.center;
+
             VerticalBox {
                 alignment: LayoutAlignment.center;
-                spacing: Spacing.md;
+                spacing: Spacing.lg;
+
+                Text {
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "ROG Control Center";
+                    font-size: Typography.xxl;
+                    font-weight: Typography.weight-bold;
+                    color: Theme.primary;
+                }
 
                 Text {
                     wrap: TextWrap.word-wrap;
-                    text: "You need to use kernel version 6.19 to use this software";
+                    text: "A powerful graphical interface for managing ASUS ROG, TUF, and ProArt laptops on Linux. It is the GUI for the asusctl toolset and exposes hardware tuning without dropping to the command line.";
                     font-size: Typography.md;
                     color: Theme.text-primary;
                     horizontal-alignment: center;
@@ -35,7 +38,7 @@ export component PageAbout inherits VerticalLayout {
                 Text {
                     vertical-alignment: TextVerticalAlignment.center;
                     horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Todo:";
+                    text: "Key Features";
                     font-size: Typography.xl;
                     font-weight: Typography.weight-semibold;
                     color: Theme.text-primary;
@@ -44,56 +47,112 @@ export component PageAbout inherits VerticalLayout {
                 VerticalBox {
                     spacing: Spacing.sm;
                     Text {
-                        text: "- [x] Theme the widgets";
+                        text: "Performance: switch power profiles and customize fan curves.";
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                    }
+
+                    Text {
+                        text: "Aura Sync: control keyboard backlighting and LED effects.";
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                    }
+
+                    Text {
+                        text: "Battery Health: set charge limits to extend battery longevity.";
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                    }
+
+                    Text {
+                        text: "Display: toggle panel overdrive and refresh-rate related settings.";
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                    }
+
+                    Text {
+                        text: "AniMe Matrix and Slash: control supported lighting and display hardware.";
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                    }
+                }
+
+                Text {
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "Requirements";
+                    font-size: Typography.xl;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                }
+
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    text: "This software requires kernel version 6.19.";
+                    font-size: Typography.md;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "Work In Progress";
+                    font-size: Typography.xl;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.warning;
+                }
+
+                VerticalBox {
+                    spacing: Spacing.sm;
+
+                    Text {
+                        text: "Done: themed widgets, CPU/GPU temp and fan info bar, bottom status metrics, Slash control, Supergfx control.";
                         color: Theme.success;
                         font-size: Typography.md;
                     }
 
                     Text {
-                        text: "- [x] Add a cpu/gpu temp/fan speed info bar";
-                        color: Theme.success;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "- [x] Include fan speeds, temps in a bottom bar";
-                        color: Theme.success;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "- [x] Slash control";
-                        color: Theme.success;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "- [x] Supergfx control";
-                        color: Theme.success;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "- [ ] Screenpad controls";
-                        color: Theme.text-secondary;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "- [ ] ROG Ally specific settings";
+                        text: "Planned: Screenpad controls and ROG Ally specific settings.";
                         color: Theme.text-secondary;
                         font-size: Typography.md;
                     }
                 }
-            }
-        }
 
-        Text {
-            vertical-alignment: TextVerticalAlignment.center;
-            horizontal-alignment: TextHorizontalAlignment.center;
-            text: "Work in progress";
-            font-size: Typography.xl;
-            color: Theme.warning;
+                Text {
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "License";
+                    font-size: Typography.xl;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                }
+
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    text: "This project is open-source software licensed under the Mozilla Public License 2.0 (MPL-2.0).";
+                    font-size: Typography.md;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                }
+
+                Text {
+                    vertical-alignment: TextVerticalAlignment.center;
+                    horizontal-alignment: TextHorizontalAlignment.center;
+                    text: "Links";
+                    font-size: Typography.xl;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                }
+
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    text: "Source Code: https://gitlab.com/asus-linux/asusctl\nWebsite: https://asus-linux.org/";
+                    font-size: Typography.md;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                }
+            }
         }
     }
 }
