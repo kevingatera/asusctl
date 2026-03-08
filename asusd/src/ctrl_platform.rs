@@ -225,6 +225,22 @@ impl CtrlPlatform {
         }
     }
 
+    // Older configs may still contain Quiet on devices that only support LowPower.
+    // Normalize at apply-time so AC/BAT transitions still work correctly.
+    async fn normalize_profile_for_device(&self, profile: PlatformProfile) -> PlatformProfile {
+        if profile == PlatformProfile::Quiet {
+            if let Ok(choices) = self.platform.get_platform_profile_choices() {
+                if !choices.contains(&PlatformProfile::Quiet)
+                    && choices.contains(&PlatformProfile::LowPower)
+                {
+                    warn!("Configured profile Quiet is unavailable, falling back to LowPower");
+                    return PlatformProfile::LowPower;
+                }
+            }
+        }
+        profile
+    }
+
     async fn update_policy_ac_or_bat(
         &self,
         previous_power_plugged: bool,
@@ -311,12 +327,16 @@ impl CtrlPlatform {
                     .unwrap_or(config.platform_profile_on_battery)
             }
         };
+        let throttle = self.normalize_profile_for_device(throttle).await;
         debug!(
             "Power plugged={}, setting profile {throttle:?} before EPP",
             power_plugged
         );
         let epp = self.get_config_epp_for_throttle(throttle).await;
-        self.platform.set_platform_profile(throttle.into()).ok();
+        if let Err(err) = self.platform.set_platform_profile(throttle.into()) {
+            warn!("Failed to set platform profile {throttle:?} on AC/BAT change: {err}");
+            return;
+        }
         self.check_and_set_epp(epp, change_epp);
 
         // Emit signal to notify clients (like rog-control-center) of the profile change
