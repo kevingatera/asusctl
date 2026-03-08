@@ -148,12 +148,6 @@ async fn main() -> Result<()> {
         }
     };
 
-    let is_tuf = {
-        let b = board_name.to_lowercase();
-        let p = prod_family.to_lowercase();
-        b.contains("tuf") || p.contains("tuf")
-    };
-
     #[cfg(feature = "rog_ally")]
     if is_rog_ally {
         config.notifications.enabled = false;
@@ -193,18 +187,12 @@ async fn main() -> Result<()> {
         slint::init_translations!(concat!(env!("CARGO_MANIFEST_DIR"), "/translations/"));
     }
 
-    // Prefetch supported Aura modes once at startup and move into the
-    // spawned UI thread so the UI uses a stable, immutable list.
-    let prefetched_supported: std::sync::Arc<Option<Vec<i32>>> = std::sync::Arc::new(
-        rog_control_center::ui::setup_aura::prefetch_supported_basic_modes().await,
-    );
-
     thread::spawn(move || {
         let mut state = AppState::StartingUp;
         loop {
             if is_rog_ally {
                 let config_copy_2 = config.clone();
-                let newui = setup_window(config.clone(), prefetched_supported.clone(), is_tuf);
+                let newui = setup_window(config.clone());
                 newui.window().on_close_requested(move || {
                     exit(0);
                 });
@@ -245,9 +233,6 @@ async fn main() -> Result<()> {
 
                 let config_copy = config.clone();
                 let app_state_copy = app_state.clone();
-                // Avoid moving the original `prefetched_supported` into the
-                // closure — clone an Arc for the closure to capture.
-                let pref_for_invoke = prefetched_supported.clone();
                 slint::invoke_from_event_loop(move || {
                     UI.with(|ui| {
                         let app_state_copy = app_state_copy.clone();
@@ -262,7 +247,7 @@ async fn main() -> Result<()> {
                             });
                         } else {
                             let config_copy_2 = config_copy.clone();
-                            let newui = setup_window(config_copy, pref_for_invoke.clone(), is_tuf);
+                            let newui = setup_window(config_copy);
                             newui.window().on_close_requested(move || {
                                 if let Ok(mut app_state) = app_state_copy.lock() {
                                     *app_state = AppState::MainWindowClosed;

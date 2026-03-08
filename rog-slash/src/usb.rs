@@ -164,7 +164,7 @@ pub const fn slash_pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [Slas
 
 const fn slash_mode_profile_byte(slash_type: SlashType) -> u8 {
     match slash_type {
-        SlashType::GA605 => 0x10,
+        SlashType::GA605_2024 | SlashType::GA605_2025 => 0x10,
         _ => 0x19,
     }
 }
