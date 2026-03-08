@@ -248,6 +248,30 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
+            RogItem {
+                min-height: 110px;
+                max-height: 140px;
+
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.md;
+
+                    Text {
+                        text: @tr("Keyboard Power Management");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        text: @tr("Keyboard lighting power controls are handled from Keyboard Aura > Power Settings on this build.");
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                        wrap: TextWrap.word-wrap;
+                    }
+                }
+            }
+
             Rectangle {
                 background: Theme.surface;
                 border-color: Theme.border;
@@ -290,7 +314,7 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            HorizontalBox {
+            VerticalLayout {
                 padding: 0px;
                 spacing: Spacing.md;
                 if SystemPageData.panel_overdrive != -1: SystemToggleInt {

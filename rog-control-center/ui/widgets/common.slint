@@ -86,9 +86,9 @@ export component PrimarySlider inherits Rectangle {
     callback changed(float);
     callback released(float);
 
-    height: 20px;
+    height: 24px;
     border-radius: Radii.lg;
-    background: Theme.surface-active;
+    background: transparent;
     opacity: enabled ? 1.0 : 0.6;
 
     property <float> normalized: maximum > minimum ? (value - minimum) / (maximum - minimum) : 0.0;
@@ -96,9 +96,9 @@ export component PrimarySlider inherits Rectangle {
     Rectangle {
         // track background
         x: 0px;
-        y: root.height / 2 - 2px;
+        y: root.height / 2 - 3px;
         width: root.width;
-        height: 4px;
+        height: 6px;
         border-radius: Radii.lg;
         background: Theme.surface-hover;
     }
@@ -106,16 +106,16 @@ export component PrimarySlider inherits Rectangle {
     Rectangle {
         // filled track
         x: 0px;
-        y: root.height / 2 - 2px;
+        y: root.height / 2 - 3px;
         width: root.width * normalized;
-        height: 4px;
+        height: 6px;
         border-radius: Radii.lg;
         background: enabled ? Theme.primary : Theme.text-secondary;
     }
 
     thumb := Rectangle {
-        width: 16px;
-        height: 16px;
+        width: 18px;
+        height: 18px;
         x: (root.width - self.width) * normalized;
         y: root.height / 2 - self.height / 2;
         border-radius: Radii.full;
@@ -180,17 +180,17 @@ export component SystemSlider inherits RogItem {
     in property <bool> has_reset: false;
     callback cb_do_reset();
 
-    min-height: 56px;
-    max-height: 72px;
+    property <bool> compact: self.width < 540px;
+    min-height: compact ? 104px : 68px;
+    max-height: compact ? 140px : 92px;
 
-    HorizontalLayout {
+    if !compact: HorizontalLayout {
         width: 100%;
         min-width: 0px;
         padding: Spacing.md;
         spacing: Spacing.md;
         alignment: LayoutAlignment.stretch;
 
-        // label + value
         HorizontalLayout {
             width: 35%;
             min-width: 140px;
@@ -199,11 +199,13 @@ export component SystemSlider inherits RogItem {
 
             Text {
                 horizontal-stretch: 1;
+                min-width: 0px;
                 font-size: Typography.md;
                 font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: root.enabled ? Theme.text-primary : Theme.text-secondary;
                 text: root.text;
+                wrap: TextWrap.word-wrap;
                 overflow: TextOverflow.elide;
             }
 
@@ -219,9 +221,8 @@ export component SystemSlider inherits RogItem {
             }
         }
 
-        // slider takes remaining space
         slider := PrimarySlider {
-            min-width: 100px;
+            min-width: 120px;
             enabled: root.enabled;
             maximum: root.maximum;
             minimum: root.minimum;
@@ -231,74 +232,61 @@ export component SystemSlider inherits RogItem {
             }
         }
 
-        help_popup := PopupWindow {
-            x: help.x - self.width + help.width - Spacing.md;
-            y: help.y - self.height + help.height - Spacing.md;
-            Rectangle {
-                drop-shadow-blur: Shadows.lg-blur;
-                drop-shadow-color: Shadows.color;
-                drop-shadow-offset-y: 4px;
-                border-radius: Radii.lg;
-                border-color: Theme.border;
-                border-width: 1px;
-                background: Theme.surface;
-                Dialog {
-                    title: root.title;
-                    VerticalBox {
-                        spacing: Spacing.md;
-                        Text {
-                            max-width: 420px;
-                            font-size: Typography.lg;
-                            font-weight: Typography.weight-semibold;
-                            wrap: TextWrap.word-wrap;
-                            horizontal-alignment: TextHorizontalAlignment.center;
-                            text: root.title;
-                            color: Theme.text-primary;
-                        }
-
-                        Rectangle {
-                            height: 1px;
-                            background: Theme.border;
-                        }
-
-                        Text {
-                            max-width: 420px;
-                            font-size: Typography.md;
-                            wrap: TextWrap.word-wrap;
-                            text: root.help_text;
-                            color: Theme.text-secondary;
-                        }
-                    }
-
-                    StandardButton {
-                        kind: ok;
-                    }
-                }
-            }
-        }
-
-        // trailing actions stay compact
         HorizontalLayout {
             spacing: Spacing.md;
             horizontal-stretch: 0;
             min-width: 0px;
             alignment: LayoutAlignment.end;
 
-            help := Rectangle {
-                width: help_text != "" ? 60px : 0px;
-                if (help_text != ""): StandardButton {
-                    kind: StandardButtonKind.help;
-                    width: 100%;
-                    height: 32px;
-                    clicked => {
-                        help_popup.show();
+            help_popup_wide := PopupWindow {
+                x: help_anchor_wide.x - self.width + help_anchor_wide.width - Spacing.md;
+                y: help_anchor_wide.y - self.height + help_anchor_wide.height - Spacing.md;
+                Rectangle {
+                    drop-shadow-blur: Shadows.lg-blur;
+                    drop-shadow-color: Shadows.color;
+                    drop-shadow-offset-y: 4px;
+                    border-radius: Radii.lg;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    background: Theme.surface;
+                    Dialog {
+                        title: root.title;
+                        VerticalBox {
+                            spacing: Spacing.md;
+                            Text {
+                                max-width: 420px;
+                                font-size: Typography.lg;
+                                font-weight: Typography.weight-semibold;
+                                wrap: TextWrap.word-wrap;
+                                horizontal-alignment: TextHorizontalAlignment.center;
+                                text: root.title;
+                                color: Theme.text-primary;
+                            }
+
+                            Rectangle {
+                                height: 1px;
+                                background: Theme.border;
+                            }
+
+                            Text {
+                                max-width: 420px;
+                                font-size: Typography.md;
+                                wrap: TextWrap.word-wrap;
+                                text: root.help_text;
+                                color: Theme.text-secondary;
+                            }
+                        }
+
+                        StandardButton {
+                            kind: ok;
+                        }
                     }
                 }
             }
 
-            reset_popup := PopupWindow {
-                x: reset.x - self.width + reset.width;
-                y: reset.y - self.height + reset.height;
+            reset_popup_wide := PopupWindow {
+                x: reset_anchor_wide.x - self.width + reset_anchor_wide.width;
+                y: reset_anchor_wide.y - self.height + reset_anchor_wide.height;
                 Rectangle {
                     drop-shadow-blur: Shadows.lg-blur;
                     drop-shadow-color: Shadows.color;
@@ -331,7 +319,19 @@ export component SystemSlider inherits RogItem {
                 }
             }
 
-            reset := Rectangle {
+            help_anchor_wide := Rectangle {
+                width: help_text != "" ? 60px : 0px;
+                if (help_text != ""): StandardButton {
+                    kind: StandardButtonKind.help;
+                    width: 100%;
+                    height: 32px;
+                    clicked => {
+                        help_popup_wide.show();
+                    }
+                }
+            }
+
+            reset_anchor_wide := Rectangle {
                 width: has_reset ? 60px : 0px;
                 if (has_reset): StandardButton {
                     kind: StandardButtonKind.reset;
@@ -339,7 +339,160 @@ export component SystemSlider inherits RogItem {
                     width: 100%;
                     height: 32px;
                     clicked => {
-                        reset_popup.show();
+                        reset_popup_wide.show();
+                    }
+                }
+            }
+        }
+    }
+
+    if compact: VerticalLayout {
+        width: 100%;
+        min-width: 0px;
+        padding: Spacing.md;
+        spacing: Spacing.sm;
+
+        HorizontalLayout {
+            spacing: Spacing.sm;
+            alignment: LayoutAlignment.space-between;
+
+            Text {
+                horizontal-stretch: 1;
+                min-width: 0px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-medium;
+                color: root.enabled ? Theme.text-primary : Theme.text-secondary;
+                text: root.text;
+                wrap: TextWrap.word-wrap;
+            }
+
+            Text {
+                min-width: 36px;
+                font-size: Typography.md;
+                font-weight: Typography.weight-bold;
+                horizontal-alignment: TextHorizontalAlignment.right;
+                color: root.enabled ? Theme.primary : Theme.text-secondary;
+                text: "\{Math.round(root.value)}";
+            }
+        }
+
+        slider_compact := PrimarySlider {
+            min-width: 120px;
+            enabled: root.enabled;
+            maximum: root.maximum;
+            minimum: root.minimum;
+            value <=> root.value;
+            released(value) => {
+                root.released(value)
+            }
+        }
+
+        HorizontalLayout {
+            spacing: Spacing.md;
+            alignment: LayoutAlignment.end;
+
+            help_popup_compact := PopupWindow {
+                x: help_anchor_compact.x - self.width + help_anchor_compact.width - Spacing.md;
+                y: help_anchor_compact.y - self.height + help_anchor_compact.height - Spacing.md;
+                Rectangle {
+                    drop-shadow-blur: Shadows.lg-blur;
+                    drop-shadow-color: Shadows.color;
+                    drop-shadow-offset-y: 4px;
+                    border-radius: Radii.lg;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    background: Theme.surface;
+                    Dialog {
+                        title: root.title;
+                        VerticalBox {
+                            spacing: Spacing.md;
+                            Text {
+                                max-width: 420px;
+                                font-size: Typography.lg;
+                                font-weight: Typography.weight-semibold;
+                                wrap: TextWrap.word-wrap;
+                                horizontal-alignment: TextHorizontalAlignment.center;
+                                text: root.title;
+                                color: Theme.text-primary;
+                            }
+
+                            Rectangle {
+                                height: 1px;
+                                background: Theme.border;
+                            }
+
+                            Text {
+                                max-width: 420px;
+                                font-size: Typography.md;
+                                wrap: TextWrap.word-wrap;
+                                text: root.help_text;
+                                color: Theme.text-secondary;
+                            }
+                        }
+
+                        StandardButton {
+                            kind: ok;
+                        }
+                    }
+                }
+            }
+
+            reset_popup_compact := PopupWindow {
+                x: reset_anchor_compact.x - self.width + reset_anchor_compact.width;
+                y: reset_anchor_compact.y - self.height + reset_anchor_compact.height;
+                Rectangle {
+                    drop-shadow-blur: Shadows.lg-blur;
+                    drop-shadow-color: Shadows.color;
+                    drop-shadow-offset-y: 4px;
+                    border-radius: Radii.lg;
+                    border-color: Theme.border;
+                    border-width: 1px;
+                    background: Theme.surface;
+                    Dialog {
+                        Text {
+                            max-width: 420px;
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-medium;
+                            wrap: TextWrap.word-wrap;
+                            text: @tr("confirm_reset" => "Are you sure you want to reset this?");
+                            color: Theme.text-primary;
+                        }
+
+                        StandardButton {
+                            kind: ok;
+                            clicked => {
+                                root.cb_do_reset();
+                            }
+                        }
+
+                        StandardButton {
+                            kind: cancel;
+                        }
+                    }
+                }
+            }
+
+            help_anchor_compact := Rectangle {
+                width: help_text != "" ? 60px : 0px;
+                if (help_text != ""): StandardButton {
+                    kind: StandardButtonKind.help;
+                    width: 100%;
+                    height: 32px;
+                    clicked => {
+                        help_popup_compact.show();
+                    }
+                }
+            }
+
+            reset_anchor_compact := Rectangle {
+                width: has_reset ? 60px : 0px;
+                if (has_reset): StandardButton {
+                    kind: StandardButtonKind.reset;
+                    enabled: root.enabled;
+                    width: 100%;
+                    height: 32px;
+                    clicked => {
+                        reset_popup_compact.show();
                     }
                 }
             }
@@ -351,20 +504,52 @@ export component SystemToggle inherits RogItem {
     in property <string> text;
     in-out property <bool> checked;
     callback toggled(bool);
+    property <bool> compact: self.width < 360px;
+    min-height: compact ? 86px : 60px;
+    max-height: compact ? 120px : 76px;
 
-    HorizontalLayout {
+    if !compact: HorizontalLayout {
         padding: Spacing.md;
         spacing: Spacing.md;
 
         HorizontalLayout {
+            horizontal-stretch: 1;
+            min-width: 0px;
             alignment: LayoutAlignment.start;
             Text {
+                min-width: 0px;
                 font-size: Typography.md;
                 font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Theme.text-primary;
                 text: root.text;
+                wrap: TextWrap.word-wrap;
+                overflow: TextOverflow.elide;
             }
+        }
+
+        HorizontalLayout {
+            horizontal-stretch: 0;
+            alignment: LayoutAlignment.end;
+            PrimarySwitch {
+                checked <=> root.checked;
+                toggled => {
+                    root.toggled(root.checked)
+                }
+            }
+        }
+    }
+
+    if compact: VerticalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.sm;
+
+        Text {
+            font-size: Typography.md;
+            font-weight: Typography.weight-medium;
+            color: Theme.text-primary;
+            text: root.text;
+            wrap: TextWrap.word-wrap;
         }
 
         HorizontalLayout {
@@ -383,20 +568,53 @@ export component SystemToggleInt inherits RogItem {
     in property <string> text;
     in-out property <int> checked_int;
     callback toggled(int);
+    property <bool> compact: self.width < 360px;
+    min-height: compact ? 86px : 60px;
+    max-height: compact ? 120px : 76px;
 
-    HorizontalLayout {
+    if !compact: HorizontalLayout {
         padding: Spacing.md;
         spacing: Spacing.md;
 
         HorizontalLayout {
+            horizontal-stretch: 1;
+            min-width: 0px;
             alignment: LayoutAlignment.start;
             Text {
+                min-width: 0px;
                 font-size: Typography.md;
                 font-weight: Typography.weight-medium;
                 vertical-alignment: TextVerticalAlignment.center;
                 color: Theme.text-primary;
                 text: root.text;
+                wrap: TextWrap.word-wrap;
+                overflow: TextOverflow.elide;
             }
+        }
+
+        HorizontalLayout {
+            horizontal-stretch: 0;
+            alignment: LayoutAlignment.end;
+            PrimarySwitch {
+                checked: root.checked_int != 0;
+                toggled => {
+                    root.checked_int = self.checked ? 1 : 0;
+                    root.toggled(root.checked_int);
+                }
+            }
+        }
+    }
+
+    if compact: VerticalLayout {
+        padding: Spacing.md;
+        spacing: Spacing.sm;
+
+        Text {
+            font-size: Typography.md;
+            font-weight: Typography.weight-medium;
+            color: Theme.text-primary;
+            text: root.text;
+            wrap: TextWrap.word-wrap;
         }
 
         HorizontalLayout {
