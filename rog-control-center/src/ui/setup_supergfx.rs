@@ -83,19 +83,47 @@ fn install_callbacks(handle: &Weak<MainWindow>, conn: Arc<Connection>, modes_sta
 
                 set_busy(&handle, true);
                 match DaemonProxy::new(&*conn).await {
-                    Ok(proxy) => match proxy.set_mode(&mode).await {
-                        Ok(action) => {
-                            let label = mode_label(mode);
-                            let action_text = action_message(&action);
+                    Ok(proxy) => {
+                        let current_mode = proxy.mode().await.unwrap_or(GfxMode::None);
+                        let pending_mode = proxy.pending_mode().await.unwrap_or(GfxMode::None);
+                        let pending_action = proxy
+                            .pending_user_action()
+                            .await
+                            .unwrap_or(UserActionRequired::Nothing);
+                        let pending_transition =
+                            pending_mode != GfxMode::None && pending_mode != current_mode;
+
+                        if pending_transition {
+                            let pending_label = mode_label(pending_mode);
                             set_status(
                                 &handle,
-                                format!("Mode change to {label} requested: {action_text}"),
+                                format!(
+                                    "Mode change to {pending_label} is still pending: {}",
+                                    action_message(&pending_action)
+                                ),
                             );
+                        } else if mode == current_mode {
+                            let label = mode_label(mode);
+                            set_status(&handle, format!("{label} is already active."));
+                        } else {
+                            match proxy.set_mode(&mode).await {
+                                Ok(action) => {
+                                    let label = mode_label(mode);
+                                    let action_text = action_message(&action);
+                                    set_status(
+                                        &handle,
+                                        format!("Mode change to {label} requested: {action_text}"),
+                                    );
+                                }
+                                Err(e) => {
+                                    set_status(
+                                        &handle,
+                                        format!("Failed to request mode change: {e}"),
+                                    );
+                                }
+                            }
                         }
-                        Err(e) => {
-                            set_status(&handle, format!("Failed to request mode change: {e}"));
-                        }
-                    },
+                    }
                     Err(e) => {
                         let label = mode_label(mode);
                         set_status(
@@ -194,10 +222,16 @@ async fn refresh_status(
         .unwrap_or(UserActionRequired::Nothing);
     let power = proxy.power().await.unwrap_or(GfxPower::Unknown);
     let vendor = proxy.vendor().await.unwrap_or_default();
+    let pending_transition = pending_mode != GfxMode::None && pending_mode != current_mode;
+    let selected_mode = if pending_transition {
+        pending_mode
+    } else {
+        current_mode
+    };
 
     let selected_index = modes_list
         .iter()
-        .position(|m| *m == current_mode)
+        .position(|m| *m == selected_mode)
         .unwrap_or(0);
 
     let mode_labels: Vec<SharedString> = modes_list
@@ -210,7 +244,7 @@ async fn refresh_status(
             let global = ui.global::<SupergfxPageData>();
             global.set_available(true);
             global.set_modes(ModelRc::new(VecModel::from(mode_labels)));
-            global.set_apply_enabled(true);
+            global.set_apply_enabled(!pending_transition);
             global.set_selected_mode(selected_index as i32);
             global.set_current_mode(SharedString::from(mode_label(current_mode)));
             global.set_power_state(SharedString::from(power_label(power)));
