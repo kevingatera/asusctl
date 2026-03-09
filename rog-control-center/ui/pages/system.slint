@@ -1,5 +1,5 @@
-import { SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
-import { Palette, HorizontalBox , VerticalBox, ScrollView, Slider, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
+import { PrimarySlider, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { Palette, HorizontalBox , VerticalBox, ScrollView, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
 
@@ -202,48 +202,111 @@ export component PageSystem inherits Rectangle {
                 }
             }
 
-            if SystemPageData.screenpad_brightness != -1: RogItem {
-                HorizontalLayout {
-                    padding-left: Spacing.md;
-                    padding-right: Spacing.lg;
-                    
-                    HorizontalLayout {
-                        width: 38%;
-                        alignment: LayoutAlignment.space-between;
-                        padding-right: Spacing.md;
+            if SystemPageData.screenpad_brightness != -1: VerticalLayout {
+                spacing: Spacing.md;
+
+                SystemSlider {
+                    text: @tr("Screenpad brightness");
+                    minimum: 0;
+                    maximum: 100;
+                    has_reset: false;
+                    value: SystemPageData.screenpad_brightness;
+                    released => {
+                        SystemPageData.cb_screenpad_brightness(Math.floor(self.value));
+                    }
+                }
+
+                if SystemPageData.screenpad_gamma > 0: RogItem {
+                    property <bool> compact: self.width < 540px;
+                    min-height: compact ? 120px : 76px;
+                    max-height: compact ? 156px : 96px;
+
+                    if !compact: HorizontalLayout {
+                        padding: Spacing.md;
+                        spacing: Spacing.md;
+                        min-width: 0px;
+
+                        VerticalLayout {
+                            width: 35%;
+                            min-width: 150px;
+                            spacing: 4px;
+                            Text {
+                                font-size: Typography.md;
+                                font-weight: Typography.weight-medium;
+                                color: Theme.text-primary;
+                                text: @tr("Screenpad gamma");
+                            }
+                            Text {
+                                font-size: Typography.sm;
+                                color: Theme.text-secondary;
+                                wrap: TextWrap.word-wrap;
+                                text: @tr("Tune how aggressively the Screenpad darkens at lower brightness.");
+                            }
+                        }
+
+                        gamma_slider := PrimarySlider {
+                            min-width: 120px;
+                            minimum: 0.1;
+                            maximum: 2.0;
+                            value <=> SystemPageData.screenpad_gamma;
+                            released(value) => {
+                                SystemPageData.cb_screenpad_gamma(value);
+                            }
+                        }
+
+                        Text {
+                            min-width: 48px;
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-bold;
+                            horizontal-alignment: TextHorizontalAlignment.right;
+                            vertical-alignment: TextVerticalAlignment.center;
+                            color: Theme.primary;
+                            text: "\{Math.round(SystemPageData.screenpad_gamma * 100) / 100}";
+                        }
+                    }
+
+                    if compact: VerticalLayout {
+                        padding: Spacing.md;
+                        spacing: Spacing.sm;
+
                         Text {
                             font-size: Typography.md;
-                            vertical-alignment: TextVerticalAlignment.center;
+                            font-weight: Typography.weight-medium;
                             color: Theme.text-primary;
-                            text: @tr("Screenpad brightness");
+                            text: @tr("Screenpad gamma");
                         }
-                    }
 
-                    HorizontalLayout {
-                        width: 38%;
-                        alignment: LayoutAlignment.stretch;
-                        screen_bright := Slider {
-                            enabled: true;
-                            minimum: 0;
-                            maximum: 100;
-                            value: SystemPageData.screenpad_brightness;
+                        Text {
+                            font-size: Typography.sm;
+                            color: Theme.text-secondary;
+                            wrap: TextWrap.word-wrap;
+                            text: @tr("Tune how aggressively the Screenpad darkens at lower brightness.");
+                        }
+
+                        gamma_slider_compact := PrimarySlider {
+                            minimum: 0.1;
+                            maximum: 2.0;
+                            value <=> SystemPageData.screenpad_gamma;
                             released(value) => {
-                                SystemPageData.cb_screenpad_brightness(Math.floor(self.value));
+                                SystemPageData.cb_screenpad_gamma(value);
                             }
+                        }
+
+                        Text {
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-bold;
+                            horizontal-alignment: TextHorizontalAlignment.right;
+                            color: Theme.primary;
+                            text: "\{Math.round(SystemPageData.screenpad_gamma * 100) / 100}";
                         }
                     }
+                }
 
-                    HorizontalLayout {
-                        width: 20%;
-                        padding-left: Spacing.md;
-                        alignment: LayoutAlignment.stretch;
-                        Switch {
-                            text: @tr("Sync with primary");
-                            checked <=> SystemPageData.screenpad_sync_with_primary;
-                            toggled => {
-                                SystemPageData.cb_screenpad_sync_with_primary(self.checked);
-                            }
-                        }
+                SystemToggle {
+                    text: @tr("Sync Screenpad with primary display");
+                    checked <=> SystemPageData.screenpad_sync_with_primary;
+                    toggled => {
+                        SystemPageData.cb_screenpad_sync_with_primary(self.checked);
                     }
                 }
             }

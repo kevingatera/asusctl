@@ -14,7 +14,7 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
     let handle = ui.as_weak();
     tokio::spawn(async move {
         let Ok(animes) = find_iface_async::<AnimeProxy>("xyz.ljones.Anime").await else {
-            info!("This device appears to have no aura interfaces");
+            info!("This device appears to have no AniMe Matrix interfaces");
             return;
         };
 
@@ -96,8 +96,8 @@ pub fn setup_anime_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         handle,
                         AnimePageData(),
                         anime.builtins_enabled(),
-                        "Keyboard LED mode successfully set to {}",
-                        "Setting keyboard LEDmode failed"
+                        "AniMe built-in animations successfully set to {}",
+                        "Setting AniMe built-in animations failed"
                     );
                     set_ui_callbacks!(
                         handle,

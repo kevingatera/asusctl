@@ -39,11 +39,8 @@ export component MainWindow inherits Window {
     min-width: AppSize.min-width;
 
     in property <[bool]> sidebar_items_avilable: [true, true, true, true, true, true, true, true];
-    private property <bool> show_notif;
-    private property <bool> fade_cover;
     private property <bool> toast: false;
     private property <string> toast_text: "I show when something is waiting";
-    private property <bool> sidebar_collapsed: false;
     toast_timer := Timer {
         interval: AppSettingsPageData.toast_timeout_seconds * 1000ms;
         running: false;
@@ -71,13 +68,8 @@ export component MainWindow inherits Window {
         }
     }
     callback exit-app();
-    callback show_notification(bool);
-    show_notification(yes) => {
-        show_notif = yes;
-    }
     callback external_colour_change();
     external_colour_change() => {
-        aura.external_colour_change();
         aura.external_colour_change();
     }
 
@@ -254,32 +246,6 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Modern backdrop blur effect for custom overlays if needed
-    if fade_cover: Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        background: Theme.background.with-alpha(0.8);
-        opacity: fade_cover ? 1.0 : 0.0;
-
-        animate opacity {
-            duration: Animations.normal;
-            easing: Animations.ease;
-        }
-
-        TouchArea {
-            height: 100%;
-            width: 100%;
-            clicked => {
-                if (show_notif) {
-                    show_notif = false;
-                }
-                fade_cover = false;
-            }
-        }
-    }
-
     // Streamlined Toast Notification
     if toast: Rectangle {
         x: root.width / 2 - self.width / 2;
@@ -324,67 +290,6 @@ export component MainWindow inherits Window {
         }
     }
 
-    // Notification Modal
-    Modal {
-        title: "Notification";
-        open: show_notif;
-        close => {
-            show_notif = false;
-            exit-app();
-        }
-
-        VerticalBox {
-            alignment: center;
-            spacing: Spacing.xl;
-            
-            Text {
-                text: "Click close or outside to exit";
-                font-size: Typography.lg;
-                horizontal-alignment: center;
-                color: Theme.text-primary;
-            }
-            
-            Button {
-                text: "OK";
-                clicked => {
-                    show_notif = false;
-                    exit-app();
-                }
-            }
-        }
-    }
-
-    // Error Modal
-    Modal {
-        title: "Error";
-        open: SomeError.error_message != "";
-        close => {
-            // Cannot close error modal easily without clearing error
-        }
-        
-        VerticalBox {
-            spacing: Spacing.lg;
-            alignment: center;
-
-            Text {
-                text: SomeError.error_message;
-                font-size: Typography.lg;
-                font-weight: Typography.weight-bold;
-                color: Theme.error;
-                horizontal-alignment: center;
-                wrap: word-wrap;
-            }
-
-            Text {
-                text: SomeError.error_help;
-                font-size: Typography.md;
-                horizontal-alignment: center;
-                wrap: word-wrap;
-                color: Theme.text-secondary;
-            }
-        }
-    }
-
     // Accent Color Picker Modal
     Modal {
         title: "Pick Accent Color";
@@ -421,9 +326,4 @@ export component MainWindow inherits Window {
             }
         }
     }
-}
-
-export global SomeError {
-    in property <string> error_message: "";
-    in property <string> error_help: "";
 }

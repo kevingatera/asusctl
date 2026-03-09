@@ -44,6 +44,7 @@ pub fn setup_system_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
     ui.global::<SystemPageData>().set_mcu_powersave(-1);
     ui.global::<SystemPageData>().set_mini_led_mode(-1);
     ui.global::<SystemPageData>().set_screenpad_brightness(-1);
+    ui.global::<SystemPageData>().set_screenpad_gamma(-1.0);
     ui.global::<SystemPageData>().set_ppt_pl1_spl(MINMAX);
     ui.global::<SystemPageData>().set_ppt_pl2_sppt(MINMAX);
     ui.global::<SystemPageData>().set_ppt_pl3_fppt(MINMAX);
@@ -542,15 +543,15 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
                     backlight.screenpad_sync_with_primary(as bool),
-                    "Screenpad successfully set to {}",
-                    "Setting screenpad brightness failed"
+                    "Screenpad sync with primary display: {}",
+                    "Setting Screenpad sync failed"
                 );
 
                 set_ui_callbacks!(handle,
                     SystemPageData(.parse().unwrap_or(1.0)),
                     backlight.screenpad_gamma(.to_string().as_str()),
-                    "Screenpad successfully set to {}",
-                    "Setting screenpad brightness failed"
+                    "Screenpad gamma set to {}",
+                    "Setting Screenpad gamma failed"
                 );
             })
             .ok();
