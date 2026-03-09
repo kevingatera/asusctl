@@ -1,5 +1,6 @@
-import { Palette, GroupBox, ComboBox, Button, VerticalBox, HorizontalBox } from "std-widgets.slint";
+import { Button, VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography, Radii } from "../globals.slint";
+import { RogItem, SystemDropdown } from "../widgets/common.slint";
 
 export global SupergfxPageData {
     in-out property <bool> available: false;
@@ -20,14 +21,43 @@ export global SupergfxPageData {
 export component PageSupergfx inherits Rectangle {
     background: Theme.background;
 
-    VerticalLayout {
-        padding: Spacing.xl;
+    ScrollView {
+        VerticalLayout {
+        padding: Spacing.lg;
         spacing: Spacing.lg;
-        
-        if !SupergfxPageData.available: GroupBox {
-            title: @tr("Supergfx Status");
+
+        RogItem {
+            min-height: 96px;
+            max-height: 120px;
+            HorizontalBox {
+                padding-left: Spacing.lg;
+                padding-right: Spacing.xl;
+                spacing: Spacing.lg;
+                alignment: LayoutAlignment.stretch;
+                VerticalLayout {
+                    spacing: Spacing.sm;
+                    Text {
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-medium;
+                        color: Theme.text-primary;
+                        text: @tr("SupergfxHead" => "Graphics mode control");
+                    }
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                        text: @tr("SupergfxIntro" => "Switch between supported GPU modes and inspect the current committed graphics state.");
+                    }
+                }
+            }
+        }
+
+        if !SupergfxPageData.available: RogItem {
+            min-height: 96px;
+            max-height: 144px;
             VerticalLayout {
                 padding: Spacing.md;
+                spacing: Spacing.sm;
                 Text {
                     wrap: TextWrap.word-wrap;
                     text: @tr("The supergfxctl daemon is not available. Ensure supergfxctl 5.2.0 or newer is installed and running.");
@@ -44,20 +74,29 @@ export component PageSupergfx inherits Rectangle {
             }
         }
 
-        if SupergfxPageData.available: GroupBox {
-            title: @tr("Graphics Mode Control");
+        if SupergfxPageData.available: RogItem {
+            min-height: 184px;
+            max-height: 240px;
             VerticalLayout {
-                padding: Spacing.md;
+                padding: Spacing.lg;
                 spacing: Spacing.md;
+                Text {
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                    text: @tr("Graphics Mode");
+                }
                 Text {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-secondary;
                     font-size: Typography.sm;
                     text: @tr("Mode changes may require logout or reboot before they fully take effect. The status section below reflects the current committed mode.");
                 }
-                ComboBox {
+                SystemDropdown {
+                    text: @tr("Mode Selection" => "Preferred mode");
                     model <=> SupergfxPageData.modes;
                     current_index <=> SupergfxPageData.selected_mode;
+                    current_value: SupergfxPageData.modes.length > SupergfxPageData.selected_mode ? SupergfxPageData.modes[SupergfxPageData.selected_mode] : "";
                     enabled: SupergfxPageData.apply_enabled && !SupergfxPageData.busy;
                 }
                 HorizontalBox {
@@ -83,11 +122,18 @@ export component PageSupergfx inherits Rectangle {
             }
         }
 
-        if SupergfxPageData.available: GroupBox {
-            title: @tr("Current Status");
+        if SupergfxPageData.available: RogItem {
+            min-height: 164px;
+            max-height: 240px;
             VerticalLayout {
-                padding: Spacing.md;
+                padding: Spacing.lg;
                 spacing: Spacing.sm;
+                Text {
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                    text: @tr("Current Status");
+                }
                 Text { 
                     text: @tr("Current mode: {0}", SupergfxPageData.current_mode); 
                     color: Theme.text-primary;
@@ -117,6 +163,7 @@ export component PageSupergfx inherits Rectangle {
                     font-size: Typography.md;
                 }
             }
+        }
         }
     }
 }

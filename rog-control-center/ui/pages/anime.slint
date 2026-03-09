@@ -1,6 +1,7 @@
 import { SystemDropdown, SystemToggle } from "../widgets/common.slint";
 import { Palette, GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
+import { Modal } from "../widgets/modal.slint";
 
 export global AnimePageData {
     in-out property <[string]> brightness_names: [
@@ -33,7 +34,6 @@ export global AnimePageData {
 }
 
 export component PageAnime inherits Rectangle {
-    property <bool> show_fade_cover: false;
     property <bool> show_display_advanced: false;
     property <bool> show_builtin_advanced: false;
     clip: true;
@@ -73,7 +73,6 @@ export component PageAnime inherits Rectangle {
                 width: 20%;
                 enabled <=> AnimePageData.enable_display;
                 clicked => {
-                    root.show_fade_cover = true;
                     root.show_display_advanced = true;
                 }
             }
@@ -96,154 +95,98 @@ export component PageAnime inherits Rectangle {
                 width: 20%;
                 enabled <=> AnimePageData.builtins_enabled;
                 clicked => {
-                    root.show_fade_cover = true;
                     root.show_builtin_advanced = true;
                 }
             }
         }
     }
 
-    // Fade cover overlay
-    if root.show_fade_cover: Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        background: Theme.background.with-alpha(0.8);
-        opacity: 1.0;
-        TouchArea {
-            height: 100%;
-            width: 100%;
+    Modal {
+        title: @tr("AnimeBuiltinsTitle" => "Built-in Animations");
+        open: root.show_builtin_advanced;
+        close => {
+            root.show_builtin_advanced = false;
         }
-    }
 
-    // Built-in animations modal
-    if root.show_builtin_advanced: Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        opacity: 1;
-        
-        VerticalLayout {
-            padding: Spacing.xxl;
+        VerticalBox {
             spacing: Spacing.md;
-            GroupBox {
-                title: @tr("Set which builtin animations are played");
-                VerticalBox {
-                    spacing: Spacing.md;
-                    alignment: LayoutAlignment.start;
+            alignment: LayoutAlignment.start;
 
-                    SystemDropdown {
-                        text: @tr("Anime built-in selection" => "Boot Animation");
-                        current_index <=> AnimePageData.boot_anim;
-                        current_value: AnimePageData.boot_anim_choices[AnimePageData.boot_anim];
-                        model <=> AnimePageData.boot_anim_choices;
-                        selected => {
-                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
-                        }
-                    }
-
-                    SystemDropdown {
-                        text: @tr("Anime built-in selection" => "Running Animation");
-                        current_index <=> AnimePageData.awake_anim;
-                        current_value: AnimePageData.awake_anim_choices[AnimePageData.awake_anim];
-                        model <=> AnimePageData.awake_anim_choices;
-                        selected => {
-                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
-                        }
-                    }
-
-                    SystemDropdown {
-                        text: @tr("Anime built-in selection" => "Sleep Animation");
-                        current_index <=> AnimePageData.sleep_anim;
-                        current_value: AnimePageData.sleep_anim_choices[AnimePageData.sleep_anim];
-                        model <=> AnimePageData.sleep_anim_choices;
-                        selected => {
-                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
-                        }
-                    }
-
-                    SystemDropdown {
-                        text: @tr("Anime built-in selection" => "Shutdown Animation");
-                        current_index <=> AnimePageData.shutdown_anim;
-                        current_value: AnimePageData.shutdown_anim_choices[AnimePageData.shutdown_anim];
-                        model <=> AnimePageData.shutdown_anim_choices;
-                        selected => {
-                            AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
-                        }
-                    }
+            SystemDropdown {
+                text: @tr("Anime built-in selection" => "Boot Animation");
+                current_index <=> AnimePageData.boot_anim;
+                current_value: AnimePageData.boot_anim_choices[AnimePageData.boot_anim];
+                model <=> AnimePageData.boot_anim_choices;
+                selected => {
+                    AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
                 }
             }
-        }
 
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_builtin_advanced = false;
-                root.show_fade_cover = false;
+            SystemDropdown {
+                text: @tr("Anime built-in selection" => "Running Animation");
+                current_index <=> AnimePageData.awake_anim;
+                current_value: AnimePageData.awake_anim_choices[AnimePageData.awake_anim];
+                model <=> AnimePageData.awake_anim_choices;
+                selected => {
+                    AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                }
+            }
+
+            SystemDropdown {
+                text: @tr("Anime built-in selection" => "Sleep Animation");
+                current_index <=> AnimePageData.sleep_anim;
+                current_value: AnimePageData.sleep_anim_choices[AnimePageData.sleep_anim];
+                model <=> AnimePageData.sleep_anim_choices;
+                selected => {
+                    AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                }
+            }
+
+            SystemDropdown {
+                text: @tr("Anime built-in selection" => "Shutdown Animation");
+                current_index <=> AnimePageData.shutdown_anim;
+                current_value: AnimePageData.shutdown_anim_choices[AnimePageData.shutdown_anim];
+                model <=> AnimePageData.shutdown_anim_choices;
+                selected => {
+                    AnimePageData.cb_builtin_animations(AnimePageData.boot_anim, AnimePageData.awake_anim, AnimePageData.sleep_anim, AnimePageData.shutdown_anim)
+                }
             }
         }
     }
 
-    // Display settings modal
-    if root.show_display_advanced: Rectangle {
-        x: 0px;
-        y: 0px;
-        width: root.width;
-        height: root.height;
-        opacity: 1;
-        
-        VerticalLayout {
-            padding: Spacing.xxl;
-            spacing: Spacing.md;
-            GroupBox {
-                title: @tr("Advanced Display Settings");
-                VerticalBox {
-                    spacing: Spacing.md;
-                    alignment: LayoutAlignment.start;
-
-                    SystemToggle {
-                        max-height: 42px;
-                        text: @tr("Off when lid closed");
-                        checked <=> AnimePageData.off_when_lid_closed;
-                        toggled => {
-                            AnimePageData.cb_off_when_lid_closed(AnimePageData.off_when_lid_closed)
-                        }
-                    }
-
-                    SystemToggle {
-                        max-height: 42px;
-                        text: @tr("Off when suspended");
-                        checked <=> AnimePageData.off_when_suspended;
-                        toggled => {
-                            AnimePageData.cb_off_when_suspended(AnimePageData.off_when_suspended)
-                        }
-                    }
-
-                    SystemToggle {
-                        max-height: 42px;
-                        text: @tr("Off when on battery");
-                        checked <=> AnimePageData.off_when_unplugged;
-                        toggled => {
-                            AnimePageData.cb_off_when_unplugged(AnimePageData.off_when_unplugged)
-                        }
-                    }
-                }
-            }
+    Modal {
+        title: @tr("AnimeDisplayTitle" => "Advanced Display Settings");
+        open: root.show_display_advanced;
+        close => {
+            root.show_display_advanced = false;
         }
 
-        Button {
-            x: root.width - self.width - 6px;
-            y: 6px;
-            text: "X";
-            height: 40px;
-            clicked => {
-                root.show_display_advanced = false;
-                root.show_fade_cover = false;
+        VerticalBox {
+            spacing: Spacing.md;
+            alignment: LayoutAlignment.start;
+
+            SystemToggle {
+                text: @tr("Off when lid closed");
+                checked <=> AnimePageData.off_when_lid_closed;
+                toggled => {
+                    AnimePageData.cb_off_when_lid_closed(AnimePageData.off_when_lid_closed)
+                }
+            }
+
+            SystemToggle {
+                text: @tr("Off when suspended");
+                checked <=> AnimePageData.off_when_suspended;
+                toggled => {
+                    AnimePageData.cb_off_when_suspended(AnimePageData.off_when_suspended)
+                }
+            }
+
+            SystemToggle {
+                text: @tr("Off when on battery");
+                checked <=> AnimePageData.off_when_unplugged;
+                toggled => {
+                    AnimePageData.cb_off_when_unplugged(AnimePageData.off_when_unplugged)
+                }
             }
         }
     }
