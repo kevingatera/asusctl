@@ -1,6 +1,6 @@
 import { Palette, ScrollView, HorizontalBox } from "std-widgets.slint";
 import { Spacing, Typography, Theme, Radii } from "../globals.slint";
-import { RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
+import { PageHeader, RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
 
 export global SlashPageData {
     in-out property <bool> initialized: false;
@@ -33,30 +33,11 @@ export component PageSlash inherits ScrollView {
         padding: Spacing.lg;
         spacing: Spacing.lg;
 
-        RogItem {
-            min-height: 96px;
-            max-height: 120px;
-            HorizontalBox {
-                padding-left: Spacing.lg;
-                padding-right: Spacing.xl;
-                spacing: Spacing.lg;
-                alignment: LayoutAlignment.stretch;
-                VerticalLayout {
-                    spacing: Spacing.sm;
-                    Text {
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-medium;
-                        color: Theme.text-primary;
-                        text: @tr("SlashHead" => "Slash lightbar");
-                    }
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                        text: @tr("SlashIntro" => "Customize the chassis slash lightbar, including effects, brightness, and when it appears.");
-                    }
-                }
-            }
+        PageHeader {
+            badge: @tr("Lighting");
+            title: @tr("Slash lightbar");
+            subtitle: @tr("Customize the chassis slash lightbar, including effects, brightness, and when it appears.");
+            aside: @tr("Chassis lighting");
         }
 
         SystemToggle {

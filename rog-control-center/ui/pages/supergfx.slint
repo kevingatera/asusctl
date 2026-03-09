@@ -1,6 +1,6 @@
 import { Button, VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography, Radii } from "../globals.slint";
-import { RogItem, SystemDropdown } from "../widgets/common.slint";
+import { PageHeader, RogItem, SystemDropdown } from "../widgets/common.slint";
 
 export global SupergfxPageData {
     in-out property <bool> available: false;
@@ -26,30 +26,11 @@ export component PageSupergfx inherits Rectangle {
         padding: Spacing.lg;
         spacing: Spacing.lg;
 
-        RogItem {
-            min-height: 96px;
-            max-height: 120px;
-            HorizontalBox {
-                padding-left: Spacing.lg;
-                padding-right: Spacing.xl;
-                spacing: Spacing.lg;
-                alignment: LayoutAlignment.stretch;
-                VerticalLayout {
-                    spacing: Spacing.sm;
-                    Text {
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-medium;
-                        color: Theme.text-primary;
-                        text: @tr("SupergfxHead" => "Graphics mode control");
-                    }
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                        text: @tr("SupergfxIntro" => "Switch between supported GPU modes and inspect the current committed graphics state.");
-                    }
-                }
-            }
+        PageHeader {
+            badge: @tr("Graphics");
+            title: @tr("Supergfx Control");
+            subtitle: @tr("Switch between supported GPU modes and inspect the current committed graphics state.");
+            aside: @tr("Mode orchestration");
         }
 
         if !SupergfxPageData.available: RogItem {

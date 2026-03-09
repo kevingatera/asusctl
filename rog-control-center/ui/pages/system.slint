@@ -1,4 +1,4 @@
-import { PrimarySlider, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { PageHeader, PrimarySlider, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -151,6 +151,13 @@ export component PageSystem inherits Rectangle {
             padding: Spacing.lg;
             spacing: Spacing.lg;
             alignment: LayoutAlignment.start;
+
+            PageHeader {
+                badge: @tr("System");
+                title: @tr("System Control");
+                subtitle: @tr("Manage platform profiles, charging behavior, display options, and firmware-backed system tuning.");
+                aside: @tr("Platform and power");
+            }
             
             Rectangle {
                 background: Theme.surface;

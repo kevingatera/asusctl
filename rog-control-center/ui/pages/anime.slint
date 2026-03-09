@@ -1,4 +1,4 @@
-import { SystemDropdown, SystemToggle } from "../widgets/common.slint";
+import { PageHeader, SystemDropdown, SystemToggle } from "../widgets/common.slint";
 import { Palette, GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -41,6 +41,12 @@ export component PageAnime inherits Rectangle {
     VerticalLayout {
         padding: Spacing.lg;
         spacing: Spacing.lg;
+        PageHeader {
+            badge: @tr("Display");
+            title: @tr("AniMe Matrix");
+            subtitle: @tr("Control panel brightness, built-in animations, and when the AniMe Matrix display should stay active.");
+            aside: @tr("Display behavior");
+        }
         HorizontalLayout {
             spacing: Spacing.md;
             max-height: 60px;

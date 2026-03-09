@@ -30,6 +30,69 @@ export component RogItem inherits Rectangle {
     }
 }
 
+export component PageHeader inherits Rectangle {
+    in property <string> badge: "";
+    in property <string> title;
+    in property <string> subtitle;
+    in property <string> aside: "";
+    height: 136px;
+    border-radius: Radii.lg;
+    border-width: 1px;
+    border-color: Theme.border-focus.with-alpha(0.35);
+    background: Theme.surface-gradient;
+    clip: true;
+
+    Rectangle {
+        x: 0px;
+        y: 0px;
+        width: 5px;
+        height: parent.height;
+        background: @linear-gradient(180deg, Theme.primary 0%, Theme.primary.darker(30%) 100%);
+    }
+
+    if root.badge != "": Text {
+        x: Spacing.lg;
+        y: Spacing.md;
+        width: parent.width - Spacing.xl;
+        color: Theme.primary;
+        font-size: Typography.xs;
+        font-weight: Typography.weight-semibold;
+        text: root.badge;
+    }
+
+    Text {
+        x: Spacing.lg;
+        y: badge != "" ? 34px : 22px;
+        width: parent.width - Spacing.xl;
+        color: Theme.text-primary;
+        font-size: Typography.xl;
+        font-weight: Typography.weight-bold;
+        text: root.title;
+        overflow: TextOverflow.elide;
+    }
+
+    Text {
+        x: Spacing.lg;
+        y: badge != "" ? 66px : 54px;
+        width: parent.width - Spacing.xl;
+        color: Theme.text-secondary;
+        font-size: Typography.sm;
+        wrap: TextWrap.word-wrap;
+        text: root.subtitle;
+    }
+
+    if root.aside != "": Text {
+        x: Spacing.lg;
+        y: 110px;
+        width: parent.width - Spacing.xl;
+        color: Theme.text-tertiary;
+        font-size: Typography.xs;
+        font-weight: Typography.weight-semibold;
+        text: root.aside;
+        overflow: TextOverflow.elide;
+    }
+}
+
 // Custom toggle that uses Theme.primary instead of the std-widgets palette
 export component PrimarySwitch inherits Rectangle {
     in-out property <bool> checked;

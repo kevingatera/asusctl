@@ -1,5 +1,5 @@
-import { Palette, Button, VerticalBox } from "std-widgets.slint";
-import { SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
+import { Palette, Button, ScrollView, VerticalBox } from "std-widgets.slint";
+import { PageHeader, SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
 import { Theme, Spacing, Typography, Radii, Shadows } from "../globals.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -25,13 +25,20 @@ export global AppSettingsPageData {
     in-out property <bool> show_color_picker: false;
 }
 
-export component PageAppSettings inherits VerticalLayout {
-    Rectangle {
-        clip: true;
-        
+export component PageAppSettings inherits Rectangle {
+    clip: true;
+
+    ScrollView {
         mainview := VerticalLayout {
             padding: Spacing.lg;
             spacing: Spacing.lg;
+
+            PageHeader {
+                badge: @tr("Preferences");
+                title: @tr("App Settings");
+                subtitle: @tr("Tune how this interface behaves, how long notifications stay visible, and how the app integrates with your session.");
+                aside: @tr("UI behavior");
+            }
             
             RogItem {
                 HorizontalLayout {

@@ -1,4 +1,4 @@
-import { SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
+import { PageHeader, SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
 import { Palette, Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
 import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
@@ -23,6 +23,12 @@ export component PageAura inherits Rectangle {
             padding: Spacing.lg;
             spacing: Spacing.lg;
             alignment: LayoutAlignment.start;
+            PageHeader {
+                badge: @tr("Lighting");
+                title: @tr("Keyboard Aura");
+                subtitle: @tr("Adjust brightness, lighting effects, colors, and hardware power behavior for supported Aura devices.");
+                aside: @tr("Effects and power");
+            }
             HorizontalLayout {
                 spacing: Spacing.md;
                 SystemDropdown {

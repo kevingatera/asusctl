@@ -1,6 +1,6 @@
 import { Palette, TabWidget, Button, CheckBox, ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
-import { SystemToggle } from "../widgets/common.slint";
+import { PageHeader, SystemToggle } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 import { Spacing, Typography, Theme } from "../globals.slint";
 
@@ -86,6 +86,15 @@ component FanTab inherits Rectangle {
 
 export component PageFans inherits VerticalLayout {
     padding: Spacing.lg;
+    spacing: Spacing.lg;
+
+    PageHeader {
+        badge: @tr("Cooling");
+        title: @tr("Fan Curves");
+        subtitle: @tr("Tune per-profile fan behavior, preview available curves, and restore factory defaults when needed.");
+        aside: @tr("Thermal profiles");
+    }
+
     ScrollView {
         TabWidget {
             Tab {

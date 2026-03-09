@@ -1,156 +1,195 @@
-import {
-    AboutSlint,
-    VerticalBox,
-    HorizontalBox,
-    ScrollView,
-} from "std-widgets.slint";
+import { ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography } from "../globals.slint";
+import { PageHeader, RogItem } from "../widgets/common.slint";
 
-export component PageAbout inherits VerticalLayout {
-    padding: Spacing.lg;
-    spacing: Spacing.lg;
+export component PageAbout inherits Rectangle {
+    clip: true;
 
     ScrollView {
-        HorizontalBox {
-            alignment: LayoutAlignment.center;
+        VerticalLayout {
+            padding: Spacing.lg;
+            spacing: Spacing.lg;
 
-            VerticalBox {
-                alignment: LayoutAlignment.center;
-                spacing: Spacing.lg;
+            PageHeader {
+                badge: @tr("About");
+                title: @tr("ROG Control Center");
+                subtitle: @tr("The graphical front end for the ASUS Linux control stack, built to expose hardware tuning without dropping to the command line.");
+                aside: @tr("asusctl GUI");
+            }
 
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "ROG Control Center";
-                    font-size: Typography.xxl;
-                    font-weight: Typography.weight-bold;
-                    color: Theme.primary;
-                }
+            RogItem {
+                min-height: 164px;
+                max-height: 212px;
 
-                Text {
-                    wrap: TextWrap.word-wrap;
-                    text: "A powerful graphical interface for managing ASUS ROG, TUF, and ProArt laptops on Linux. It is the GUI for the asusctl toolset and exposes hardware tuning without dropping to the command line.";
-                    font-size: Typography.md;
-                    color: Theme.text-primary;
-                    horizontal-alignment: center;
-                }
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.md;
 
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Key Features";
-                    font-size: Typography.xl;
-                    font-weight: Typography.weight-semibold;
-                    color: Theme.text-primary;
-                }
-
-                VerticalBox {
-                    spacing: Spacing.sm;
                     Text {
-                        text: "Performance: switch power profiles and customize fan curves.";
+                        text: @tr("What it does");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
                         color: Theme.text-primary;
-                        font-size: Typography.md;
                     }
 
                     Text {
-                        text: "Aura Sync: control keyboard backlighting and LED effects.";
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("ROG Control Center is the desktop interface for the `asusctl` toolset and related services. It brings ASUS laptop controls into one place while keeping the same DBus-backed hardware stack underneath.");
+                        font-size: Typography.md;
                         color: Theme.text-primary;
-                        font-size: Typography.md;
                     }
 
                     Text {
-                        text: "Battery Health: set charge limits to extend battery longevity.";
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "Display: toggle panel overdrive and refresh-rate related settings.";
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "AniMe Matrix and Slash: control supported lighting and display hardware.";
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                    }
-                }
-
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Requirements";
-                    font-size: Typography.xl;
-                    font-weight: Typography.weight-semibold;
-                    color: Theme.text-primary;
-                }
-
-                Text {
-                    wrap: TextWrap.word-wrap;
-                    text: "This software requires kernel version 6.19.";
-                    font-size: Typography.md;
-                    color: Theme.text-primary;
-                    horizontal-alignment: center;
-                }
-
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Work In Progress";
-                    font-size: Typography.xl;
-                    font-weight: Typography.weight-semibold;
-                    color: Theme.warning;
-                }
-
-                VerticalBox {
-                    spacing: Spacing.sm;
-
-                    Text {
-                        text: "Done: themed widgets, CPU/GPU temp and fan info bar, bottom status metrics, Slash control, Supergfx control.";
-                        color: Theme.success;
-                        font-size: Typography.md;
-                    }
-
-                    Text {
-                        text: "Planned: Screenpad controls and ROG Ally specific settings.";
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("Pages only appear when the underlying platform interfaces are available, so the UI stays close to the machine's actual capabilities instead of exposing dead controls.");
+                        font-size: Typography.sm;
                         color: Theme.text-secondary;
-                        font-size: Typography.md;
                     }
                 }
+            }
 
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "License";
-                    font-size: Typography.xl;
-                    font-weight: Typography.weight-semibold;
-                    color: Theme.text-primary;
+            RogItem {
+                min-height: 228px;
+                max-height: 312px;
+
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.sm;
+
+                    Text {
+                        text: @tr("Key capabilities");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        text: @tr("Performance and thermals: switch platform profiles and edit supported fan curves.");
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                        wrap: TextWrap.word-wrap;
+                    }
+
+                    Text {
+                        text: @tr("Lighting: configure Aura keyboard effects, AniMe Matrix behavior, and Slash lightbar settings on supported hardware.");
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                        wrap: TextWrap.word-wrap;
+                    }
+
+                    Text {
+                        text: @tr("Battery and display: set charge limits, screen options, and other firmware-backed controls exposed by the platform.");
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                        wrap: TextWrap.word-wrap;
+                    }
+
+                    Text {
+                        text: @tr("Graphics routing: inspect and request supported GPU modes through `supergfxctl` when available.");
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                        wrap: TextWrap.word-wrap;
+                    }
                 }
+            }
 
-                Text {
-                    wrap: TextWrap.word-wrap;
-                    text: "This project is open-source software licensed under the Mozilla Public License 2.0 (MPL-2.0).";
-                    font-size: Typography.md;
-                    color: Theme.text-primary;
-                    horizontal-alignment: center;
+            RogItem {
+                min-height: 148px;
+                max-height: 204px;
+
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.sm;
+
+                    Text {
+                        text: @tr("Requirements");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("This software requires kernel version 6.19 for the newer armoury-backed controls used by current builds.");
+                        font-size: Typography.md;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("Some features also depend on the matching services being installed and running, such as `asusd` for platform controls and `supergfxctl` for graphics-mode management.");
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                    }
                 }
+            }
 
-                Text {
-                    vertical-alignment: TextVerticalAlignment.center;
-                    horizontal-alignment: TextHorizontalAlignment.center;
-                    text: "Links";
-                    font-size: Typography.xl;
-                    font-weight: Typography.weight-semibold;
-                    color: Theme.text-primary;
+            RogItem {
+                min-height: 156px;
+                max-height: 224px;
+
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.sm;
+
+                    Text {
+                        text: @tr("This branch");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("This build carries a newer custom interface branch on top of the upstream ASUS Linux control stack, with ongoing work to keep UI polish and upstream feature coverage in sync.");
+                        font-size: Typography.md;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("Current focus areas include responsive layout cleanup, consistent page shell design, and keeping hardware controls aligned with upstream service behavior.");
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                    }
                 }
+            }
 
-                Text {
-                    wrap: TextWrap.word-wrap;
-                    text: "Source Code: https://gitlab.com/asus-linux/asusctl\nWebsite: https://asus-linux.org/";
-                    font-size: Typography.md;
-                    color: Theme.text-primary;
-                    horizontal-alignment: center;
+            RogItem {
+                min-height: 168px;
+                max-height: 236px;
+
+                VerticalLayout {
+                    padding: Spacing.lg;
+                    spacing: Spacing.sm;
+
+                    Text {
+                        text: @tr("Project and license");
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        text: @tr("ROG Control Center is open-source software released under the Mozilla Public License 2.0 (MPL-2.0).");
+                        font-size: Typography.md;
+                        color: Theme.text-primary;
+                    }
+
+                    Text {
+                        text: @tr("Source Code: https://gitlab.com/asus-linux/asusctl");
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                        wrap: TextWrap.word-wrap;
+                    }
+
+                    Text {
+                        text: @tr("Website: https://asus-linux.org/");
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                        wrap: TextWrap.word-wrap;
+                    }
                 }
             }
         }
