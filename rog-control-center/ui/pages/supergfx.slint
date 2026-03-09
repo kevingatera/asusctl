@@ -75,8 +75,8 @@ export component PageSupergfx inherits Rectangle {
         }
 
         if SupergfxPageData.available: RogItem {
-            min-height: 184px;
-            max-height: 240px;
+            min-height: SupergfxPageData.status_message != "" ? 220px : 184px;
+            max-height: SupergfxPageData.status_message != "" ? 320px : 240px;
             VerticalLayout {
                 padding: Spacing.lg;
                 spacing: Spacing.md;
