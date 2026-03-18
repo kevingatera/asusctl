@@ -297,12 +297,12 @@ fn set_busy(handle: &Weak<MainWindow>, busy: bool) {
 
 fn mode_label(mode: GfxMode) -> &'static str {
     match mode {
-        GfxMode::Hybrid => "Hybrid (MS Hybrid)",
-        GfxMode::Integrated => "Integrated",
+        GfxMode::Hybrid => "Hybrid (Balanced, dGPU on demand)",
+        GfxMode::Integrated => "Integrated (Battery saver, iGPU only)",
         GfxMode::NvidiaNoModeset => "NVIDIA (No Modeset)",
         GfxMode::Vfio => "VFIO Passthrough",
         GfxMode::AsusEgpu => "ASUS eGPU",
-        GfxMode::AsusMuxDgpu => "MUX dGPU",
+        GfxMode::AsusMuxDgpu => "Ultimate / MUX dGPU (Performance, dGPU only)",
         GfxMode::None => "Unknown",
     }
 }
@@ -313,7 +313,7 @@ fn power_label(power: GfxPower) -> &'static str {
         GfxPower::Suspended => "Suspended",
         GfxPower::Off => "Powered Off",
         GfxPower::AsusDisabled => "Disabled (ASUS EC)",
-        GfxPower::AsusMuxDiscreet => "MUX dGPU Active",
+        GfxPower::AsusMuxDiscreet => "Ultimate / MUX dGPU Active",
         GfxPower::Unknown => "Unknown",
     }
 }

@@ -29,7 +29,7 @@ export component PageSupergfx inherits Rectangle {
         PageHeader {
             badge: @tr("Graphics");
             title: @tr("Supergfx Control");
-            subtitle: @tr("Switch between supported GPU modes and inspect the current committed graphics state.");
+            subtitle: @tr("Choose battery saver, balanced hybrid graphics, or discrete-only performance mode and inspect the current committed graphics state.");
             aside: @tr("Mode orchestration");
         }
 
@@ -71,7 +71,7 @@ export component PageSupergfx inherits Rectangle {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-secondary;
                     font-size: Typography.sm;
-                    text: @tr("Mode changes may require logout or reboot before they fully take effect. The status section below reflects the current committed mode.");
+                    text: @tr("Integrated keeps only the iGPU active for battery life. Hybrid keeps the iGPU primary and wakes the dGPU on demand. Ultimate / MUX dGPU makes the dGPU primary for maximum performance. Mode changes may require logout or reboot before they fully take effect.");
                 }
                 SystemDropdown {
                     text: @tr("Mode Selection" => "Preferred mode");
@@ -99,6 +99,39 @@ export component PageSupergfx inherits Rectangle {
                     color: Theme.text-secondary;
                     text: SupergfxPageData.status_message;
                     font-size: Typography.sm;
+                }
+            }
+        }
+
+        if SupergfxPageData.available: RogItem {
+            min-height: 208px;
+            max-height: 280px;
+            VerticalLayout {
+                padding: Spacing.lg;
+                spacing: Spacing.sm;
+                Text {
+                    font-size: Typography.md;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                    text: @tr("What The Modes Mean");
+                }
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-primary;
+                    font-size: Typography.sm;
+                    text: @tr("Integrated: Battery saver. Runs only on the built-in integrated GPU and powers the discrete GPU down.");
+                }
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-primary;
+                    font-size: Typography.sm;
+                    text: @tr("Hybrid: Balanced everyday mode. The integrated GPU drives the desktop while apps can wake the discrete GPU when extra graphics power is needed.");
+                }
+                Text {
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-primary;
+                    font-size: Typography.sm;
+                    text: @tr("Ultimate / MUX dGPU: Highest performance. Switches the laptop's hardware MUX so the discrete GPU becomes the primary display GPU. This usually needs a reboot and uses more power.");
                 }
             }
         }
