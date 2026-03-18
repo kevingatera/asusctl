@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::time::Duration;
 
 use config_traits::StdConfig;
 use log::{debug, error, info, warn};
@@ -24,6 +25,54 @@ impl AuraZbus {
         Self(aura)
     }
 
+    fn start_brightness_watch(&self, signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
+        let Some(backlight) = self.0.backlight.clone() else {
+            return Ok(());
+        };
+        let aura = self.clone();
+
+        tokio::spawn(async move {
+            let watch = match backlight.lock().await.monitor_brightness() {
+                Ok(watch) => watch,
+                Err(err) => {
+                    warn!("CtrlKbdLedTask: failed to watch keyboard brightness: {err}");
+                    return;
+                }
+            };
+            let mut last_level = aura.brightness().await.ok();
+            let mut buffer = [0; 32];
+            use futures_lite::StreamExt;
+
+            if let Ok(mut stream) = watch.into_event_stream(&mut buffer) {
+                while stream.next().await.is_some() {
+                    let level = match aura.brightness().await {
+                        Ok(level) => level,
+                        Err(err) => {
+                            warn!("CtrlKbdLedTask: failed to read current brightness: {err}");
+                            tokio::time::sleep(Duration::from_millis(300)).await;
+                            continue;
+                        }
+                    };
+
+                    if Some(level) != last_level {
+                        last_level = Some(level);
+                        let mut config = aura.0.config.lock().await;
+                        if config.brightness != level {
+                            config.brightness = level;
+                            config.write();
+                        }
+                        aura.brightness_changed(&signal_ctxt).await.ok();
+                    }
+
+                    // sysfs watchers can emit duplicate MODIFY events, so avoid spinning.
+                    tokio::time::sleep(Duration::from_millis(300)).await;
+                }
+            }
+        });
+
+        Ok(())
+    }
+
     pub async fn start_tasks(
         mut self,
         connection: &Connection,
@@ -37,10 +86,13 @@ impl AuraZbus {
             .unwrap_or_else(|err| warn!("Controller error: {}", err));
         connection
             .object_server()
-            .at(path.clone(), self)
+            .at(path.clone(), self.clone())
             .await
             .map_err(|e| error!("Couldn't add server at path: {path}, {e:?}"))
             .ok();
+        if let Ok(signal_ctxt) = SignalEmitter::new(connection, path.clone()) {
+            self.start_brightness_watch(signal_ctxt)?;
+        }
         // TODO: skip this until we keep handles to tasks so they can be killed
         // task.create_tasks(signal_ctx).await
         Ok(())

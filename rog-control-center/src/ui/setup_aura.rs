@@ -134,10 +134,13 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                 .ok();
         }
 
+        let current_mode = aura.led_mode().await.ok();
+
         if let Ok(modes) = aura.supported_basic_modes().await {
             log::debug!("Available LED modes {modes:?}");
             let modes_for_ui = modes.clone();
             let mode_entries_clone = mode_entries.clone();
+            let selected_index_clone = selected_index.clone();
             handle
                 .upgrade_in_event_loop(move |ui| {
                     let names_model = ui.global::<AuraPageData>().get_mode_names();
@@ -178,18 +181,26 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
                         .set_supported_basic_modes(supported.as_slice().into());
                     ui.global::<AuraPageData>()
                         .set_available_mode_names(labels.as_slice().into());
+
+                    if let Some(current_mode) = current_mode {
+                        let index = mode_entries_clone
+                            .lock()
+                            .ok()
+                            .and_then(|items| {
+                                items.iter().position(
+                                    |entry| matches!(entry, ModeEntry::Builtin(m) if *m == current_mode),
+                                )
+                            })
+                            .unwrap_or(0) as i32;
+                        if let Ok(mut guard) = selected_index_clone.lock() {
+                            *guard = index;
+                        }
+                        ui.global::<AuraPageData>()
+                            .set_current_available_mode(index);
+                    }
                 })
                 .map_err(|e| error!("{e:}"))
                 .ok();
-        }
-
-        if let Ok(current_mode) = aura.led_mode().await {
-            sync_mode_selection(
-                &handle,
-                mode_entries.clone(),
-                selected_index.clone(),
-                current_mode,
-            );
         }
 
         let proxy_copy = aura.clone();
@@ -370,33 +381,6 @@ pub fn setup_aura_page(ui: &MainWindow, _states: Arc<Mutex<Config>>) {
         });
         debug!("Aura setup tasks complete");
         Ok(())
-    });
-}
-
-fn sync_mode_selection(
-    handle: &Weak<MainWindow>,
-    entries: Arc<Mutex<Vec<ModeEntry>>>,
-    selected_index: Arc<Mutex<i32>>,
-    mode: AuraModeNum,
-) {
-    let entries_clone = entries.clone();
-    let selected_clone = selected_index.clone();
-    let target = mode;
-    let _ = handle.clone().upgrade_in_event_loop(move |ui| {
-        let index = entries_clone
-            .lock()
-            .ok()
-            .and_then(|items| {
-                items
-                    .iter()
-                    .position(|entry| matches!(entry, ModeEntry::Builtin(m) if *m == target))
-            })
-            .unwrap_or(0) as i32;
-        if let Ok(mut guard) = selected_clone.lock() {
-            *guard = index;
-        }
-        ui.global::<AuraPageData>()
-            .set_current_available_mode(index);
     });
 }
 
