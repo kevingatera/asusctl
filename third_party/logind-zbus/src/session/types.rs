@@ -78,6 +78,8 @@ pub enum SessionClass {
     User,
     Greeter,
     LockScreen,
+    Background,
+    BackgroundLight,
     Manager,
 }
 enum_impl_serde_str!(SessionClass);
@@ -86,6 +88,8 @@ enum_impl_str_conv!(SessionClass, {
     "user": User,
     "greeter": Greeter,
     "lock-screen": LockScreen,
+    "background": Background,
+    "background-light": BackgroundLight,
     "manager": Manager,
 });
 
