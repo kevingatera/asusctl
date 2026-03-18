@@ -393,7 +393,10 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                 error!("{e:}");
                 mark_unavailable(
                     &handle,
-                    format!("Fan controls are unavailable because the fan DBus service could not be reached: {e}"),
+                    format!(
+                        "Fan controls are unavailable because the fan DBus service could not be \
+                         reached: {e}"
+                    ),
                 );
                 return;
             }
@@ -480,7 +483,8 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     set_status(
                         &handle_next,
                         format!(
-                            "Restoring factory defaults for {}. The firmware may briefly switch profiles while reading defaults.",
+                            "Restoring factory defaults for {}. The firmware may briefly switch \
+                             profiles while reading defaults.",
                             platform_profile_label(target, quiet_is_low_power)
                         ),
                         false,
@@ -538,7 +542,8 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         format!(
                             "Reloading {} fan settings…",
                             platform_profile_label(
-                                resolve_profile(profile, &choices).unwrap_or(PlatformProfile::Balanced),
+                                resolve_profile(profile, &choices)
+                                    .unwrap_or(PlatformProfile::Balanced),
                                 quiet_is_low_power
                             )
                         ),
@@ -602,11 +607,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     );
                     if let Err(e) = fans.set_fan_curve(target, data).await {
                         error!("{e:}");
-                        set_status(
-                            &handle_next,
-                            format!("Failed to save fan curve: {e}"),
-                            true,
-                        );
+                        set_status(&handle_next, format!("Failed to save fan curve: {e}"), true);
                         set_busy(&handle_next, false);
                         return;
                     }
@@ -619,7 +620,10 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                             error!("{e}");
                             set_status(
                                 &handle_status,
-                                format!("Saved fan changes, but failed to reload the updated curve: {e}"),
+                                format!(
+                                    "Saved fan changes, but failed to reload the updated curve: \
+                                     {e}"
+                                ),
                                 true,
                             );
                             set_busy(&handle_status, false);
@@ -645,7 +649,8 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         set_status(
                             &handle_status,
                             format!(
-                                "Saved {} fan changes. They will apply live when that profile becomes active.",
+                                "Saved {} fan changes. They will apply live when that profile \
+                                 becomes active.",
                                 platform_profile_label(target, quiet_is_low_power)
                             ),
                             false,

@@ -164,8 +164,8 @@ impl AnimeImage {
     ///  first_x
     /// ```
     ///
-    /// For G835L/G635L (inverted pattern - triangle grows then rectangle shifts):
-    /// ```text
+    /// For G835L/G635L (inverted pattern - triangle grows then rectangle
+    /// shifts): ```text
     /// ●              <- Row 0: first_x = 0, width = 1
     ///  ●             <- Row 1: first_x = 0 (stagger), width = 1
     /// ● ●            <- Row 2: first_x = 0, width = 2
@@ -194,9 +194,10 @@ impl AnimeImage {
                 (y - 9) / 2
             }
             AnimeType::G635L | AnimeType::G835L => {
-                // G835L/G635L have inverted geometry - triangle at top-left, rectangle shifts right
-                // Triangle (rows 0-27): no cumulative shift, just alternating stagger
-                // Rectangle (rows 28-67): shifts right by ~0.5px per row
+                // G835L/G635L have inverted geometry - triangle at top-left, rectangle shifts
+                // right Triangle (rows 0-27): no cumulative shift, just
+                // alternating stagger Rectangle (rows 28-67): shifts right by
+                // ~0.5px per row
                 if y < 28 {
                     0
                 } else {

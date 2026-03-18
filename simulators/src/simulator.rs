@@ -88,8 +88,8 @@ impl VirtAnimeMatrix {
             })
             .unwrap_or_else(|err| {
                 panic!(
-                    "Could not create virtual device: {err:?}. \
-                    Try loading the uhid module and ensure you have the necessary permissions."
+                    "Could not create virtual device: {err:?}. Try loading the uhid module and \
+                     ensure you have the necessary permissions."
                 )
             }),
         }

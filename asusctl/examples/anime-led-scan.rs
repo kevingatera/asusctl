@@ -5,7 +5,8 @@
 //! for mapping new device types like G835L where the exact layout is unknown.
 //!
 //! You might want to use it slowly, as it sometimes doesn't work properly.
-//! Maybe there's better ways to make this reliable but for now it works for my use case.
+//! Maybe there's better ways to make this reliable but for now it works for my
+//! use case.
 //!
 //! # Usage
 //! ```
@@ -399,7 +400,10 @@ fn main() {
             }
             "row" => {
                 if anime_type != AnimeType::G835L {
-                    println!("Warning: Row commands use G835L mapping (provisional). You can add to this code to support other types. `examples/anime-led-scan.rs[402:425]`");
+                    println!(
+                        "Warning: Row commands use G835L mapping (provisional). You can add to \
+                         this code to support other types. `examples/anime-led-scan.rs[402:425]`"
+                    );
                 }
                 println!("Row stepping mode. Press Enter for next row, 'q' to quit.");
                 let total = g835l_total_rows();
