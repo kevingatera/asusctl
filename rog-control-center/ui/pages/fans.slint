@@ -55,10 +55,22 @@ component FanTab inherits Rectangle {
             alignment: LayoutAlignment.end;
             spacing: Spacing.md;
 
-            CheckBox {
-                text: @tr("Enabled");
-                checked <=> root.enabled;
-                enabled: root.active && !FanPageData.busy;
+            VerticalLayout {
+                spacing: 4px;
+
+                CheckBox {
+                    text: @tr("Use Custom Curve");
+                    checked <=> root.enabled;
+                    enabled: root.active && !FanPageData.busy;
+                }
+
+                Text {
+                    width: 220px;
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-secondary;
+                    font-size: Typography.xs;
+                    text: @tr("Turns the selected fan's saved custom curve on or off for this profile. This is not a global fan toggle.");
+                }
             }
 
             Button {
