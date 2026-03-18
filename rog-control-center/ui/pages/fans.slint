@@ -1,6 +1,6 @@
 import { Palette, TabWidget, Button, CheckBox, ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
-import { PageHeader, SystemToggle } from "../widgets/common.slint";
+import { PageHeader, RogItem } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 import { Spacing, Typography, Theme } from "../globals.slint";
 
@@ -13,10 +13,10 @@ component FanTab inherits Rectangle {
     callback apply();
     callback cancel();
     callback default();
-    callback toggled();
     in property <string> title;
     in-out property <[Node]> nodes;
-    property <bool> active: root.profile_available && root.tab_enabled;
+    property <bool> interactive: FanPageData.available && !FanPageData.loading && !FanPageData.has_error;
+    property <bool> active: root.interactive && root.profile_available && root.tab_enabled;
 
     VerticalLayout {
         padding: Spacing.lg;
@@ -35,10 +35,17 @@ component FanTab inherits Rectangle {
                         font-size: Typography.xl;
                         font-weight: Typography.weight-medium;
                         color: Theme.text-secondary;
-                        text: root.profile_available
+                        text: FanPageData.loading
+                            ? @tr("Loading fan controls…")
+                            : FanPageData.has_error
+                            ? (FanPageData.status_message != ""
+                                ? FanPageData.status_message
+                                : @tr("Fan controls are unavailable right now"))
+                            : root.profile_available
                             ? @tr("This fan is not avilable on this machine")
                             : @tr("This profile is not available on this machine");
                         horizontal-alignment: center;
+                        wrap: TextWrap.word-wrap;
                     }
                 }
             }
@@ -51,15 +58,12 @@ component FanTab inherits Rectangle {
             CheckBox {
                 text: @tr("Enabled");
                 checked <=> root.enabled;
-                enabled <=> root.active;
-                toggled => {
-                    root.toggled();
-                }
+                enabled: root.active && !FanPageData.busy;
             }
 
             Button {
-                text: @tr("Apply");
-                enabled <=> root.active;
+                text: FanPageData.busy ? @tr("Working…") : @tr("Apply");
+                enabled: root.active && !FanPageData.busy;
                 clicked => {
                     root.apply();
                 }
@@ -67,7 +71,7 @@ component FanTab inherits Rectangle {
 
             Button {
                 text: @tr("Cancel");
-                enabled <=> root.active;
+                enabled: root.active && !FanPageData.busy;
                 clicked => {
                     root.cancel()
                 }
@@ -75,7 +79,7 @@ component FanTab inherits Rectangle {
 
             Button {
                 text: @tr("Factory Default (all fans)");
-                enabled <=> root.active;
+                enabled: root.active && !FanPageData.busy;
                 clicked => {
                     root.default();
                 }
@@ -91,11 +95,57 @@ export component PageFans inherits VerticalLayout {
     PageHeader {
         badge: @tr("Cooling");
         title: @tr("Fan Curves");
-        subtitle: @tr("Tune per-profile fan behavior, preview available curves, and restore factory defaults when needed.");
+        subtitle: @tr("Tune per-profile fan behavior, preview available curves, and restore factory defaults when needed. Changes to inactive profiles are saved now and applied live when that profile becomes active.");
         aside: @tr("Thermal profiles");
     }
 
-    ScrollView {
+    Text {
+        wrap: TextWrap.word-wrap;
+        color: Theme.text-secondary;
+        font-size: Typography.sm;
+        text: FanPageData.active_profile != ""
+            ? @tr("Current active platform profile: {0}. Applying fan changes to a different profile stores them for later. Factory Default may briefly switch profiles internally while reading defaults.", FanPageData.active_profile)
+            : @tr("Applying fan changes to a profile that is not currently active stores them for later. Factory Default may briefly switch profiles internally while reading defaults.");
+    }
+
+    Text {
+        visible: FanPageData.status_message != "";
+        wrap: TextWrap.word-wrap;
+        color: FanPageData.has_error ? Theme.text-primary : Theme.text-secondary;
+        font-size: Typography.sm;
+        text: FanPageData.status_message;
+    }
+
+    if FanPageData.loading || !FanPageData.available: RogItem {
+        min-height: 172px;
+        max-height: 220px;
+
+        VerticalLayout {
+            padding: Spacing.lg;
+            spacing: Spacing.sm;
+            alignment: center;
+
+            Text {
+                font-size: Typography.lg;
+                font-weight: Typography.weight-semibold;
+                color: Theme.text-primary;
+                horizontal-alignment: center;
+                text: FanPageData.loading ? @tr("Loading fan curves") : @tr("Fan curves unavailable");
+            }
+
+            Text {
+                wrap: TextWrap.word-wrap;
+                color: FanPageData.has_error ? Theme.error : Theme.text-secondary;
+                font-size: Typography.sm;
+                horizontal-alignment: center;
+                text: FanPageData.status_message != ""
+                    ? FanPageData.status_message
+                    : @tr("This machine did not report editable fan curves.");
+            }
+        }
+    }
+
+    if FanPageData.available && !FanPageData.loading: ScrollView {
         TabWidget {
             Tab {
                 title: @tr("Balanced");
@@ -112,9 +162,6 @@ export component PageFans inherits VerticalLayout {
                             }
                             cancel => {
                                 FanPageData.reload_profile(Profile.Balanced);
-                            }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.CPU, Profile.Balanced, self.enabled, FanPageData.balanced_cpu);
                             }
                             default => {
                                 FanPageData.set_profile_default(Profile.Balanced);
@@ -135,9 +182,6 @@ export component PageFans inherits VerticalLayout {
                             cancel => {
                                 FanPageData.reload_profile(Profile.Balanced);
                             }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.Middle, Profile.Balanced, self.enabled, FanPageData.balanced_mid);
-                            }
                             default => {
                                 FanPageData.set_profile_default(Profile.Balanced);
                             }
@@ -156,9 +200,6 @@ export component PageFans inherits VerticalLayout {
                             }
                             cancel => {
                                 FanPageData.reload_profile(Profile.Balanced);
-                            }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.GPU, Profile.Balanced, self.enabled, FanPageData.balanced_gpu);
                             }
                             default => {
                                 FanPageData.set_profile_default(Profile.Balanced);
@@ -184,9 +225,6 @@ export component PageFans inherits VerticalLayout {
                             cancel => {
                                 FanPageData.reload_profile(Profile.Performance);
                             }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.CPU, Profile.Performance, self.enabled, FanPageData.performance_cpu);
-                            }
                             default => {
                                 FanPageData.set_profile_default(Profile.Performance);
                             }
@@ -206,9 +244,6 @@ export component PageFans inherits VerticalLayout {
                             cancel => {
                                 FanPageData.reload_profile(Profile.Performance);
                             }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.Middle, Profile.Performance, self.enabled, FanPageData.performance_mid);
-                            }
                             default => {
                                 FanPageData.set_profile_default(Profile.Performance);
                             }
@@ -227,9 +262,6 @@ export component PageFans inherits VerticalLayout {
                             }
                             cancel => {
                                 FanPageData.reload_profile(Profile.Performance);
-                            }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.GPU, Profile.Performance, self.enabled, FanPageData.performance_gpu);
                             }
                             default => {
                                 FanPageData.set_profile_default(Profile.Performance);
@@ -255,9 +287,6 @@ export component PageFans inherits VerticalLayout {
                             cancel => {
                                 FanPageData.reload_profile(Profile.Quiet);
                             }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.CPU, Profile.Quiet, self.enabled, FanPageData.quiet_cpu);
-                            }
                             default => {
                                 FanPageData.set_profile_default(Profile.Quiet);
                             }
@@ -277,9 +306,6 @@ export component PageFans inherits VerticalLayout {
                             cancel => {
                                 FanPageData.reload_profile(Profile.Quiet);
                             }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.Middle, Profile.Quiet, self.enabled, FanPageData.quiet_mid);
-                            }
                             default => {
                                 FanPageData.set_profile_default(Profile.Quiet);
                             }
@@ -298,9 +324,6 @@ export component PageFans inherits VerticalLayout {
                             }
                             cancel => {
                                 FanPageData.reload_profile(Profile.Quiet);
-                            }
-                            toggled => {
-                                FanPageData.set_fan_data(FanType.GPU, Profile.Quiet, self.enabled, FanPageData.quiet_gpu);
                             }
                             default => {
                                 FanPageData.set_profile_default(Profile.Quiet);

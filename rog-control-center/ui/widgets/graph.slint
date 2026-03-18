@@ -248,11 +248,18 @@ export component Graph inherits Rectangle {
                 function est_rpm() -> int {
                     Math.round((fan_pct() / 100.0) * root.max-rpm)
                 }
+                function tooltip_text() -> string {
+                    if root.max-rpm > 0 {
+                        "\{Math.floor(n.x / 1px)}°C, \{fan_pct()}% (~\{est_rpm()} RPM)"
+                    } else {
+                        "\{Math.floor(n.x / 1px)}°C, \{fan_pct()}%"
+                    }
+                }
                 //
                 label := Text {
                     color: Theme.text-primary;
                     font-size: Typography.sm;
-                    text: "\{Math.floor(n.x / 1px)}°C, \{fan_pct()}% (~\{est_rpm()} RPM)";
+                    text: tooltip_text();
                     vertical-alignment: center;
                     horizontal-alignment: center;
                 }
