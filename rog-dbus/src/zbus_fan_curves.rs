@@ -38,13 +38,6 @@ pub trait FanCurves {
     /// Get the latest CPU temperature metrics sampled by the daemon.
     fn cpu_temperature_metrics(&self) -> zbus::Result<CpuTempMetrics>;
 
-    /// Reset the stored (self) and device curve to the defaults of the
-    /// platform.
-    ///
-    /// Each platform_profile has a different default and the defualt can be
-    /// read only for the currently active profile.
-    fn reset_profile_curves(&self, profile: PlatformProfile) -> zbus::Result<()>;
-
     /// SetActiveCurveToDefaults method
     fn set_curves_to_defaults(&self, profile: PlatformProfile) -> zbus::Result<()>;
 
