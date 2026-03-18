@@ -2,195 +2,93 @@ import { ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography } from "../globals.slint";
 import { PageHeader, RogItem } from "../widgets/common.slint";
 
+component AboutCard inherits RogItem {
+    in property <string> title;
+    in property <string> body;
+
+    min-width: 0px;
+    min-height: 132px;
+    max-height: 208px;
+
+    VerticalLayout {
+        padding-top: Spacing.md;
+        padding-bottom: Spacing.md;
+        padding-left: Spacing.lg;
+        padding-right: Spacing.lg;
+        spacing: Spacing.xs;
+
+        Text {
+            text: root.title;
+            font-size: Typography.sm;
+            font-weight: Typography.weight-semibold;
+            color: Theme.text-primary;
+        }
+
+        Text {
+            min-width: 0px;
+            text: root.body;
+            font-size: Typography.xs;
+            color: Theme.text-secondary;
+            wrap: TextWrap.word-wrap;
+        }
+    }
+}
+
 export component PageAbout inherits Rectangle {
     clip: true;
+    property <bool> wide: self.width >= 900px;
 
     ScrollView {
         VerticalLayout {
             padding: Spacing.lg;
-            spacing: Spacing.lg;
+            spacing: Spacing.md;
 
             PageHeader {
                 badge: @tr("About");
                 title: @tr("ROG Control Center");
-                subtitle: @tr("The graphical front end for the ASUS Linux control stack, built to expose hardware tuning without dropping to the command line.");
+                subtitle: @tr("Desktop controls for ASUS hardware features that are available on this machine.");
                 aside: @tr("asusctl GUI");
             }
 
-            RogItem {
-                min-height: 164px;
-                max-height: 212px;
+            AboutCard {
+                title: @tr("What it is");
+                body: @tr("ROG Control Center is the graphical front end for asusctl and related services. It keeps the UI close to the machine's actual capabilities instead of showing controls that do not apply.");
+            }
 
-                VerticalLayout {
-                    padding: Spacing.lg;
-                    spacing: Spacing.md;
+            if wide: HorizontalLayout {
+                spacing: Spacing.lg;
 
-                    Text {
-                        text: @tr("What it does");
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Theme.text-primary;
-                    }
+                AboutCard {
+                    horizontal-stretch: 1;
+                    title: @tr("What you can change");
+                    body: @tr("Power: switch performance profiles and adjust fan behavior.\nLighting: configure Aura effects and AniMe Matrix on supported devices.\nBattery: set charge limits and other firmware-backed limits.\nGraphics: inspect and request supported GPU modes through supergfxctl.");
+                }
 
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("ROG Control Center is the desktop interface for the `asusctl` toolset and related services. It brings ASUS laptop controls into one place while keeping the same DBus-backed hardware stack underneath.");
-                        font-size: Typography.md;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("Pages only appear when the underlying platform interfaces are available, so the UI stays close to the machine's actual capabilities instead of exposing dead controls.");
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                    }
+                AboutCard {
+                    horizontal-stretch: 1;
+                    title: @tr("What it needs");
+                    body: @tr("Kernel 6.19 or newer.\nasusd for platform controls.\nsupergfxctl for graphics routing.");
                 }
             }
 
-            RogItem {
-                min-height: 228px;
-                max-height: 312px;
-
-                VerticalLayout {
-                    padding: Spacing.lg;
-                    spacing: Spacing.sm;
-
-                    Text {
-                        text: @tr("Key capabilities");
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        text: @tr("Performance and thermals: switch platform profiles and edit supported fan curves.");
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                        wrap: TextWrap.word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("Lighting: configure Aura keyboard effects, AniMe Matrix behavior, and Slash lightbar settings on supported hardware.");
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                        wrap: TextWrap.word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("Battery and display: set charge limits, screen options, and other firmware-backed controls exposed by the platform.");
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                        wrap: TextWrap.word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("Graphics routing: inspect and request supported GPU modes through `supergfxctl` when available.");
-                        color: Theme.text-primary;
-                        font-size: Typography.md;
-                        wrap: TextWrap.word-wrap;
-                    }
-                }
+            if !wide: AboutCard {
+                title: @tr("What you can change");
+                body: @tr("Power: switch performance profiles and adjust fan behavior.\nLighting: configure Aura effects and AniMe Matrix on supported devices.\nBattery: set charge limits and other firmware-backed limits.\nGraphics: inspect and request supported GPU modes through supergfxctl.");
             }
 
-            RogItem {
-                min-height: 148px;
-                max-height: 204px;
-
-                VerticalLayout {
-                    padding: Spacing.lg;
-                    spacing: Spacing.sm;
-
-                    Text {
-                        text: @tr("Requirements");
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("This software requires kernel version 6.19 for the newer armoury-backed controls used by current builds.");
-                        font-size: Typography.md;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("Some features also depend on the matching services being installed and running, such as `asusd` for platform controls and `supergfxctl` for graphics-mode management.");
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                    }
-                }
+            if !wide: AboutCard {
+                title: @tr("What it needs");
+                body: @tr("Kernel 6.19 or newer.\nasusd for platform controls.\nsupergfxctl for graphics routing.");
             }
 
-            RogItem {
-                min-height: 156px;
-                max-height: 224px;
-
-                VerticalLayout {
-                    padding: Spacing.lg;
-                    spacing: Spacing.sm;
-
-                    Text {
-                        text: @tr("This branch");
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("This build carries a newer custom interface branch on top of the upstream ASUS Linux control stack, with ongoing work to keep UI polish and upstream feature coverage in sync.");
-                        font-size: Typography.md;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("Current focus areas include responsive layout cleanup, consistent page shell design, and keeping hardware controls aligned with upstream service behavior.");
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                    }
-                }
+            AboutCard {
+                title: @tr("Why some pages are hidden");
+                body: @tr("Pages only appear when the matching hardware or service is present. That keeps the interface honest: if a feature is not supported on this laptop, it does not get a dead control.");
             }
 
-            RogItem {
-                min-height: 168px;
-                max-height: 236px;
-
-                VerticalLayout {
-                    padding: Spacing.lg;
-                    spacing: Spacing.sm;
-
-                    Text {
-                        text: @tr("Project and license");
-                        font-size: Typography.lg;
-                        font-weight: Typography.weight-semibold;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        wrap: TextWrap.word-wrap;
-                        text: @tr("ROG Control Center is open-source software released under the Mozilla Public License 2.0 (MPL-2.0).");
-                        font-size: Typography.md;
-                        color: Theme.text-primary;
-                    }
-
-                    Text {
-                        text: @tr("Source Code: https://gitlab.com/asus-linux/asusctl");
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                        wrap: TextWrap.word-wrap;
-                    }
-
-                    Text {
-                        text: @tr("Website: https://asus-linux.org/");
-                        font-size: Typography.sm;
-                        color: Theme.text-secondary;
-                        wrap: TextWrap.word-wrap;
-                    }
-                }
+            AboutCard {
+                title: @tr("Project links");
+                body: "Source code: https://gitlab.com/asus-linux/asusctl\nWebsite: https://asus-linux.org/\nLicense: MPL-2.0";
             }
         }
     }
