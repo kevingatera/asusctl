@@ -31,6 +31,10 @@ members = [
   "rog-scsi",
 ]
 
+# Vendored supergfxctl fork: linked via path dependency from rog-control-center,
+# excluded here so root workspace commands (e.g. cargo fmt --all) don't churn it.
+exclude = ["supergfxctl"]
+
 default-members = ["asusctl", "asusd", "asusd-user", "rog-control-center"]
 
 [workspace.dependencies]

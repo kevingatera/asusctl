@@ -12,6 +12,8 @@ export global SupergfxPageData {
     in-out property <string> pending_mode: "";
     in-out property <string> pending_action: "";
     in-out property <string> vendor: "";
+    in-out property <string> topology: "";
+    in-out property <string> mode_note: "";
     in-out property <string> status_message: "";
     in-out property <bool> apply_enabled: false;
     callback request_set_mode(int);
@@ -43,6 +45,19 @@ component StatusRow inherits VerticalLayout {
 
 export component PageSupergfx inherits Rectangle {
     background: Theme.background;
+    property <int> status_row_count:
+        2
+        + (SupergfxPageData.topology != "" ? 1 : 0)
+        + (SupergfxPageData.pending_mode != "" && SupergfxPageData.pending_mode != SupergfxPageData.current_mode ? 1 : 0)
+        + (SupergfxPageData.pending_action != "" ? 1 : 0)
+        + (SupergfxPageData.vendor != "" ? 1 : 0);
+    property <length> status_card_min_height:
+        180px
+        + status_row_count * 48px
+        + (SupergfxPageData.mode_note != "" ? 88px : 0px);
+    property <length> mode_card_min_height:
+        288px
+        + (SupergfxPageData.status_message != "" ? 52px : 0px);
 
     ScrollView {
         VerticalLayout {
@@ -52,7 +67,7 @@ export component PageSupergfx inherits Rectangle {
         PageHeader {
             badge: @tr("Graphics");
             title: @tr("Supergfx Control");
-            subtitle: @tr("Choose battery saver, balanced hybrid graphics, or discrete-only performance mode and inspect the current committed graphics state.");
+            subtitle: @tr("Choose battery saver, balanced hybrid graphics, or discrete-only performance mode and inspect both the supergfx state and the current hardware topology.");
             aside: @tr("Mode orchestration");
         }
 
@@ -79,8 +94,8 @@ export component PageSupergfx inherits Rectangle {
         }
 
         if SupergfxPageData.available: RogItem {
-            min-height: SupergfxPageData.status_message != "" ? 220px : 184px;
-            max-height: SupergfxPageData.status_message != "" ? 320px : 240px;
+            min-height: mode_card_min_height;
+            max-height: mode_card_min_height + 88px;
             VerticalLayout {
                 padding: Spacing.lg;
                 spacing: Spacing.md;
@@ -97,6 +112,8 @@ export component PageSupergfx inherits Rectangle {
                     text: @tr("Integrated keeps only the iGPU active for battery life. Hybrid keeps the iGPU primary and wakes the dGPU on demand. Ultimate / MUX dGPU makes the dGPU primary for maximum performance. Mode changes may require logout or reboot before they fully take effect.");
                 }
                 SystemDropdown {
+                    min-height: 72px;
+                    max-height: 96px;
                     text: @tr("Mode Selection" => "Mode");
                     model <=> SupergfxPageData.modes;
                     current_index <=> SupergfxPageData.selected_mode;
@@ -128,7 +145,7 @@ export component PageSupergfx inherits Rectangle {
 
         if SupergfxPageData.available: RogItem {
             min-height: 186px;
-            max-height: 248px;
+            max-height: 260px;
             VerticalLayout {
                 padding: Spacing.md;
                 spacing: Spacing.xs;
@@ -154,8 +171,8 @@ export component PageSupergfx inherits Rectangle {
         }
 
         if SupergfxPageData.available: RogItem {
-            min-height: 212px;
-            max-height: 340px;
+            min-height: status_card_min_height;
+            max-height: status_card_min_height + 140px;
             VerticalLayout {
                 padding: Spacing.md;
                 spacing: Spacing.sm;
@@ -169,27 +186,35 @@ export component PageSupergfx inherits Rectangle {
                     label: @tr("Current mode");
                     value: SupergfxPageData.current_mode;
                 }
+                if SupergfxPageData.topology != "": StatusRow {
+                    label: @tr("Hardware topology");
+                    value: SupergfxPageData.topology;
+                }
                 StatusRow {
                     label: @tr("Power state");
                     value: SupergfxPageData.power_state;
                 }
-                StatusRow {
+                if SupergfxPageData.pending_mode != "" && SupergfxPageData.pending_mode != SupergfxPageData.current_mode: StatusRow {
                     label: @tr("Pending mode");
                     value: SupergfxPageData.pending_mode;
-                    visible: SupergfxPageData.pending_mode != "" && SupergfxPageData.pending_mode != SupergfxPageData.current_mode;
                     value_color: Theme.text-secondary;
                 }
-                StatusRow {
+                if SupergfxPageData.pending_action != "": StatusRow {
                     label: @tr("Pending action");
                     value: SupergfxPageData.pending_action;
-                    visible: SupergfxPageData.pending_action != "" && SupergfxPageData.pending_action != @tr("No action required");
                     value_color: Theme.text-secondary;
                 }
-                StatusRow {
+                if SupergfxPageData.vendor != "": StatusRow {
                     label: @tr("dGPU vendor");
                     value: SupergfxPageData.vendor;
-                    visible: SupergfxPageData.vendor != "";
                     value_color: Theme.text-secondary;
+                }
+                Text {
+                    visible: SupergfxPageData.mode_note != "";
+                    wrap: TextWrap.word-wrap;
+                    color: Theme.text-secondary;
+                    font-size: Typography.sm;
+                    text: SupergfxPageData.mode_note;
                 }
             }
         }

@@ -94,7 +94,7 @@ fn install_callbacks(handle: &Weak<MainWindow>, conn: Arc<Connection>, modes_sta
                             pending_mode != GfxMode::None && pending_mode != current_mode;
 
                         if pending_transition {
-                            let pending_label = mode_label(pending_mode);
+                            let pending_label = mode_detail_label(pending_mode);
                             set_status(
                                 &handle,
                                 format!(
@@ -103,12 +103,12 @@ fn install_callbacks(handle: &Weak<MainWindow>, conn: Arc<Connection>, modes_sta
                                 ),
                             );
                         } else if mode == current_mode {
-                            let label = mode_label(mode);
+                            let label = mode_detail_label(mode);
                             set_status(&handle, format!("{label} is already active."));
                         } else {
                             match proxy.set_mode(&mode).await {
                                 Ok(action) => {
-                                    let label = mode_label(mode);
+                                    let label = mode_detail_label(mode);
                                     let action_text = action_message(&action);
                                     set_status(
                                         &handle,
@@ -125,7 +125,7 @@ fn install_callbacks(handle: &Weak<MainWindow>, conn: Arc<Connection>, modes_sta
                         }
                     }
                     Err(e) => {
-                        let label = mode_label(mode);
+                        let label = mode_detail_label(mode);
                         set_status(
                             &handle,
                             format!("Failed to connect to supergfxctl for {label}: {e}"),
@@ -222,6 +222,8 @@ async fn refresh_status(
         .unwrap_or(UserActionRequired::Nothing);
     let power = proxy.power().await.unwrap_or(GfxPower::Unknown);
     let vendor = proxy.vendor().await.unwrap_or_default();
+    let topology = proxy.topology().await.unwrap_or_default();
+    let mode_note = proxy.mode_note().await.unwrap_or_default();
     let pending_transition = pending_mode != GfxMode::None && pending_mode != current_mode;
     let selected_mode = if pending_transition {
         pending_mode
@@ -236,7 +238,7 @@ async fn refresh_status(
 
     let mode_labels: Vec<SharedString> = modes_list
         .iter()
-        .map(|mode| SharedString::from(mode_label(*mode)))
+        .map(|mode| SharedString::from(mode_option_label(*mode)))
         .collect();
 
     handle
@@ -246,17 +248,19 @@ async fn refresh_status(
             global.set_modes(ModelRc::new(VecModel::from(mode_labels)));
             global.set_apply_enabled(!pending_transition);
             global.set_selected_mode(selected_index as i32);
-            global.set_current_mode(SharedString::from(mode_label(current_mode)));
+            global.set_current_mode(SharedString::from(mode_detail_label(current_mode)));
             global.set_power_state(SharedString::from(power_label(power)));
             let pending_text = if pending_mode == GfxMode::None || pending_mode == current_mode {
                 SharedString::default()
             } else {
-                SharedString::from(mode_label(pending_mode))
+                SharedString::from(mode_detail_label(pending_mode))
             };
             global.set_pending_mode(pending_text);
-            let action_text = SharedString::from(action_message(&pending_action));
+            let action_text = SharedString::from(action_status_text(&pending_action));
             global.set_pending_action(action_text);
             global.set_vendor(SharedString::from(vendor.trim()));
+            global.set_topology(SharedString::from(topology.trim()));
+            global.set_mode_note(SharedString::from(mode_note.trim()));
         })
         .ok();
 
@@ -295,7 +299,19 @@ fn set_busy(handle: &Weak<MainWindow>, busy: bool) {
         .ok();
 }
 
-fn mode_label(mode: GfxMode) -> &'static str {
+fn mode_option_label(mode: GfxMode) -> &'static str {
+    match mode {
+        GfxMode::Hybrid => "Hybrid",
+        GfxMode::Integrated => "Integrated",
+        GfxMode::NvidiaNoModeset => "NVIDIA (No Modeset)",
+        GfxMode::Vfio => "VFIO",
+        GfxMode::AsusEgpu => "ASUS eGPU",
+        GfxMode::AsusMuxDgpu => "MUX dGPU",
+        GfxMode::None => "Unknown",
+    }
+}
+
+fn mode_detail_label(mode: GfxMode) -> &'static str {
     match mode {
         GfxMode::Hybrid => "Hybrid (Balanced, dGPU on demand)",
         GfxMode::Integrated => "Integrated (Battery saver, iGPU only)",
@@ -327,5 +343,12 @@ fn action_message(action: &UserActionRequired) -> &'static str {
             "Switch to Integrated or Hybrid before disabling ASUS eGPU."
         }
         UserActionRequired::Nothing => "No action required.",
+    }
+}
+
+fn action_status_text(action: &UserActionRequired) -> &'static str {
+    match action {
+        UserActionRequired::Nothing => "",
+        _ => action_message(action),
     }
 }
