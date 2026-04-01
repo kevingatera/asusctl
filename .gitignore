@@ -28,3 +28,5 @@ AGENTS.md
 
 # Local agent continuity log
 continuity.md
+
+*.log

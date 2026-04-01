@@ -463,7 +463,8 @@ async fn wait_for_discrete_gpu_idle() {
                     }
 
                     debug!(
-                        "Discrete GPU nodes are idle, waiting {:?} more to avoid driver teardown race",
+                        "Discrete GPU nodes are idle, waiting {:?} more to avoid driver teardown \
+                         race",
                         GPU_IDLE_STABLE_FOR.saturating_sub(idle_for)
                     );
                 } else {
