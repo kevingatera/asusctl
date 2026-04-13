@@ -753,6 +753,7 @@ export component SystemDropdown inherits RogItem {
                 model <=> root.model;
                 current-index <=> root.current_index;
                 current-value <=> root.current_value;
+                enabled: root.enabled;
                 selected => {
                     root.selected(root.current_index)
                 }
