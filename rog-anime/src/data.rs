@@ -26,9 +26,9 @@ use crate::{AnimTime, AnimeGif};
 /// per-device-class:
 ///
 /// - GA401, GA402, GU604, G835L: `PANE_LEN` bytes per pane (universal).
-/// - G635L: 490 bytes (pane 1), 320 bytes (pane 2) — exact-fit chunking
-///   for the 810-LED matrix, per G Helper's `AnimeMatrixDevice`. See
-///   the doc comment on [`usb_prefixes_for`] for source citations.
+/// - G635L: 490 bytes (pane 1), 320 bytes (pane 2) — exact-fit chunking for the
+///   810-LED matrix, per G Helper's `AnimeMatrixDevice`. See the doc comment on
+///   [`usb_prefixes_for`] for source citations.
 const BLOCK_START: usize = 7;
 /// *Not* inclusive — the byte before this is the final usable byte of
 /// each "pane" (packet payload region). 640 (packet size) - 6 (trailing
@@ -51,16 +51,19 @@ pub const USB_PREFIX2: [u8; 7] = [
 pub const USB_PREFIX3: [u8; 7] = [
     0x5e, 0xc0, 0x02, 0xe7, 0x04, 0x73, 0x02,
 ];
-/// First packet header for G635L: start=1, length=490 (per G Helper STRIX-class chunking)
+/// First packet header for G635L: start=1, length=490 (per G Helper STRIX-class
+/// chunking)
 pub const USB_PREFIX_G635L_1: [u8; 7] = [
     0x5e, 0xc0, 0x02, 0x01, 0x00, 0xea, 0x01,
 ];
-/// Second packet header for G635L: start=491, length=320 (per G Helper STRIX-class chunking)
+/// Second packet header for G635L: start=491, length=320 (per G Helper
+/// STRIX-class chunking)
 pub const USB_PREFIX_G635L_2: [u8; 7] = [
     0x5e, 0xc0, 0x02, 0xeb, 0x01, 0x40, 0x01,
 ];
 /// LED data length carried in G635L packet 1 (pane 1).
-/// G635L's 810-LED matrix splits exactly as 490 + 320 per G Helper STRIX-class chunking.
+/// G635L's 810-LED matrix splits exactly as 490 + 320 per G Helper STRIX-class
+/// chunking.
 pub const G635L_PANE1_LEN: usize = 490;
 /// LED data length carried in G635L packet 2 (pane 2). Equals
 /// `AnimeType::G635L.data_length() - G635L_PANE1_LEN`.
@@ -70,9 +73,10 @@ pub const G635L_PANE2_LEN: usize = 320;
 /// transaction, per device class.
 ///
 /// The protocol structure for each data packet is:
-///   `[0x5e, 0xc0, 0x02, START_LO, START_HI, LEN_LO, LEN_HI, ...payload..., zeros]`
-/// where `START` and `LEN` are little-endian `u16` values describing the
-/// LED index range this packet writes (LED indices are 1-based on the wire).
+///   `[0x5e, 0xc0, 0x02, START_LO, START_HI, LEN_LO, LEN_HI, ...payload...,
+/// zeros]` where `START` and `LEN` are little-endian `u16` values describing
+/// the LED index range this packet writes (LED indices are 1-based on the
+/// wire).
 ///
 /// Per-device chunking strategy (UpdatePageLength values, sourced from
 /// G Helper's AnimeMatrixDevice — see citation at the top of the
@@ -80,12 +84,12 @@ pub const G635L_PANE2_LEN: usize = 320;
 /// - GA401: PANE_LEN bytes per pane (universal)
 /// - GA402: PANE_LEN bytes per pane (universal)
 /// - GU604: PANE_LEN bytes per pane (universal)
-/// - G835L: PANE_LEN bytes per pane — currently shares the universal
-///   chunking. Per G Helper this should be 490+320 (STRIX class),
-///   but G835L is intentionally left unchanged here pending
-///   hardware verification by a G835L owner.
-/// - G635L: 490 bytes (pane 1), 320 bytes (pane 2) — exact fit for the
-///   810-LED matrix.
+/// - G835L: PANE_LEN bytes per pane — currently shares the universal chunking.
+///   Per G Helper this should be 490+320 (STRIX class), but G835L is
+///   intentionally left unchanged here pending hardware verification by a G835L
+///   owner.
+/// - G635L: 490 bytes (pane 1), 320 bytes (pane 2) — exact fit for the 810-LED
+///   matrix.
 pub fn usb_prefixes_for(anime_type: AnimeType) -> Vec<[u8; 7]> {
     match anime_type {
         // G635L: STRIX-class chunking (490 + 320), per G Helper:

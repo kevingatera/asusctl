@@ -3,7 +3,9 @@ use std::sync::Arc;
 
 use config_traits::{StdConfig, StdConfigLoad};
 use log::{debug, info, warn};
+use rog_platform::asus_armoury::FirmwareAttributes;
 use rog_platform::platform::{PlatformProfile, RogPlatform};
+use rog_platform::power::AsusPower;
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
 use rog_profiles::{find_fan_curve_node, FanCurvePU, FanCurveProfiles};
@@ -12,9 +14,6 @@ use tokio::sync::Mutex;
 use tokio::time::Duration;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
-
-use rog_platform::asus_armoury::FirmwareAttributes;
-use rog_platform::power::AsusPower;
 
 use crate::asus_armoury::set_config_or_default;
 use crate::config::Config;
