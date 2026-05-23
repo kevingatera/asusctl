@@ -2,8 +2,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use config_traits::{StdConfig, StdConfigLoad};
-use futures_lite::StreamExt;
-use log::{debug, error, info, warn};
+use log::{debug, info, warn};
 use rog_platform::platform::{PlatformProfile, RogPlatform};
 use rog_profiles::error::ProfileError;
 use rog_profiles::fan_curve_set::CurveData;
@@ -14,6 +13,11 @@ use tokio::time::Duration;
 use zbus::object_server::SignalEmitter;
 use zbus::{interface, Connection};
 
+use rog_platform::asus_armoury::FirmwareAttributes;
+use rog_platform::power::AsusPower;
+
+use crate::asus_armoury::set_config_or_default;
+use crate::config::Config;
 use crate::cpu_temp_monitor::{CpuTempMetrics, CpuTempMonitor};
 use crate::error::RogError;
 use crate::{CtrlTask, CONFIG_PATH_BASE};
@@ -46,16 +50,58 @@ impl StdConfig for FanCurveConfig {
 
 impl StdConfigLoad for FanCurveConfig {}
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct CtrlFanCurveZbus {
     config: Arc<Mutex<FanCurveConfig>>,
     platform: RogPlatform,
     cpu_monitor: Option<Arc<CpuTempMonitor>>,
     cpu_metrics: Arc<Mutex<Option<CpuTempMetrics>>>,
+    platform_config: Option<Arc<Mutex<Config>>>,
+    power: Option<AsusPower>,
+}
+
+// Manual impl because Config does not derive Debug; platform_config and
+// power are intentionally omitted from the output.
+impl std::fmt::Debug for CtrlFanCurveZbus {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("CtrlFanCurveZbus")
+            .field("config", &self.config)
+            .field("platform", &self.platform)
+            .finish()
+    }
 }
 
 // Non-zbus-derive impl
 impl CtrlFanCurveZbus {
+    pub fn config(&self) -> Arc<Mutex<FanCurveConfig>> {
+        self.config.clone()
+    }
+
+    /// Set the platform config and power references needed to re-apply PPT
+    /// values after fan curve changes.
+    pub fn set_platform_refs(&mut self, config: Arc<Mutex<Config>>, power: AsusPower) {
+        self.platform_config = Some(config);
+        self.power = Some(power);
+    }
+
+    /// Re-apply PPT values after fan curve writes. Fan curve changes reset
+    /// the EC fan mode, and PPT values must be re-sent afterwards.
+    async fn reapply_ppt(&self, profile: PlatformProfile) {
+        let (Some(ref platform_config), Some(ref power)) = (&self.platform_config, &self.power)
+        else {
+            return;
+        };
+        let power_plugged = power.get_online().unwrap_or_default();
+        let attrs = FirmwareAttributes::new();
+        set_config_or_default(
+            &attrs,
+            &mut *platform_config.lock().await,
+            power_plugged == 1,
+            profile,
+        )
+        .await;
+    }
+
     pub fn new() -> Result<Self, RogError> {
         let platform = RogPlatform::new()?;
         if platform.has_platform_profile() {
@@ -107,6 +153,8 @@ impl CtrlFanCurveZbus {
                 platform,
                 cpu_monitor,
                 cpu_metrics: Arc::new(Mutex::new(None)),
+                platform_config: None,
+                power: None,
             });
         }
 
@@ -128,11 +176,15 @@ impl CtrlFanCurveZbus {
             .await
             .profiles
             .set_profile_curves_enabled(profile, enabled);
-        self.config
-            .lock()
-            .await
-            .profiles
-            .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+        let active: PlatformProfile = self.platform.get_platform_profile()?.into();
+        if active == profile {
+            self.config
+                .lock()
+                .await
+                .profiles
+                .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+            self.reapply_ppt(profile).await;
+        }
         self.config.lock().await.write();
         Ok(())
     }
@@ -150,11 +202,15 @@ impl CtrlFanCurveZbus {
             .await
             .profiles
             .set_profile_fan_curve_enabled(profile, fan, enabled);
-        self.config
-            .lock()
-            .await
-            .profiles
-            .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+        let active: PlatformProfile = self.platform.get_platform_profile()?.into();
+        if active == profile {
+            self.config
+                .lock()
+                .await
+                .profiles
+                .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+            self.reapply_ppt(profile).await;
+        }
         self.config.lock().await.write();
         Ok(())
     }
@@ -193,6 +249,7 @@ impl CtrlFanCurveZbus {
                 .await
                 .profiles
                 .write_profile_curve_to_platform(profile, &mut find_fan_curve_node()?)?;
+            self.reapply_ppt(profile).await;
         }
         self.config.lock().await.write();
         Ok(())
@@ -235,42 +292,6 @@ impl CtrlTask for CtrlFanCurveZbus {
     }
 
     async fn create_tasks(&self, _signal_ctxt: SignalEmitter<'static>) -> Result<(), RogError> {
-        let watch_platform_profile = self.platform.monitor_platform_profile()?;
-        let platform = self.platform.clone();
-        let config = self.config.clone();
-        let fan_curves = self.config.clone();
-
-        tokio::spawn(async move {
-            let mut buffer = [0; 32];
-            if let Ok(mut stream) = watch_platform_profile.into_event_stream(&mut buffer) {
-                while (stream.next().await).is_some() {
-                    debug!("watch_platform_profile changed");
-                    if let Ok(profile) =
-                        platform
-                            .get_platform_profile()
-                            .map(|p| p.into())
-                            .map_err(|e| {
-                                error!("get_platform_profile error: {e}");
-                            })
-                    {
-                        if profile != config.lock().await.current {
-                            fan_curves
-                                .lock()
-                                .await
-                                .profiles
-                                .write_profile_curve_to_platform(
-                                    profile,
-                                    &mut find_fan_curve_node().unwrap(),
-                                )
-                                .map_err(|e| warn!("write_profile_curve_to_platform, {}", e))
-                                .ok();
-                            config.lock().await.current = profile;
-                        }
-                    }
-                }
-            }
-        });
-
         if let Some(monitor) = self.cpu_monitor.clone() {
             let metrics_store = self.cpu_metrics.clone();
             tokio::spawn(async move {
