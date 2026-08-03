@@ -250,7 +250,7 @@ export component SystemSlider inherits RogItem {
         alignment: LayoutAlignment.stretch;
 
         HorizontalLayout {
-            width: 35%;
+            horizontal-stretch: 35;
             min-width: 140px;
             spacing: Spacing.sm;
             alignment: LayoutAlignment.stretch;
@@ -280,6 +280,7 @@ export component SystemSlider inherits RogItem {
         }
 
         slider := PrimarySlider {
+            horizontal-stretch: 65;
             min-width: 120px;
             enabled: root.enabled;
             maximum: root.maximum;
