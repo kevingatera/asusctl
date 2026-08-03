@@ -54,20 +54,25 @@ export component PageAppSettings inherits Rectangle {
                         color: Theme.text-primary;
                     }
                     
-                    Button {
-                        text: "Change";
-                        clicked => {
-                            AppSettingsPageData.show_color_picker = true;
+                    HorizontalLayout {
+                        spacing: Spacing.md;
+                        alignment: end;
+
+                        Rectangle {
+                            width: 24px;
+                            height: 24px;
+                            border-radius: Radii.sm;
+                            background: Theme.primary;
+                            border-width: 1px;
+                            border-color: Theme.border;
                         }
-                    }
-                    
-                    Rectangle {
-                        width: 24px;
-                        height: 24px;
-                        border-radius: Radii.sm;
-                        background: Theme.primary;
-                        border-width: 1px;
-                        border-color: Theme.border;
+
+                        Button {
+                            text: "Change";
+                            clicked => {
+                                AppSettingsPageData.show_color_picker = true;
+                            }
+                        }
                     }
                 }
             }
