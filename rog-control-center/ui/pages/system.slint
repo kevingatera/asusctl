@@ -486,14 +486,15 @@ export component PageSystem inherits Rectangle {
 
             if !fan_curve_active: Rectangle {
                 background: #665500;
-                max-height: 30px;
+                border-radius: Radii.sm;
                 VerticalBox {
+                    padding: Spacing.sm;
                     Text {
                         text: @tr("requires_fan_curve_warning" => "CPU power limits require an active custom fan curve. Enable a fan curve for the active profile in the Fans tab to unlock these controls.");
                         font-size: 14px;
                         color: white;
-                        horizontal-alignment: TextHorizontalAlignment.center;
-                        wrap: word-wrap;
+                        wrap: TextWrap.word-wrap;
+                        horizontal-alignment: TextHorizontalAlignment.left;
                     }
                 }
             }
