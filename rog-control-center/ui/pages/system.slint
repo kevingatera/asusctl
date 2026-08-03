@@ -276,7 +276,7 @@ export component PageSystem inherits Rectangle {
                         min-width: 0px;
 
                         VerticalLayout {
-                            width: 35%;
+                            horizontal-stretch: 35;
                             min-width: 150px;
                             spacing: 4px;
                             Text {
@@ -294,6 +294,7 @@ export component PageSystem inherits Rectangle {
                         }
 
                         gamma_slider := PrimarySlider {
+                            horizontal-stretch: 65;
                             min-width: 120px;
                             minimum: 0.1;
                             maximum: 2.0;
