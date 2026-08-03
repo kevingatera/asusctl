@@ -197,7 +197,9 @@ export component PageAura inherits Rectangle {
             }
 
             HorizontalLayout {
+                alignment: LayoutAlignment.start;
                 Button {
+                    horizontal-stretch: 0;
                     text: @tr("Power Settings");
                     clicked => {
                         root.show_aura_power = true;
