@@ -118,7 +118,16 @@ async fn set_tray_icon_and_tip(
                     icons.rog_green.clone()
                 }
             }
-            GfxPower::AsusDisabled => icons.rog_white.clone(),
+            // The dGPU is fully disabled here (e.g. Integrated mode via the
+            // asus-armoury dgpu_disable switch), which is the same power-saving
+            // state as `Off` — show green, matching machines without the switch.
+            GfxPower::AsusDisabled => {
+                if mode == GfxMode::Vfio {
+                    icons.rog_white.clone()
+                } else {
+                    icons.rog_green.clone()
+                }
+            }
             GfxPower::AsusMuxDiscreet | GfxPower::Active => icons.rog_red.clone(),
             GfxPower::Unknown => {
                 if supergfx_active {
