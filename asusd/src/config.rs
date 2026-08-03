@@ -93,6 +93,18 @@ impl Config {
         };
         config.get(&profile)
     }
+
+    /// The profile to use for the given power state: the last profile saved
+    /// for that state, or the configured default if none was saved yet.
+    pub fn profile_for_power_state(&self, power_plugged: bool) -> PlatformProfile {
+        if power_plugged {
+            self.last_profile_on_ac
+                .unwrap_or(self.platform_profile_on_ac)
+        } else {
+            self.last_profile_on_battery
+                .unwrap_or(self.platform_profile_on_battery)
+        }
+    }
 }
 
 impl Default for Config {
@@ -284,5 +296,50 @@ impl From<Config601> for Config {
             last_profile_on_ac: None,
             last_profile_on_battery: None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn profile_for_power_state_falls_back_to_configured_default() {
+        let config = Config::default();
+        assert_eq!(
+            config.profile_for_power_state(true),
+            config.platform_profile_on_ac
+        );
+        assert_eq!(
+            config.profile_for_power_state(false),
+            config.platform_profile_on_battery
+        );
+    }
+
+    #[test]
+    fn profile_for_power_state_prefers_saved_profile() {
+        let mut config = Config::default();
+        config.last_profile_on_ac = Some(PlatformProfile::Quiet);
+        config.last_profile_on_battery = Some(PlatformProfile::Performance);
+        assert_eq!(config.profile_for_power_state(true), PlatformProfile::Quiet);
+        assert_eq!(
+            config.profile_for_power_state(false),
+            PlatformProfile::Performance
+        );
+    }
+
+    #[test]
+    fn profile_for_power_state_is_per_power_state() {
+        // Saving a profile for one power state must not leak into the other
+        let mut config = Config::default();
+        config.last_profile_on_battery = Some(PlatformProfile::Quiet);
+        assert_eq!(
+            config.profile_for_power_state(true),
+            config.platform_profile_on_ac
+        );
+        assert_eq!(
+            config.profile_for_power_state(false),
+            PlatformProfile::Quiet
+        );
     }
 }

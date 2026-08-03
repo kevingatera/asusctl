@@ -922,58 +922,47 @@ impl crate::Reloadable for CtrlPlatform {
         }
 
         if let Ok(power_plugged) = self.power.get_online() {
-            let previous_power_state_u8 = self.config.lock().await.last_power_plugged;
-            let previous_power_state = previous_power_state_u8 > 0;
-            let power_state_changed = previous_power_state_u8 != power_plugged;
-
             if self.platform.has_platform_profile() {
-                // Initialize saved profiles if they don't exist
+                // Initialize saved profiles if they don't exist, and record the
+                // actual power state so live AC/BAT transitions compare correctly
                 {
                     let mut config = self.config.lock().await;
+                    let mut dirty = false;
                     if let Ok(current_profile) = self.platform.get_platform_profile() {
                         let profile: PlatformProfile = current_profile.into();
                         if power_plugged > 0 {
                             if config.last_profile_on_ac.is_none() {
                                 config.last_profile_on_ac = Some(profile);
+                                dirty = true;
                             }
-                        } else {
-                            if config.last_profile_on_battery.is_none() {
-                                config.last_profile_on_battery = Some(profile);
-                            }
+                        } else if config.last_profile_on_battery.is_none() {
+                            config.last_profile_on_battery = Some(profile);
+                            dirty = true;
                         }
+                    }
+                    config.last_power_plugged = power_plugged;
+                    if dirty {
+                        config.write();
                     }
                 }
 
                 let change_epp = self.config.lock().await.platform_profile_linked_epp;
 
-                if power_state_changed {
-                    // Only update if power state actually changed
-                    self.update_policy_ac_or_bat(
-                        previous_power_state,
-                        power_plugged > 0,
-                        change_epp,
-                        None,
-                    )
-                    .await;
-                } else {
-                    // At startup (no change detected), use saved profile if available, otherwise
-                    // use configured default
-                    let throttle = {
-                        let config = self.config.lock().await;
-                        if power_plugged > 0 {
-                            config
-                                .last_profile_on_ac
-                                .unwrap_or(config.platform_profile_on_ac)
-                        } else {
-                            config
-                                .last_profile_on_battery
-                                .unwrap_or(config.platform_profile_on_battery)
-                        }
-                    };
-                    let epp = self.get_config_epp_for_throttle(throttle).await;
-                    self.platform.set_platform_profile(throttle.into()).ok();
-                    self.check_and_set_epp(epp, change_epp);
-                }
+                // Startup restore is "restore only": apply the saved profile for
+                // the current power state without routing through
+                // update_policy_ac_or_bat(). last_power_plugged is not persisted,
+                // so a power-state "change" detected here is an artifact of boot
+                // and the save-previous-state logic would clobber the saved
+                // profile for the other power state with the kernel-boot default.
+                let throttle = self
+                    .config
+                    .lock()
+                    .await
+                    .profile_for_power_state(power_plugged > 0);
+                let throttle = self.normalize_profile_for_device(throttle).await;
+                let epp = self.get_config_epp_for_throttle(throttle).await;
+                self.platform.set_platform_profile(throttle.into()).ok();
+                self.check_and_set_epp(epp, change_epp);
             }
 
             self.run_ac_or_bat_cmd(power_plugged > 0).await;
