@@ -1,5 +1,5 @@
-import { PageHeader, PrimarySlider, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
-import { Palette, HorizontalBox , VerticalBox, ScrollView, Button, Switch, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
+import { PageHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { Palette, HorizontalBox , VerticalBox, ScrollView, Button, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
 import { FanPageData } from "../types/fan_types.slint";
@@ -443,31 +443,43 @@ export component PageSystem inherits Rectangle {
             if (SystemPageData.ppt_pl1_spl.max > 0 && SystemPageData.ppt_pl1_spl.current != -1) || (SystemPageData.ppt_pl2_sppt.max > 0 && SystemPageData.ppt_pl2_sppt.current != -1) || (SystemPageData.ppt_pl3_fppt.max > 0 && SystemPageData.ppt_pl3_fppt.current != -1) || (SystemPageData.ppt_fppt.max > 0 && SystemPageData.ppt_fppt.current != -1) || (SystemPageData.ppt_apu_sppt.max > 0 && SystemPageData.ppt_apu_sppt.current != -1) || (SystemPageData.nv_tgp.max > 0 && SystemPageData.nv_tgp.current != -1) || (SystemPageData.nv_temp_target.max > 0 && SystemPageData.nv_temp_target.current != -1) || (SystemPageData.nv_dynamic_boost.max > 0 && SystemPageData.nv_dynamic_boost.current != -1): HorizontalLayout {
                 padding-right: Spacing.md;
                 padding-left: Spacing.md;
+                spacing: Spacing.md;
                 alignment: LayoutAlignment.space-between;
-                Rectangle {
-                    height: 32px;
-                    Text {
-                        font-size: Typography.md;
-                        color: Theme.text-secondary;
-                        text: @tr("ppt_warning" => "The following settings are not applied until the toggle is enabled.");
-                    }
+                Text {
+                    horizontal-stretch: 1;
+                    min-width: 0px;
+                    wrap: TextWrap.word-wrap;
+                    vertical-alignment: TextVerticalAlignment.center;
+                    font-size: Typography.md;
+                    color: Theme.text-secondary;
+                    text: @tr("ppt_warning" => "The following settings are not applied until the toggle is enabled.");
                 }
 
-                if !SystemPageData.ppt_enabled_available: Switch {
-                    text: @tr("ppt_group_enabled" => "Enable Tuning");
-                    checked <=> SystemPageData.enable_ppt_group;
-                    enabled: ppt_unlocked;
-                    toggled => {
-                        SystemPageData.cb_enable_ppt_group(SystemPageData.enable_ppt_group)
+                HorizontalLayout {
+                    horizontal-stretch: 0;
+                    spacing: Spacing.sm;
+
+                    if !SystemPageData.ppt_enabled_available: PrimarySwitch {
+                        enabled: ppt_unlocked;
+                        checked <=> SystemPageData.enable_ppt_group;
+                        toggled => {
+                            SystemPageData.cb_enable_ppt_group(SystemPageData.enable_ppt_group)
+                        }
                     }
-                }
-                if SystemPageData.ppt_enabled_available: Switch {
-                    text: @tr("ppt_group_enabled" => "Enable Tuning");
-                    checked <=> SystemPageData.ppt_enabled;
-                    enabled: ppt_unlocked;
-                    toggled => {
-                        SystemPageData.enable_ppt_group = self.checked;
-                        SystemPageData.cb_ppt_enabled(SystemPageData.ppt_enabled)
+                    if SystemPageData.ppt_enabled_available: PrimarySwitch {
+                        enabled: ppt_unlocked;
+                        checked <=> SystemPageData.ppt_enabled;
+                        toggled => {
+                            SystemPageData.enable_ppt_group = self.checked;
+                            SystemPageData.cb_ppt_enabled(SystemPageData.ppt_enabled)
+                        }
+                    }
+
+                    Text {
+                        vertical-alignment: TextVerticalAlignment.center;
+                        font-size: Typography.md;
+                        color: ppt_unlocked ? Theme.text-primary : Theme.text-secondary;
+                        text: @tr("ppt_group_enabled" => "Enable Tuning");
                     }
                 }
             }
