@@ -63,6 +63,7 @@ export component PageSupergfx inherits Rectangle {
         VerticalLayout {
         padding: Spacing.lg;
         spacing: Spacing.lg;
+        alignment: LayoutAlignment.start;
 
         PageHeader {
             badge: @tr("Graphics");
@@ -72,22 +73,32 @@ export component PageSupergfx inherits Rectangle {
         }
 
         if !SupergfxPageData.available: RogItem {
-            min-height: 96px;
-            max-height: 144px;
+            min-height: 172px;
+            max-height: 220px;
             VerticalLayout {
-                padding: Spacing.md;
+                padding: Spacing.lg;
                 spacing: Spacing.sm;
+                alignment: center;
+                Text {
+                    font-size: Typography.lg;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-primary;
+                    horizontal-alignment: center;
+                    text: @tr("supergfx_unavailable" => "Supergfx unavailable");
+                }
                 Text {
                     wrap: TextWrap.word-wrap;
+                    horizontal-alignment: center;
                     text: @tr("The supergfxctl daemon is not available. Ensure supergfxctl 5.2.0 or newer is installed and running.");
-                    color: Theme.text-primary;
-                    font-size: Typography.md;
+                    color: Theme.text-secondary;
+                    font-size: Typography.sm;
                 }
                 Text {
                     visible: SupergfxPageData.status_message != "";
+                    wrap: TextWrap.word-wrap;
+                    horizontal-alignment: center;
                     text: SupergfxPageData.status_message;
                     color: Theme.text-secondary;
-                    wrap: TextWrap.word-wrap;
                     font-size: Typography.sm;
                 }
             }
