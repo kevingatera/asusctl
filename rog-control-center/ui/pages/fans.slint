@@ -145,7 +145,11 @@ export component PageFans inherits VerticalLayout {
     padding: Spacing.lg;
     spacing: Spacing.lg;
 
-    property <Profile> selected_profile: Profile.Balanced;
+    // Start on the live profile instead of silently editing a different
+    // saved profile (for example Balanced while the machine is on Low Power).
+    // Clicking a chip intentionally replaces this binding and lets the user
+    // edit another profile for later use.
+    property <Profile> selected_profile: FanPageData.active_profile_kind;
     property <FanType> selected_fan: FanType.CPU;
 
     PageHeader {

@@ -179,8 +179,10 @@ impl CurveData {
         // Enable must be done *after* all points are written pwm3_enable
         device
             .set_attribute_value(format!("pwm{pwm_num}_enable"), enable.to_string())
-            .map_err(|e| error!("Failed to set pwm{pwm_num}_enable to {enable}: {e:?}"))
-            .ok();
+            .map_err(|e| {
+                error!("Failed to set pwm{pwm_num}_enable to {enable}: {e:?}");
+                e
+            })?;
         Ok(())
     }
 }

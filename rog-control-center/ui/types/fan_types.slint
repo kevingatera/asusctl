@@ -21,6 +21,9 @@ export global FanPageData {
     in-out property <bool> has_error: false;
     in-out property <string> status_message: "";
     in-out property <string> active_profile: "";
+    // The page uses this to start on the profile whose curve is actually
+    // active. A string remains separate for the human-readable status label.
+    in-out property <Profile> active_profile_kind: Profile.Balanced;
 
     in-out property <bool> cpu_fan_available: false;
     in-out property <bool> gpu_fan_available: false;

@@ -76,6 +76,17 @@ fn platform_profile_label(profile: PlatformProfile, quiet_is_low_power: bool) ->
     }
 }
 
+fn ui_profile_for_platform(profile: PlatformProfile) -> Profile {
+    match profile {
+        PlatformProfile::Balanced => Profile::Balanced,
+        PlatformProfile::Performance => Profile::Performance,
+        PlatformProfile::Quiet | PlatformProfile::LowPower => Profile::Quiet,
+        // The fan page has no Custom selector yet; keep a usable curve view
+        // instead of leaving the page with no matching FanTab.
+        PlatformProfile::Custom => Profile::Balanced,
+    }
+}
+
 fn set_loading(handle: &Weak<MainWindow>, loading: bool) {
     handle
         .upgrade_in_event_loop(move |handle| {
@@ -117,13 +128,18 @@ fn clear_status(handle: &Weak<MainWindow>) {
         .ok();
 }
 
-fn set_active_profile_label(handle: &Weak<MainWindow>, profile: impl Into<String>) {
-    let profile = profile.into();
+fn set_active_profile_label(
+    handle: &Weak<MainWindow>,
+    profile: PlatformProfile,
+    quiet_is_low_power: bool,
+) {
+    let label = platform_profile_label(profile, quiet_is_low_power);
+    let ui_profile = ui_profile_for_platform(profile);
     handle
         .upgrade_in_event_loop(move |handle| {
-            handle
-                .global::<FanPageData>()
-                .set_active_profile(profile.into());
+            let global = handle.global::<FanPageData>();
+            global.set_active_profile(label.into());
+            global.set_active_profile_kind(ui_profile);
         })
         .map_err(|e| error!("set_active_profile_label: upgrade_in_event_loop: {e:?}"))
         .ok();
@@ -442,10 +458,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
 
         update_fan_data(handle, balanced, perf, quiet);
         if let Ok(active) = platform.platform_profile().await {
-            set_active_profile_label(
-                &handle_copy,
-                platform_profile_label(active, quiet_is_low_power),
-            );
+            set_active_profile_label(&handle_copy, active, quiet_is_low_power);
         }
         if !has_any_curves {
             set_status(
@@ -510,10 +523,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     };
                     update_fan_data(handle_next, balanced, perf, quiet);
                     if let Ok(active) = platform.platform_profile().await {
-                        set_active_profile_label(
-                            &handle_status,
-                            platform_profile_label(active, quiet_is_low_power),
-                        );
+                        set_active_profile_label(&handle_status, active, quiet_is_low_power);
                     }
                     set_status(
                         &handle_status,
@@ -560,10 +570,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                     };
                     update_profile_data(handle_next, profile, curves);
                     if let Ok(active) = platform.platform_profile().await {
-                        set_active_profile_label(
-                            &handle_status,
-                            platform_profile_label(active, quiet_is_low_power),
-                        );
+                        set_active_profile_label(&handle_status, active, quiet_is_low_power);
                     }
                     set_status(
                         &handle_status,
@@ -631,10 +638,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         }
                     }
                     if let Some(active) = active_profile {
-                        set_active_profile_label(
-                            &handle_status,
-                            platform_profile_label(active, quiet_is_low_power),
-                        );
+                        set_active_profile_label(&handle_status, active, quiet_is_low_power);
                     }
                     if live_now {
                         set_status(
