@@ -60,7 +60,7 @@ export component Graph inherits Rectangle {
         for n in 11: Text {
             color: Theme.text-secondary;
             font-size <=> root.axis_font_size;
-            text: "\{n * 10}c";
+            text: "\{n * 10}°C";
             x: scale_x_to_graph(n * 10px) - self.width / 2; // Centered
             y: graph.height + Spacing.sm;
         }

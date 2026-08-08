@@ -1,6 +1,6 @@
-import { Palette, Button, CheckBox, ScrollView } from "std-widgets.slint";
+import { Button, ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
-import { PageHeader, RogItem } from "../widgets/common.slint";
+import { PageHeader, PrimarySwitch, RogItem } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 import { Spacing, Typography, Theme, Radii, Animations } from "../globals.slint";
 
@@ -12,13 +12,13 @@ component SelectorChip inherits Rectangle {
     in property <bool> available: true;
     callback clicked();
 
-    height: 34px;
-    border-radius: Radii.full;
+    height: 30px;
+    border-radius: Radii.sm;
     border-width: 1px;
     border-color: root.selected ? Theme.primary : (touch.has-hover ? Theme.border-focus : Theme.border);
     background: root.selected
-        ? (touch.has-hover ? Theme.primary-hover : Theme.primary)
-        : (touch.has-hover ? Theme.surface-hover : Theme.surface);
+        ? (touch.has-hover ? Theme.primary.with-alpha(0.22) : Theme.primary.with-alpha(0.14))
+        : (touch.has-hover ? Theme.surface-hover : transparent);
     opacity: root.available ? 1.0 : 0.45;
 
     animate background, border-color {
@@ -27,8 +27,8 @@ component SelectorChip inherits Rectangle {
     }
 
     HorizontalLayout {
-        padding-left: Spacing.md;
-        padding-right: Spacing.md;
+        padding-left: 12px;
+        padding-right: 12px;
         Text {
             text: root.label;
             font-size: Typography.sm;
@@ -60,21 +60,52 @@ component FanTab inherits Rectangle {
     property <bool> active: root.interactive && root.profile_available && root.tab_enabled;
 
     VerticalLayout {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
+        spacing: Spacing.md;
 
         HorizontalLayout {
             vertical-stretch: 1;
-            if root.active: Graph {
-                nodes <=> root.nodes;
-                max-rpm: FanPageData.max_rpm;
+            if root.active: VerticalLayout {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                spacing: Spacing.sm;
+
+                HorizontalLayout {
+                    height: 28px;
+                    Text {
+                        text: @tr("Temperature curve");
+                        color: Theme.text-primary;
+                        font-size: Typography.md;
+                        font-weight: Typography.weight-semibold;
+                    }
+                    Text {
+                        horizontal-stretch: 1;
+                        horizontal-alignment: right;
+                        vertical-alignment: center;
+                        text: @tr("Drag the points to adjust fan speed");
+                        color: Theme.text-tertiary;
+                        font-size: Typography.xs;
+                    }
+                }
+
+                Graph {
+                    vertical-stretch: 1;
+                    nodes <=> root.nodes;
+                    max-rpm: FanPageData.max_rpm;
+                }
             }
             if !root.active: Rectangle {
+                horizontal-stretch: 1;
+                vertical-stretch: 1;
+                background: Theme.surface;
+                border-color: Theme.border;
+                border-width: 1px;
+                border-radius: Radii.md;
                 VerticalLayout {
+                    padding: Spacing.lg;
                     alignment: center;
                     Text {
-                        font-size: Typography.xl;
-                        font-weight: Typography.weight-medium;
+                        font-size: Typography.lg;
+                        font-weight: Typography.weight-semibold;
                         color: Theme.text-secondary;
                         text: FanPageData.loading
                             ? @tr("Loading fan controls…")
@@ -83,8 +114,8 @@ component FanTab inherits Rectangle {
                                 ? FanPageData.status_message
                                 : @tr("Fan controls are unavailable right now"))
                             : root.profile_available
-                            ? @tr("This fan is not avilable on this machine")
-                            : @tr("This profile is not available on this machine");
+                            ? @tr("This fan is unavailable on this machine")
+                            : @tr("This profile is unavailable on this machine");
                         horizontal-alignment: center;
                         wrap: TextWrap.word-wrap;
                     }
@@ -92,49 +123,73 @@ component FanTab inherits Rectangle {
             }
         }
 
-        HorizontalLayout {
-            alignment: LayoutAlignment.end;
-            spacing: Spacing.md;
+        Rectangle {
+            min-height: 72px;
+            max-height: 84px;
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: Radii.md;
 
-            VerticalLayout {
-                spacing: 4px;
+            HorizontalLayout {
+                padding: Spacing.md;
+                spacing: Spacing.md;
 
-                CheckBox {
-                    text: @tr("Use Custom Curve");
+                VerticalLayout {
+                    horizontal-stretch: 1;
+                    spacing: 2px;
+
+                    HorizontalLayout {
+                        Text {
+                            text: @tr("Custom curve");
+                            color: Theme.text-primary;
+                            font-size: Typography.md;
+                            font-weight: Typography.weight-semibold;
+                        }
+                    }
+
+                    Text {
+                        wrap: TextWrap.word-wrap;
+                        color: Theme.text-secondary;
+                        font-size: Typography.xs;
+                        text: @tr("Use this curve for the selected fan in this profile.");
+                    }
+                }
+
+                Text {
+                    text: root.enabled ? @tr("On") : @tr("Off");
+                    color: root.enabled ? Theme.primary : Theme.text-tertiary;
+                    font-size: Typography.sm;
+                    vertical-alignment: center;
+                }
+
+                PrimarySwitch {
                     checked <=> root.enabled;
                     enabled: root.active && !FanPageData.busy;
                 }
 
-                Text {
-                    width: 220px;
-                    wrap: TextWrap.word-wrap;
-                    color: Theme.text-secondary;
-                    font-size: Typography.xs;
-                    text: @tr("Turns the selected fan's saved custom curve on or off for this profile. This is not a global fan toggle.");
+                Button {
+                    text: FanPageData.busy ? @tr("Working…") : @tr("Apply");
+                    enabled: root.active && !FanPageData.busy;
+                    clicked => {
+                        root.apply();
+                    }
                 }
-            }
 
-            Button {
-                text: FanPageData.busy ? @tr("Working…") : @tr("Apply");
-                enabled: root.active && !FanPageData.busy;
-                clicked => {
-                    root.apply();
+                Button {
+                    text: @tr("Cancel");
+                    enabled: root.active && !FanPageData.busy;
+                    clicked => {
+                        root.cancel()
+                    }
                 }
-            }
 
-            Button {
-                text: @tr("Cancel");
-                enabled: root.active && !FanPageData.busy;
-                clicked => {
-                    root.cancel()
-                }
-            }
-
-            Button {
-                text: @tr("Factory Default (all fans)");
-                enabled: root.active && !FanPageData.busy;
-                clicked => {
-                    root.default();
+                Button {
+                    text: @tr("Restore defaults");
+                    enabled: root.active && !FanPageData.busy;
+                    clicked => {
+                        root.default();
+                    }
                 }
             }
         }
@@ -153,27 +208,49 @@ export component PageFans inherits VerticalLayout {
     property <FanType> selected_fan: FanType.CPU;
 
     PageHeader {
+        height: 104px;
         badge: @tr("Cooling");
         title: @tr("Fan Curves");
-        subtitle: @tr("Tune per-profile fan behavior, preview available curves, and restore factory defaults when needed. Changes to inactive profiles are saved now and applied live when that profile becomes active.");
-        aside: @tr("Thermal profiles");
+        subtitle: @tr("Set temperature-based fan speeds for each performance profile.");
+        aside: "";
     }
 
-    Text {
-        wrap: TextWrap.word-wrap;
-        color: Theme.text-secondary;
-        font-size: Typography.sm;
-        text: FanPageData.active_profile != ""
-            ? @tr("Current active platform profile: {0}. Applying fan changes to a different profile stores them for later. Factory Default may briefly switch profiles internally while reading defaults.", FanPageData.active_profile)
-            : @tr("Applying fan changes to a profile that is not currently active stores them for later. Factory Default may briefly switch profiles internally while reading defaults.");
-    }
+    HorizontalLayout {
+        height: 28px;
+        spacing: Spacing.sm;
 
-    Text {
-        visible: FanPageData.status_message != "";
-        wrap: TextWrap.word-wrap;
-        color: FanPageData.has_error ? Theme.text-primary : Theme.text-secondary;
-        font-size: Typography.sm;
-        text: FanPageData.status_message;
+        Rectangle {
+            width: 7px;
+            height: 7px;
+            y: (parent.height - self.height) / 2;
+            border-radius: Radii.full;
+            background: FanPageData.has_error ? Theme.error : Theme.primary;
+        }
+
+        Text {
+            vertical-alignment: center;
+            color: Theme.text-secondary;
+            font-size: Typography.sm;
+            text: FanPageData.active_profile != ""
+                ? @tr("Active profile: {0}", FanPageData.active_profile)
+                : @tr("Active profile");
+        }
+
+        Text {
+            horizontal-stretch: 1;
+            vertical-alignment: center;
+            color: Theme.text-tertiary;
+            font-size: Typography.xs;
+            text: @tr("Changes are saved per profile.");
+        }
+
+        Text {
+            visible: FanPageData.status_message != "";
+            vertical-alignment: center;
+            color: FanPageData.has_error ? Theme.error : Theme.text-secondary;
+            font-size: Typography.xs;
+            text: FanPageData.status_message;
+        }
     }
 
     if FanPageData.loading || !FanPageData.available: RogItem {
@@ -206,92 +283,125 @@ export component PageFans inherits VerticalLayout {
     }
 
     if FanPageData.available && !FanPageData.loading: HorizontalLayout {
-        spacing: Spacing.xl;
-        alignment: LayoutAlignment.start;
+        spacing: Spacing.md;
 
-        VerticalLayout {
-            spacing: Spacing.xs;
-            alignment: LayoutAlignment.start;
+        Rectangle {
+            horizontal-stretch: 1;
+            min-width: 390px;
+            height: 68px;
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: Radii.md;
 
-            Text {
-                text: @tr("Profile");
-                font-size: Typography.xs;
-                font-weight: Typography.weight-semibold;
-                color: Theme.text-tertiary;
-            }
+            VerticalLayout {
+                padding-left: Spacing.md;
+                padding-right: Spacing.md;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 6px;
 
-            HorizontalLayout {
-                spacing: Spacing.sm;
-                alignment: LayoutAlignment.start;
-
-                SelectorChip {
-                    label: @tr("Balanced");
-                    selected: root.selected_profile == Profile.Balanced;
-                    available: FanPageData.balanced_available;
-                    clicked => {
-                        root.selected_profile = Profile.Balanced;
+                HorizontalLayout {
+                    Text {
+                        text: @tr("Profile");
+                        font-size: Typography.xs;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-secondary;
+                    }
+                    Text {
+                        horizontal-stretch: 1;
+                        horizontal-alignment: right;
+                        text: FanPageData.active_profile != ""
+                            ? @tr("Active: {0}", FanPageData.active_profile)
+                            : "";
+                        font-size: Typography.xs;
+                        color: Theme.text-tertiary;
                     }
                 }
 
-                SelectorChip {
-                    label: @tr("Performance");
-                    selected: root.selected_profile == Profile.Performance;
-                    available: FanPageData.performance_available;
-                    clicked => {
-                        root.selected_profile = Profile.Performance;
-                    }
-                }
+                HorizontalLayout {
+                    spacing: 4px;
 
-                SelectorChip {
-                    label: FanPageData.quiet_is_low_power ? @tr("Low Power") : @tr("Quiet");
-                    selected: root.selected_profile == Profile.Quiet;
-                    available: FanPageData.quiet_available;
-                    clicked => {
-                        root.selected_profile = Profile.Quiet;
+                    SelectorChip {
+                        label: @tr("Balanced");
+                        selected: root.selected_profile == Profile.Balanced;
+                        available: FanPageData.balanced_available;
+                        clicked => {
+                            root.selected_profile = Profile.Balanced;
+                        }
+                    }
+
+                    SelectorChip {
+                        label: @tr("Performance");
+                        selected: root.selected_profile == Profile.Performance;
+                        available: FanPageData.performance_available;
+                        clicked => {
+                            root.selected_profile = Profile.Performance;
+                        }
+                    }
+
+                    SelectorChip {
+                        label: FanPageData.quiet_is_low_power ? @tr("Low Power") : @tr("Quiet");
+                        selected: root.selected_profile == Profile.Quiet;
+                        available: FanPageData.quiet_available;
+                        clicked => {
+                            root.selected_profile = Profile.Quiet;
+                        }
                     }
                 }
             }
         }
 
-        VerticalLayout {
-            spacing: Spacing.xs;
-            alignment: LayoutAlignment.start;
+        Rectangle {
+            min-width: 300px;
+            height: 68px;
+            background: Theme.surface;
+            border-color: Theme.border;
+            border-width: 1px;
+            border-radius: Radii.md;
 
-            Text {
-                text: @tr("Fan");
-                font-size: Typography.xs;
-                font-weight: Typography.weight-semibold;
-                color: Theme.text-tertiary;
-            }
+            VerticalLayout {
+                padding-left: Spacing.md;
+                padding-right: Spacing.md;
+                padding-top: 10px;
+                padding-bottom: 10px;
+                spacing: 6px;
 
-            HorizontalLayout {
-                spacing: Spacing.sm;
-                alignment: LayoutAlignment.start;
-
-                SelectorChip {
-                    label: @tr("CPU");
-                    selected: root.selected_fan == FanType.CPU;
-                    available: FanPageData.cpu_fan_available;
-                    clicked => {
-                        root.selected_fan = FanType.CPU;
-                    }
+                Text {
+                    text: @tr("Fan");
+                    font-size: Typography.xs;
+                    font-weight: Typography.weight-semibold;
+                    color: Theme.text-secondary;
                 }
 
-                SelectorChip {
-                    label: @tr("Mid");
-                    selected: root.selected_fan == FanType.Middle;
-                    available: FanPageData.mid_fan_available;
-                    clicked => {
-                        root.selected_fan = FanType.Middle;
-                    }
-                }
+                HorizontalLayout {
+                    spacing: 4px;
 
-                SelectorChip {
-                    label: @tr("GPU");
-                    selected: root.selected_fan == FanType.GPU;
-                    available: FanPageData.gpu_fan_available;
-                    clicked => {
-                        root.selected_fan = FanType.GPU;
+                    SelectorChip {
+                        label: @tr("CPU");
+                        selected: root.selected_fan == FanType.CPU;
+                        available: FanPageData.cpu_fan_available;
+                        clicked => {
+                            root.selected_fan = FanType.CPU;
+                        }
+                    }
+
+                    SelectorChip {
+                        label: @tr("Mid");
+                        selected: root.selected_fan == FanType.Middle;
+                        available: FanPageData.mid_fan_available;
+                        clicked => {
+                            root.selected_fan = FanType.Middle;
+                        }
+                    }
+
+                    SelectorChip {
+                        label: @tr("GPU");
+                        selected: root.selected_fan == FanType.GPU;
+                        available: FanPageData.gpu_fan_available;
+                        clicked => {
+                            root.selected_fan = FanType.GPU;
+                        }
                     }
                 }
             }
