@@ -1,4 +1,4 @@
-import { PageHeader, SectionHeader, SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
+import { PageHeader, PageLayout, SectionHeader, SystemDropdown, RogItem, SystemToggle, SystemToggleVert } from "../widgets/common.slint";
 import { Palette, Button, ComboBox, VerticalBox, GroupBox } from "std-widgets.slint";
 import { StyleMetrics, Slider, HorizontalBox, TextEdit, SpinBox, LineEdit, ScrollView } from "std-widgets.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
@@ -17,9 +17,7 @@ export component PageAura inherits Rectangle {
         c2.external_colour_change();
     }
     ScrollView {
-        VerticalLayout {
-            padding: Spacing.lg;
-            spacing: Spacing.lg;
+        PageLayout {
             alignment: LayoutAlignment.start;
             PageHeader {
                 badge: @tr("Lighting");
@@ -54,8 +52,11 @@ export component PageAura inherits Rectangle {
             }
 
             RogItem {
-                min-height: 220px;
-                max-height: 400px;
+                // Four colour controls plus the card inset need a little more
+                // room at the minimum window width; otherwise the zone row
+                // can visually crowd the hex input while the page scrolls.
+                min-height: 320px;
+                max-height: 340px;
                 HorizontalLayout {
                     padding: Spacing.lg;
                     spacing: Spacing.lg;

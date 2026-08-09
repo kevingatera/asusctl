@@ -1,4 +1,4 @@
-import { ActionButton, PageHeader, SectionHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PageLayout, SectionHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -175,10 +175,7 @@ export component PageSystem inherits Rectangle {
     clip: true;
     
     ScrollView {
-        VerticalLayout {
-            padding: Spacing.lg;
-            spacing: Spacing.lg;
-            alignment: LayoutAlignment.start;
+        PageLayout {
 
             PageHeader {
                 badge: @tr("System");

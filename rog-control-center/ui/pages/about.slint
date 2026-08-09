@@ -1,6 +1,6 @@
 import { ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography } from "../globals.slint";
-import { PageHeader, RogItem } from "../widgets/common.slint";
+import { PageHeader, PageLayout, RogItem } from "../widgets/common.slint";
 
 component AboutCard inherits RogItem {
     in property <string> title;
@@ -39,10 +39,7 @@ export component PageAbout inherits Rectangle {
     clip: true;
 
     ScrollView {
-        VerticalLayout {
-            padding: Spacing.lg;
-            spacing: Spacing.md;
-            alignment: LayoutAlignment.start;
+        PageLayout {
 
             PageHeader {
                 badge: @tr("About");

@@ -97,6 +97,14 @@ export component PageHeader inherits Rectangle {
     }
 }
 
+// Shared page stack: every page gets the same inset and vertical rhythm.
+// Individual cards can still control their own internal spacing.
+export component PageLayout inherits VerticalLayout {
+    padding: Spacing.lg;
+    spacing: Spacing.lg;
+    alignment: LayoutAlignment.start;
+}
+
 export component SectionHeader inherits Rectangle {
     in property <string> title;
     in property <string> subtitle: "";

@@ -1,6 +1,6 @@
 import { ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
-import { ActionButton, PageHeader, PrimarySwitch, RogItem } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PageLayout, PrimarySwitch, RogItem } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 import { Spacing, Typography, Theme, Radii, Animations } from "../globals.slint";
 
@@ -199,9 +199,7 @@ component FanTab inherits Rectangle {
     }
 }
 
-export component PageFans inherits VerticalLayout {
-    padding: Spacing.lg;
-    spacing: Spacing.lg;
+export component PageFans inherits PageLayout {
 
     // Start on the live profile instead of silently editing a different
     // saved profile (for example Balanced while the machine is on Low Power).
@@ -218,7 +216,6 @@ export component PageFans inherits VerticalLayout {
         @tr("Custom");
 
     PageHeader {
-        height: 104px;
         badge: @tr("Cooling");
         title: @tr("Fan Curves");
         subtitle: @tr("Edit the cooling curve used by each performance mode.");

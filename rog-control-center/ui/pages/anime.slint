@@ -1,4 +1,4 @@
-import { ActionButton, PageHeader, SystemDropdown, SystemToggle } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PageLayout, SystemDropdown, SystemToggle } from "../widgets/common.slint";
 import { Palette, GroupBox, VerticalBox, HorizontalBox } from "std-widgets.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -38,9 +38,7 @@ export component PageAnime inherits Rectangle {
     property <bool> show_builtin_advanced: false;
     clip: true;
     
-    VerticalLayout {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
+    PageLayout {
         PageHeader {
             badge: @tr("Display");
             title: @tr("AniMe Matrix");

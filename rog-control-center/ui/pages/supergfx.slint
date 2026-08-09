@@ -1,6 +1,6 @@
 import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography, Radii } from "../globals.slint";
-import { ActionButton, PageHeader, RogItem, SystemDropdown } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PageLayout, RogItem, SystemDropdown } from "../widgets/common.slint";
 
 export global SupergfxPageData {
     in-out property <bool> available: false;
@@ -60,10 +60,7 @@ export component PageSupergfx inherits Rectangle {
         + (SupergfxPageData.status_message != "" ? 52px : 0px);
 
     ScrollView {
-        VerticalLayout {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
-        alignment: LayoutAlignment.start;
+        PageLayout {
 
         PageHeader {
             badge: @tr("Graphics");

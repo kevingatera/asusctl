@@ -1,6 +1,6 @@
 import { Palette, ScrollView, HorizontalBox } from "std-widgets.slint";
 import { Spacing, Typography, Theme, Radii } from "../globals.slint";
-import { PageHeader, RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
+import { PageHeader, PageLayout, RogItem, SystemToggle, SystemSlider, SystemDropdown } from "../widgets/common.slint";
 
 export global SlashPageData {
     in-out property <bool> initialized: false;
@@ -29,9 +29,7 @@ export global SlashPageData {
 }
 
 export component PageSlash inherits ScrollView {
-    VerticalLayout {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
+    PageLayout {
 
         PageHeader {
             badge: @tr("Lighting");

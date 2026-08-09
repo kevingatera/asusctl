@@ -1,5 +1,5 @@
 import { Palette, ScrollView, VerticalBox } from "std-widgets.slint";
-import { ActionButton, PageHeader, SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PageLayout, SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
 import { Theme, Spacing, Typography, Radii, Shadows } from "../globals.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -29,9 +29,7 @@ export component PageAppSettings inherits Rectangle {
     clip: true;
 
     ScrollView {
-        mainview := VerticalLayout {
-            padding: Spacing.lg;
-            spacing: Spacing.lg;
+        mainview := PageLayout {
 
             PageHeader {
                 badge: @tr("Preferences");
