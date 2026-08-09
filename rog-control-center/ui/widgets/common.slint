@@ -35,7 +35,11 @@ export component PageHeader inherits Rectangle {
     in property <string> title;
     in property <string> subtitle;
     in property <string> aside: "";
-    height: 136px;
+    // Compact headers keep the page identity clear without pushing the
+    // actual controls below a large block of prose. Set compact to false only
+    // for pages that genuinely need a longer introduction.
+    in property <bool> compact: true;
+    height: root.compact ? 104px : 136px;
     border-radius: Radii.lg;
     border-width: 1px;
     border-color: Theme.border-focus.with-alpha(0.35);
@@ -81,7 +85,7 @@ export component PageHeader inherits Rectangle {
         text: root.subtitle;
     }
 
-    if root.aside != "": Text {
+    if root.aside != "" && !root.compact: Text {
         x: Spacing.lg;
         y: 110px;
         width: parent.width - Spacing.xl;
@@ -90,6 +94,61 @@ export component PageHeader inherits Rectangle {
         font-weight: Typography.weight-semibold;
         text: root.aside;
         overflow: TextOverflow.elide;
+    }
+}
+
+// Small themed action button used for page actions. The stock Fluent button
+// becomes almost black when disabled, which makes its label hard to read on
+// the dark ROG surface.
+export component ActionButton inherits Rectangle {
+    in property <string> text;
+    in property <bool> enabled: true;
+    in property <bool> primary: false;
+    callback clicked();
+
+    min-width: 84px;
+    min-height: 42px;
+    max-height: 52px;
+    border-radius: Radii.sm;
+    border-width: 1px;
+    border-color: !root.enabled
+        ? Theme.border
+        : (root.primary ? Theme.primary : Theme.border-focus.with-alpha(0.35));
+    background: !root.enabled
+        ? Theme.surface-active
+        : (root.primary ? Theme.primary.with-alpha(0.14) : Theme.surface);
+
+    states [
+        hover when touch.has-hover && root.enabled: {
+            background: root.primary ? Theme.primary.with-alpha(0.24) : Theme.surface-hover;
+            border-color: Theme.primary;
+        }
+        pressed when touch.pressed && root.enabled: {
+            background: root.primary ? Theme.primary.with-alpha(0.34) : Theme.surface-active;
+        }
+    ]
+
+    animate background, border-color {
+        duration: Animations.fast;
+        easing: Animations.ease;
+    }
+
+    Text {
+        width: 100%;
+        height: 100%;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+        text: root.text;
+        color: !root.enabled ? Theme.text-secondary : Theme.text-primary;
+        font-size: Typography.sm;
+        font-weight: root.primary ? Typography.weight-semibold : Typography.weight-medium;
+    }
+
+    touch := TouchArea {
+        enabled: root.enabled;
+        clicked => {
+            root.clicked();
+        }
     }
 }
 
@@ -392,11 +451,13 @@ export component SystemSlider inherits RogItem {
 
             reset_anchor_wide := Rectangle {
                 width: has_reset ? 60px : 0px;
-                if (has_reset): StandardButton {
-                    kind: StandardButtonKind.reset;
+                if (has_reset): ActionButton {
+                    text: @tr("Reset");
                     enabled: root.enabled;
-                    width: 100%;
+                    min-width: 60px;
+                    min-height: 32px;
                     height: 32px;
+                    width: 100%;
                     clicked => {
                         reset_popup_wide.show();
                     }
@@ -545,11 +606,13 @@ export component SystemSlider inherits RogItem {
 
             reset_anchor_compact := Rectangle {
                 width: has_reset ? 60px : 0px;
-                if (has_reset): StandardButton {
-                    kind: StandardButtonKind.reset;
+                if (has_reset): ActionButton {
+                    text: @tr("Reset");
                     enabled: root.enabled;
-                    width: 100%;
+                    min-width: 60px;
+                    min-height: 32px;
                     height: 32px;
+                    width: 100%;
                     clicked => {
                         reset_popup_compact.show();
                     }

@@ -19,10 +19,11 @@ struct SensorConfig {
     cpu_fan: Option<FanSensor>,
     gpu_fan: Option<FanSensor>,
     extra_fans: Vec<FanSensor>,
+    legacy_fans: Vec<FanSensor>,
 }
 
 impl SensorConfig {
-    fn readings(&self) -> Vec<String> {
+    fn readings(&mut self) -> Vec<String> {
         let mut entries = Vec::new();
 
         if let Some(temp) = &self.cpu_temp {
@@ -50,7 +51,7 @@ impl SensorConfig {
             }
         }
 
-        if let Some(fan) = &self.cpu_fan {
+        if let Some(fan) = self.cpu_fan.as_mut() {
             if let Some(value) = fan.read() {
                 entries.push(format!(
                     "{}: {value}",
@@ -59,7 +60,7 @@ impl SensorConfig {
             }
         }
 
-        if let Some(fan) = &self.gpu_fan {
+        if let Some(fan) = self.gpu_fan.as_mut() {
             if let Some(value) = fan.read() {
                 entries.push(format!(
                     "{}: {value}",
@@ -68,7 +69,7 @@ impl SensorConfig {
             }
         }
 
-        for fan in self.extra_fans.iter().take(1) {
+        for fan in self.extra_fans.iter_mut().take(1) {
             if let Some(value) = fan.read() {
                 let label = friendly_fan_label(&fan.label, "Chassis Fan");
                 entries.push(format!("{label}: {value}"));
@@ -101,21 +102,25 @@ struct FanSensor {
     label: String,
     path: PathBuf,
     max_rpm: Option<i64>,
+    last_value: Option<String>,
 }
 
 impl FanSensor {
-    fn read(&self) -> Option<String> {
-        let raw = read_i64(&self.path)?;
-        if raw <= 0 {
-            return None;
+    fn read(&mut self) -> Option<String> {
+        if let Some(raw) = read_i64(&self.path).filter(|value| *value > 0) {
+            let rounded = (raw + 5) / 10 * 10;
+            let value = if let Some(max) = self.max_rpm {
+                let pct = ((rounded as f32 / max as f32) * 100.0).clamp(0.0, 200.0);
+                format!("{rounded} RPM ({pct:.0}%)")
+            } else {
+                format!("{rounded} RPM")
+            };
+            self.last_value = Some(value);
         }
-        let rounded = (raw + 5) / 10 * 10;
-        if let Some(max) = self.max_rpm {
-            let pct = ((rounded as f32 / max as f32) * 100.0).clamp(0.0, 200.0);
-            Some(format!("{rounded} RPM ({pct:.0}%)"))
-        } else {
-            Some(format!("{rounded} RPM"))
-        }
+        // hwmon can briefly return 0 or fail while the embedded controller
+        // updates a tachometer. Keep the last good value so the sidebar does
+        // not make a healthy fan appear to vanish for one polling cycle.
+        self.last_value.clone()
     }
 }
 
@@ -222,16 +227,27 @@ fn detect_sensors() -> SensorConfig {
     }
 
     if config.cpu_fan.is_none() {
-        if !config.extra_fans.is_empty() {
+        if !config.legacy_fans.is_empty() {
+            config.cpu_fan = Some(config.legacy_fans.remove(0));
+        } else if !config.extra_fans.is_empty() {
             config.cpu_fan = Some(config.extra_fans.remove(0));
         }
     }
 
     if config.gpu_fan.is_none() {
-        if !config.extra_fans.is_empty() {
+        if !config.legacy_fans.is_empty() {
+            config.gpu_fan = Some(config.legacy_fans.remove(0));
+        } else if !config.extra_fans.is_empty() {
             config.gpu_fan = Some(config.extra_fans.remove(0));
         }
     }
+
+    // The ASUS hwmon exposes the actual CPU/GPU/Mid tachometers. Some kernels
+    // also expose an older acpi_fan mirror; only use that mirror as a fallback
+    // when the preferred ASUS channels were not found.
+    config
+        .extra_fans
+        .extend(std::mem::take(&mut config.legacy_fans));
 
     if config.cpu_temp.is_none() {
         if !config.extra_temps.is_empty() {
@@ -272,6 +288,7 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
                 label: "CPU Fan".into(),
                 path,
                 max_rpm,
+                last_value: None,
             });
             continue;
         }
@@ -281,15 +298,23 @@ fn collect_fans(config: &mut SensorConfig, base: &Path, dev_name: &str) {
                 label: "GPU Fan".into(),
                 path,
                 max_rpm,
+                last_value: None,
             });
             continue;
         }
 
-        config.extra_fans.push(FanSensor {
+        let sensor = FanSensor {
             label: fallback_label,
             path,
             max_rpm,
-        });
+            last_value: None,
+        };
+
+        if dev_name == "acpi_fan" {
+            config.legacy_fans.push(sensor);
+        } else {
+            config.extra_fans.push(sensor);
+        }
     }
 }
 

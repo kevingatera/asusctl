@@ -1,5 +1,5 @@
-import { Palette, Button, ScrollView, VerticalBox } from "std-widgets.slint";
-import { PageHeader, SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
+import { Palette, ScrollView, VerticalBox } from "std-widgets.slint";
+import { ActionButton, PageHeader, SystemToggle, RogItem, SystemSlider } from "../widgets/common.slint";
 import { Theme, Spacing, Typography, Radii, Shadows } from "../globals.slint";
 import { ColourSlider } from "../widgets/colour_picker.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -36,7 +36,7 @@ export component PageAppSettings inherits Rectangle {
             PageHeader {
                 badge: @tr("Preferences");
                 title: @tr("App Settings");
-                subtitle: @tr("Tune how this interface behaves, how long notifications stay visible, and how the app integrates with your session.");
+                subtitle: @tr("Control startup, notifications, and appearance.");
                 aside: @tr("UI behavior");
             }
             
@@ -67,7 +67,7 @@ export component PageAppSettings inherits Rectangle {
                             border-color: Theme.border;
                         }
 
-                        Button {
+                        ActionButton {
                             text: "Change";
                             clicked => {
                                 AppSettingsPageData.show_color_picker = true;

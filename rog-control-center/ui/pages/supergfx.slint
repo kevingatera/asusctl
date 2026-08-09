@@ -1,6 +1,6 @@
-import { Button, VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
+import { VerticalBox, HorizontalBox, ScrollView } from "std-widgets.slint";
 import { Theme, Spacing, Typography, Radii } from "../globals.slint";
-import { PageHeader, RogItem, SystemDropdown } from "../widgets/common.slint";
+import { ActionButton, PageHeader, RogItem, SystemDropdown } from "../widgets/common.slint";
 
 export global SupergfxPageData {
     in-out property <bool> available: false;
@@ -68,7 +68,7 @@ export component PageSupergfx inherits Rectangle {
         PageHeader {
             badge: @tr("Graphics");
             title: @tr("Supergfx Control");
-            subtitle: @tr("Choose battery saver, balanced hybrid graphics, or discrete-only performance mode and inspect both the supergfx state and the current hardware topology.");
+            subtitle: @tr("Choose a graphics mode and inspect the current hardware state.");
             aside: @tr("Mode orchestration");
         }
 
@@ -120,7 +120,7 @@ export component PageSupergfx inherits Rectangle {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-secondary;
                     font-size: Typography.sm;
-                    text: @tr("Integrated keeps only the iGPU active for battery life. Hybrid keeps the iGPU primary and wakes the dGPU on demand. Ultimate / MUX dGPU makes the dGPU primary for maximum performance. Mode changes may require logout or reboot before they fully take effect.");
+                    text: @tr("Switch graphics mode. Some changes require logout or reboot.");
                 }
                 SystemDropdown {
                     min-height: 72px;
@@ -133,14 +133,15 @@ export component PageSupergfx inherits Rectangle {
                 }
                 HorizontalBox {
                     spacing: Spacing.md;
-                    Button {
+                    ActionButton {
                         text: @tr("Refresh");
                         enabled: !SupergfxPageData.busy;
                         clicked => { SupergfxPageData.request_refresh(); }
                     }
-                    Button {
+                    ActionButton {
                         text: SupergfxPageData.busy ? @tr("Applying…") : @tr("Apply Mode");
                         enabled: SupergfxPageData.apply_enabled && !SupergfxPageData.busy;
+                        primary: true;
                         clicked => { SupergfxPageData.request_set_mode(SupergfxPageData.selected_mode); }
                     }
                 }
@@ -164,19 +165,19 @@ export component PageSupergfx inherits Rectangle {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-primary;
                     font-size: Typography.sm;
-                    text: @tr("Integrated: Battery saver. Runs only on the built-in integrated GPU and powers the discrete GPU down.");
+                    text: @tr("Integrated  —  iGPU only; the dGPU stays powered down.");
                 }
                 Text {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-primary;
                     font-size: Typography.sm;
-                    text: @tr("Hybrid: Balanced everyday mode. The integrated GPU drives the desktop while apps can wake the discrete GPU when extra graphics power is needed.");
+                    text: @tr("Hybrid  —  iGPU drives the desktop; apps can wake the dGPU.");
                 }
                 Text {
                     wrap: TextWrap.word-wrap;
                     color: Theme.text-primary;
                     font-size: Typography.sm;
-                    text: @tr("Ultimate / MUX dGPU: Highest performance. Switches the laptop's hardware MUX so the discrete GPU becomes the primary display GPU. This usually needs a reboot and uses more power.");
+                    text: @tr("Ultimate / MUX  —  dGPU drives the display for maximum performance.");
                 }
             }
         }

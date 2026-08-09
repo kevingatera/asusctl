@@ -22,7 +22,9 @@ export global Theme {
     
     out property <color> text-primary: #ffffff;
     out property <color> text-secondary: #a0a0a0;
-    out property <color> text-tertiary: #666666;
+    // Still subdued, but readable on the dark surface for hints and status
+    // labels. Disabled controls add their own opacity where appropriate.
+    out property <color> text-tertiary: #858585;
     
     out property <color> border: #2a2a2a;
     out property <color> border-focus: primary;

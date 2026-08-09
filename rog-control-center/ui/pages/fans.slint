@@ -1,6 +1,6 @@
-import { Button, ScrollView } from "std-widgets.slint";
+import { ScrollView } from "std-widgets.slint";
 import { Graph, Node } from "../widgets/graph.slint";
-import { PageHeader, PrimarySwitch, RogItem } from "../widgets/common.slint";
+import { ActionButton, PageHeader, PrimarySwitch, RogItem } from "../widgets/common.slint";
 import { Profile, FanType, FanPageData } from "../types/fan_types.slint";
 import { Spacing, Typography, Theme, Radii, Animations } from "../globals.slint";
 
@@ -82,7 +82,7 @@ component FanTab inherits Rectangle {
                         horizontal-alignment: right;
                         vertical-alignment: center;
                         text: @tr("Drag the points to adjust fan speed");
-                        color: Theme.text-tertiary;
+                        color: Theme.text-secondary;
                         font-size: Typography.xs;
                     }
                 }
@@ -158,7 +158,7 @@ component FanTab inherits Rectangle {
 
                 Text {
                     text: root.enabled ? @tr("On") : @tr("Off");
-                    color: root.enabled ? Theme.primary : Theme.text-tertiary;
+                    color: root.enabled ? Theme.primary : Theme.text-secondary;
                     font-size: Typography.sm;
                     vertical-alignment: center;
                 }
@@ -168,15 +168,16 @@ component FanTab inherits Rectangle {
                     enabled: root.active && !FanPageData.busy;
                 }
 
-                Button {
+                ActionButton {
                     text: FanPageData.busy ? @tr("Working…") : @tr("Apply");
                     enabled: root.active && !FanPageData.busy;
+                    primary: true;
                     clicked => {
                         root.apply();
                     }
                 }
 
-                Button {
+                ActionButton {
                     text: @tr("Cancel");
                     enabled: root.active && !FanPageData.busy;
                     clicked => {
@@ -184,7 +185,7 @@ component FanTab inherits Rectangle {
                     }
                 }
 
-                Button {
+                ActionButton {
                     text: @tr("Restore defaults");
                     enabled: root.active && !FanPageData.busy;
                     clicked => {

@@ -1,5 +1,5 @@
-import { PageHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
-import { Palette, HorizontalBox , VerticalBox, ScrollView, Button, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
+import { ActionButton, PageHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { Palette, HorizontalBox , VerticalBox, ScrollView, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
 import { FanPageData } from "../types/fan_types.slint";
@@ -10,24 +10,28 @@ export struct AttrMinMax {
   current: float,
 }
 
-component SectionHeader inherits RogItem {
+component SectionHeader inherits Rectangle {
     in property <string> title;
     in property <string> subtitle: "";
 
-    min-height: subtitle == "" ? 56px : 88px;
-    max-height: subtitle == "" ? 72px : 120px;
+    horizontal-stretch: 1;
+    min-width: 0px;
+    min-height: subtitle == "" ? 40px : 56px;
+    max-height: subtitle == "" ? 52px : 72px;
+    background: transparent;
+    border-width: 0px;
 
     VerticalLayout {
-        padding-left: Spacing.lg;
-        padding-right: Spacing.lg;
-        padding-top: Spacing.md;
-        padding-bottom: Spacing.md;
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: Spacing.sm;
+        padding-bottom: Spacing.sm;
         spacing: Spacing.xs;
         alignment: LayoutAlignment.center;
 
         Text {
             text: root.title;
-            font-size: Typography.lg;
+            font-size: Typography.md;
             font-weight: Typography.weight-semibold;
             color: Theme.text-primary;
         }
@@ -210,7 +214,7 @@ export component PageSystem inherits Rectangle {
             PageHeader {
                 badge: @tr("System");
                 title: @tr("System Control");
-                subtitle: @tr("Manage platform profiles, charging behavior, display options, and firmware-backed system tuning.");
+                subtitle: @tr("Profiles, charging, displays, and hardware tuning.");
                 aside: @tr("Platform and power");
             }
             
@@ -243,7 +247,7 @@ export component PageSystem inherits Rectangle {
                     }
                 }
 
-                Button {
+                ActionButton {
                     text: @tr("Advanced");
                     clicked => {
                         root.show_throttle_advanced = true;
@@ -363,7 +367,7 @@ export component PageSystem inherits Rectangle {
 
             SectionHeader {
                 title: @tr("Keyboard Power Management");
-                subtitle: @tr("Keyboard lighting power controls are handled from Keyboard Aura > Power Settings on this build.");
+                subtitle: @tr("Keyboard lighting power controls live under Keyboard Aura.");
             }
 
             SectionHeader {

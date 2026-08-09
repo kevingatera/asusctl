@@ -1,11 +1,11 @@
-import { Palette, Button, VerticalBox } from "std-widgets.slint";
+import { Palette, VerticalBox } from "std-widgets.slint";
 import { AppSize, Spacing, Typography, Radii, Shadows, Animations, Theme } from "globals.slint";
 import { PageSystem, SystemPageData, AttrMinMax } from "pages/system.slint";
 import { SideBar } from "widgets/sidebar.slint";
 import { PageAbout } from "pages/about.slint";
 import { PageFans } from "pages/fans.slint";
 import { PageAnime, AnimePageData } from "pages/anime.slint";
-import { RogItem } from "widgets/common.slint";
+import { ActionButton, RogItem } from "widgets/common.slint";
 import { PageAura } from "pages/aura.slint";
 import { PageSlash, SlashPageData } from "pages/slash.slint";
 import { Node } from "widgets/graph.slint";
@@ -318,8 +318,9 @@ export component MainWindow inherits Window {
                 }
             }
             
-            Button {
+            ActionButton {
                 text: "Done";
+                primary: true;
                 clicked => {
                     AppSettingsPageData.show_color_picker = false;
                 }

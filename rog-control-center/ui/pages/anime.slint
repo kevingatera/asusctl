@@ -1,5 +1,5 @@
-import { PageHeader, SystemDropdown, SystemToggle } from "../widgets/common.slint";
-import { Palette, GroupBox, VerticalBox, Button, HorizontalBox } from "std-widgets.slint";
+import { ActionButton, PageHeader, SystemDropdown, SystemToggle } from "../widgets/common.slint";
+import { Palette, GroupBox, VerticalBox, HorizontalBox } from "std-widgets.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
 
@@ -44,7 +44,7 @@ export component PageAnime inherits Rectangle {
         PageHeader {
             badge: @tr("Display");
             title: @tr("AniMe Matrix");
-            subtitle: @tr("Control panel brightness, built-in animations, and when the AniMe Matrix display should stay active.");
+            subtitle: @tr("Configure brightness, animations, and display behaviour.");
             aside: @tr("Display behavior");
         }
         HorizontalLayout {
@@ -74,7 +74,7 @@ export component PageAnime inherits Rectangle {
                 }
             }
 
-            Button {
+            ActionButton {
                 text: @tr("Advanced");
                 width: 20%;
                 enabled <=> AnimePageData.enable_display;
@@ -96,7 +96,7 @@ export component PageAnime inherits Rectangle {
                 }
             }
 
-            Button {
+            ActionButton {
                 text: @tr("Advanced");
                 width: 20%;
                 enabled <=> AnimePageData.builtins_enabled;
