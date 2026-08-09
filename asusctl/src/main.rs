@@ -941,6 +941,15 @@ fn handle_fan_curve(
         if let Some(mut curve) = cmd.data.clone() {
             let fan = cmd.fan.unwrap_or_default();
             curve.set_fan(fan);
+            // A data-only update should not silently turn an existing
+            // override off. CurveData's parser defaults `enabled` to false,
+            // and callers such as smart_fan use --data to adjust points while
+            // expecting the selected override to remain active.
+            curve.enabled = fan_proxy
+                .fan_curve_data(profile)?
+                .into_iter()
+                .find(|existing| existing.fan == fan)
+                .is_some_and(|existing| existing.enabled);
             fan_proxy.set_fan_curve(profile, curve)?;
         }
     }
