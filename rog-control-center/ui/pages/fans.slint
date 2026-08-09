@@ -48,6 +48,7 @@ component SelectorChip inherits Rectangle {
 component FanTab inherits Rectangle {
     // The graph has no intrinsic height, so give the tab enough room for the
     // chart and its action row even when it is hosted by a ScrollView.
+    height: 100%;
     min-height: 428px;
     in-out property <bool> enabled: false;
     in property <bool> profile_available: true;
