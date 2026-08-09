@@ -1,11 +1,54 @@
 import { Palette, VerticalBox, HorizontalBox, GroupBox } from "std-widgets.slint";
-import { SystemToggleVert, SystemDropdown } from "common.slint";
+import { PrimarySwitch, SystemDropdown } from "common.slint";
 import { PowerZones } from "../types/aura_types.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
 
+component AuraPowerToggle inherits Rectangle {
+    in property <string> text;
+    in-out property <bool> checked;
+    callback toggled(bool);
+
+    min-width: 0px;
+    horizontal-stretch: 1;
+    min-height: 52px;
+    max-height: 60px;
+    border-radius: Radii.md;
+    background: Theme.background;
+    border-width: 1px;
+    border-color: Theme.border;
+
+    HorizontalLayout {
+        padding-left: Spacing.sm;
+        padding-right: Spacing.sm;
+        spacing: Spacing.sm;
+
+        Text {
+            horizontal-stretch: 1;
+            font-size: Typography.sm;
+            font-weight: Typography.weight-medium;
+            vertical-alignment: center;
+            color: Theme.text-primary;
+            text: root.text;
+        }
+
+        VerticalLayout {
+            width: 40px;
+            height: 100%;
+            alignment: LayoutAlignment.center;
+
+            PrimarySwitch {
+                checked <=> root.checked;
+                toggled => {
+                    root.toggled(root.checked);
+                }
+            }
+        }
+    }
+}
+
 export component AuraPowerGroup inherits Rectangle {
-    min-width: row.min-width;
-    border-radius: Radii.lg;
+    min-width: 0px;
+    border-radius: Radii.md;
     background: Theme.surface;
     border-width: 1px;
     border-color: Theme.border;
@@ -22,24 +65,21 @@ export component AuraPowerGroup inherits Rectangle {
     callback shutdown_toggled(bool);
     
     VerticalBox {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
+        padding: Spacing.md;
+        spacing: Spacing.sm;
+        alignment: LayoutAlignment.start;
         
         Text {
-            font-size: Typography.lg;
+            font-size: Typography.md;
             color: Theme.text-primary;
-            font-weight: Typography.weight-medium;
-            horizontal-alignment: TextHorizontalAlignment.center;
+            font-weight: Typography.weight-semibold;
             text <=> root.group-title;
         }
 
         row := HorizontalBox {
-            alignment: LayoutAlignment.center;
-            spacing: Spacing.md;
+            spacing: Spacing.sm;
             
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Boot");
                 checked <=> root.boot_checked;
                 toggled => {
@@ -47,9 +87,7 @@ export component AuraPowerGroup inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Awake");
                 checked <=> root.awake_checked;
                 toggled => {
@@ -57,9 +95,7 @@ export component AuraPowerGroup inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Sleep");
                 checked <=> root.sleep_checked;
                 toggled => {
@@ -67,9 +103,7 @@ export component AuraPowerGroup inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Shutdown");
                 checked <=> root.shutdown_checked;
                 toggled => {
@@ -81,8 +115,8 @@ export component AuraPowerGroup inherits Rectangle {
 }
 
 export component AuraPowerGroupOld inherits Rectangle {
-    min-width: row.min-width;
-    border-radius: Radii.lg;
+    min-width: 0px;
+    border-radius: Radii.md;
     background: Theme.surface;
     border-width: 1px;
     border-color: Theme.border;
@@ -101,23 +135,23 @@ export component AuraPowerGroupOld inherits Rectangle {
     callback selected_zone(int);
     
     VerticalBox {
-        padding: Spacing.lg;
-        spacing: Spacing.lg;
+        padding: Spacing.md;
+        spacing: Spacing.sm;
+        alignment: LayoutAlignment.start;
         
         Text {
-            font-size: Typography.lg;
+            font-size: Typography.md;
             color: Theme.text-primary;
-            font-weight: Typography.weight-medium;
-            horizontal-alignment: TextHorizontalAlignment.center;
+            font-weight: Typography.weight-semibold;
             text <=> root.group-title;
         }
 
         row := HorizontalBox {
-            alignment: LayoutAlignment.center;
-            spacing: Spacing.md;
+            spacing: Spacing.sm;
 
             SystemDropdown {
                 text: @tr("Zone Selection");
+                horizontal-stretch: 1;
                 current_index <=> root.current_zone;
                 current_value: root.zone_strings[root.current_zone];
                 model <=> root.zone_strings;
@@ -126,9 +160,7 @@ export component AuraPowerGroupOld inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Boot");
                 checked <=> root.boot_checked;
                 toggled => {
@@ -136,9 +168,7 @@ export component AuraPowerGroupOld inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Awake");
                 checked <=> root.awake_checked;
                 toggled => {
@@ -146,9 +176,7 @@ export component AuraPowerGroupOld inherits Rectangle {
                 }
             }
 
-            SystemToggleVert {
-                min-width: 96px;
-                max-height: 42px;
+            AuraPowerToggle {
                 text: @tr("Sleep");
                 checked <=> root.sleep_checked;
                 toggled => {

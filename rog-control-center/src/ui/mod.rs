@@ -131,6 +131,13 @@ pub fn setup_window(config: Arc<Mutex<Config>>) -> MainWindow {
         .show()
         .map_err(|e| warn!("Couldn't show main window: {e:?}"))
         .unwrap();
+    ui.window().set_size(slint::LogicalSize::new(1400.0, 900.0));
+    let ui_weak = ui.as_weak();
+    slint::Timer::single_shot(std::time::Duration::from_millis(250), move || {
+        if let Some(ui) = ui_weak.upgrade() {
+            ui.window().set_size(slint::LogicalSize::new(1400.0, 900.0));
+        }
+    });
 
     let available = list_iface_blocking().unwrap_or_default();
     let platform_available = available.contains(&"xyz.ljones.Platform".to_string());

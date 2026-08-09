@@ -97,6 +97,41 @@ export component PageHeader inherits Rectangle {
     }
 }
 
+export component SectionHeader inherits Rectangle {
+    in property <string> title;
+    in property <string> subtitle: "";
+
+    horizontal-stretch: 1;
+    min-width: 0px;
+    min-height: subtitle == "" ? 40px : 56px;
+    max-height: subtitle == "" ? 52px : 72px;
+    background: transparent;
+    border-width: 0px;
+
+    VerticalLayout {
+        padding-left: 4px;
+        padding-right: 4px;
+        padding-top: Spacing.sm;
+        padding-bottom: Spacing.sm;
+        spacing: Spacing.xs;
+        alignment: LayoutAlignment.center;
+
+        Text {
+            text: root.title;
+            font-size: Typography.md;
+            font-weight: Typography.weight-semibold;
+            color: Theme.text-primary;
+        }
+
+        if root.subtitle != "": Text {
+            text: root.subtitle;
+            font-size: Typography.sm;
+            color: Theme.text-secondary;
+            wrap: TextWrap.word-wrap;
+        }
+    }
+}
+
 // Small themed action button used for page actions. The stock Fluent button
 // becomes almost black when disabled, which makes its label hard to read on
 // the dark ROG surface.
@@ -140,7 +175,7 @@ export component ActionButton inherits Rectangle {
         vertical-alignment: center;
         text: root.text;
         color: !root.enabled ? Theme.text-secondary : Theme.text-primary;
-        font-size: Typography.sm;
+        font-size: Typography.xs;
         font-weight: root.primary ? Typography.weight-semibold : Typography.weight-medium;
     }
 
@@ -212,14 +247,15 @@ export component PrimarySlider inherits Rectangle {
     border-radius: Radii.lg;
     background: transparent;
     opacity: enabled ? 1.0 : 0.6;
+    property <length> thumb-size: 18px;
 
     property <float> normalized: maximum > minimum ? (value - minimum) / (maximum - minimum) : 0.0;
 
     Rectangle {
         // track background
-        x: 0px;
+        x: root.thumb-size / 2;
         y: root.height / 2 - 3px;
-        width: root.width;
+        width: root.width - root.thumb-size;
         height: 6px;
         border-radius: Radii.lg;
         background: Theme.surface-hover;
@@ -227,18 +263,18 @@ export component PrimarySlider inherits Rectangle {
 
     Rectangle {
         // filled track
-        x: 0px;
+        x: root.thumb-size / 2;
         y: root.height / 2 - 3px;
-        width: root.width * normalized;
+        width: (root.width - root.thumb-size) * normalized;
         height: 6px;
         border-radius: Radii.lg;
         background: enabled ? Theme.primary : Theme.text-secondary;
     }
 
     thumb := Rectangle {
-        width: 18px;
-        height: 18px;
-        x: (root.width - self.width) * normalized;
+        width: root.thumb-size;
+        height: root.thumb-size;
+        x: root.thumb-size / 2 + (root.width - root.thumb-size) * normalized;
         y: root.height / 2 - self.height / 2;
         border-radius: Radii.full;
         background: Theme.surface;
@@ -273,10 +309,11 @@ export component PrimarySlider inherits Rectangle {
 
     public function update_from_pos(x: length) {
         let span = maximum - minimum;
-        if (span <= 0) {
+        let usable = root.width - root.thumb-size;
+        if (span <= 0 || usable <= 0) {
             return;
         }
-        let raw = x / root.width;
+        let raw = (x - root.thumb-size / 2) / usable;
         let frac = Math.max(0.0, Math.min(1.0, raw));
         let new_val = minimum + frac * span;
         value = new_val;

@@ -1,4 +1,4 @@
-import { ActionButton, PageHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
+import { ActionButton, PageHeader, SectionHeader, PrimarySlider, PrimarySwitch, SystemSlider, SystemDropdown, SystemToggle, SystemToggleInt, RogItem } from "../widgets/common.slint";
 import { Palette, HorizontalBox , VerticalBox, ScrollView, ComboBox, GroupBox, StandardButton} from "std-widgets.slint";
 import { Spacing, Typography, Radii, Theme } from "../globals.slint";
 import { Modal } from "../widgets/modal.slint";
@@ -8,41 +8,6 @@ export struct AttrMinMax {
   min: int,
   max: int,
   current: float,
-}
-
-component SectionHeader inherits Rectangle {
-    in property <string> title;
-    in property <string> subtitle: "";
-
-    horizontal-stretch: 1;
-    min-width: 0px;
-    min-height: subtitle == "" ? 40px : 56px;
-    max-height: subtitle == "" ? 52px : 72px;
-    background: transparent;
-    border-width: 0px;
-
-    VerticalLayout {
-        padding-left: 4px;
-        padding-right: 4px;
-        padding-top: Spacing.sm;
-        padding-bottom: Spacing.sm;
-        spacing: Spacing.xs;
-        alignment: LayoutAlignment.center;
-
-        Text {
-            text: root.title;
-            font-size: Typography.md;
-            font-weight: Typography.weight-semibold;
-            color: Theme.text-primary;
-        }
-
-        if root.subtitle != "": Text {
-            text: root.subtitle;
-            font-size: Typography.sm;
-            color: Theme.text-secondary;
-            wrap: TextWrap.word-wrap;
-        }
-    }
 }
 
 export struct AttrPossible {
@@ -240,7 +205,7 @@ export component PageSystem inherits Rectangle {
                 }
 
                 ActionButton {
-                    text: @tr("Mode details");
+                    text: @tr("Details");
                     clicked => {
                         root.show_throttle_advanced = true;
                     }

@@ -1,7 +1,96 @@
-import { Palette, Slider, HorizontalBox, Button, LineEdit } from "std-widgets.slint";
 import { Theme, Typography, Spacing, Radii } from "../globals.slint";
 
+component HexInput inherits Rectangle {
+    in-out property <string> text;
+    in property <bool> enabled: true;
+    callback accepted(string);
+
+    min-height: 36px;
+    max-height: 40px;
+    border-radius: Radii.md;
+    border-width: 1px;
+    border-color: enabled ? Theme.border : Theme.surface-active;
+    background: enabled ? Theme.surface-active : Theme.surface;
+
+    input := TextInput {
+        x: Spacing.sm;
+        y: 0px;
+        width: parent.width - 2 * Spacing.sm;
+        height: parent.height;
+        text <=> root.text;
+        enabled: root.enabled;
+        color: root.enabled ? Theme.text-primary : Theme.text-secondary;
+        font-size: Typography.sm;
+        vertical-alignment: center;
+        single-line: true;
+        accepted => {
+            root.accepted(self.text);
+        }
+    }
+}
+
+component ColourRamp inherits Rectangle {
+    in-out property <float> value;
+    in property <float> maximum: 100;
+    in property <brush> ramp;
+    in property <bool> enabled: true;
+    callback changed(float);
+    callback released(float);
+
+    min-width: 0px;
+    horizontal-stretch: 1;
+    height: 28px;
+    border-width: 1px;
+    border-radius: Radii.md;
+    border-color: enabled ? Theme.border : Theme.surface-active;
+    background: enabled ? root.ramp : Theme.surface-active;
+    clip: true;
+
+    property <float> normalized: maximum > 0 ? value / maximum : 0;
+
+    thumb := Rectangle {
+        width: 16px;
+        height: 16px;
+        x: (root.width - self.width) * root.normalized;
+        y: (root.height - self.height) / 2;
+        border-radius: Radii.full;
+        background: enabled ? Theme.surface : Theme.text-secondary;
+        border-width: 2px;
+        border-color: enabled ? Theme.primary : Theme.border;
+    }
+
+    TouchArea {
+        enabled: root.enabled;
+        pointer-event(event) => {
+            if (event.button != PointerEventButton.left) {
+                return;
+            }
+            if (event.kind == PointerEventKind.up) {
+                root.released(root.value);
+                return;
+            }
+            root.set-value(self.mouse-x);
+        }
+        moved => {
+            if (self.pressed) {
+                root.set-value(self.mouse-x);
+            }
+        }
+    }
+
+    public function set-value(x: length) {
+        let usable = root.width - thumb.width;
+        if (usable <= 0px || root.maximum <= 0) {
+            return;
+        }
+        root.value = max(0, min(root.maximum, x / usable * root.maximum));
+        root.changed(root.value);
+    }
+}
+
 export component ColourSlider inherits VerticalLayout {
+    min-width: 0px;
+    horizontal-stretch: 1;
     spacing: Spacing.md;
     in-out property <bool> enabled;
     property <string> hex: "#FF0000";
@@ -102,74 +191,64 @@ export component ColourSlider inherits VerticalLayout {
         root.set_base_colour();
         hex = set_hex_from_colour(final_colour);
     }
-    Rectangle {
-        height: 32px;
-        border-width: 1px;
-        border-radius: Radii.md;
-        border-color: Theme.border;
-        // 13 colours
-        background: !root.enabled ? Theme.surface.darker(0.1) : @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12], base_colours[13], base_colours[14], base_colours[15], base_colours[16], base_colours[17], base_colours[18], base_colours[19], base_colours[20], base_colours[21], base_colours[22], base_colours[23], base_colours[24], base_colours[25], base_colours[26], base_colours[27], base_colours[28], base_colours[29], base_colours[30], base_colours[31], base_colours[32], base_colours[33], base_colours[34], base_colours[35]);
-        clip: true;
-        c1 := Slider {
+    VerticalLayout {
+        spacing: Spacing.xs;
+        Text {
+            text: @tr("Hue");
+            font-size: Typography.xs;
+            color: Theme.text-secondary;
+        }
+        c1 := ColourRamp {
             enabled <=> root.enabled;
-            width: parent.width;
-            height: parent.height;
-            minimum: 0;
             maximum: root.base_colours.length;
-            // One less than the array length
-            changed => {
+            ramp: @linear-gradient(90deg, base_colours[0], base_colours[1], base_colours[2], base_colours[3], base_colours[4], base_colours[5], base_colours[6], base_colours[7], base_colours[8], base_colours[9], base_colours[10], base_colours[11], base_colours[12], base_colours[13], base_colours[14], base_colours[15], base_colours[16], base_colours[17], base_colours[18], base_colours[19], base_colours[20], base_colours[21], base_colours[22], base_colours[23], base_colours[24], base_colours[25], base_colours[26], base_colours[27], base_colours[28], base_colours[29], base_colours[30], base_colours[31], base_colours[32], base_colours[33], base_colours[34], base_colours[35]);
+            changed(value) => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
             }
-            released => {
+            released(value) => {
                 root.released();
             }
         }
     }
 
-    Rectangle {
-        height: 32px;
-        border-width: 1px;
-        border-radius: Radii.md;
-        border-color: Theme.border;
-        // 11 colours
-            background: !root.enabled ? Theme.surface.darker(0.1) : @linear-gradient(90deg, base_saturation[0], base_saturation[1], base_saturation[2], base_saturation[3], base_saturation[4], base_saturation[5], base_saturation[6], base_saturation[7], base_saturation[8], base_saturation[9], base_saturation[10]);
-        clip: true;
-        c2 := Slider {
+    VerticalLayout {
+        spacing: Spacing.xs;
+        Text {
+            text: @tr("Saturation");
+            font-size: Typography.xs;
+            color: Theme.text-secondary;
+        }
+        c2 := ColourRamp {
             enabled <=> root.enabled;
-            width: parent.width;
-            height: parent.height;
-            minimum: 0;
             maximum: root.base_saturation.length;
-            changed => {
+            ramp: @linear-gradient(90deg, base_saturation[0], base_saturation[1], base_saturation[2], base_saturation[3], base_saturation[4], base_saturation[5], base_saturation[6], base_saturation[7], base_saturation[8], base_saturation[9], base_saturation[10]);
+            changed(value) => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
             }
-            released => {
+            released(value) => {
                 root.released();
             }
         }
     }
 
-    Rectangle {
-        height: 32px;
-        border-width: 1px;
-        border-radius: Radii.md;
-        border-color: Theme.border;
-        // 11 colours
-        background: !root.enabled ? Theme.surface.darker(0.1) : @linear-gradient(90deg, base_value[0], base_value[1], base_value[2], base_value[3], base_value[4], base_value[5], base_value[6], base_value[7], base_value[8], base_value[9], base_value[10]);
-        clip: true;
-        c3 := Slider {
+    VerticalLayout {
+        spacing: Spacing.xs;
+        Text {
+            text: @tr("Brightness");
+            font-size: Typography.xs;
+            color: Theme.text-secondary;
+        }
+        c3 := ColourRamp {
             enabled <=> root.enabled;
-            width: parent.width;
-            height: parent.height;
-            minimum: 0;
             maximum: root.base_value.length;
-            changed => {
+            ramp: @linear-gradient(90deg, base_value[0], base_value[1], base_value[2], base_value[3], base_value[4], base_value[5], base_value[6], base_value[7], base_value[8], base_value[9], base_value[10]);
+            changed(value) => {
                 set_base_colour();
                 hex = set_hex_from_colour(final_colour);
             }
-            released => {
+            released(value) => {
                 root.released();
             }
         }
@@ -177,22 +256,30 @@ export component ColourSlider inherits VerticalLayout {
 
     HorizontalLayout {
         spacing: Spacing.md;
-        LineEdit {
-            enabled <=> root.enabled;
-            // width: 50%;
-            text <=> root.hex;
-            accepted => {
-                base_colour = hex_to_colour(self.text);
-                root.colourbox = base_colour;
-                root.final_colour = base_colour;
-                root.colourbox = root.final_colour;
-                root.external_colour_change();
-                root.released();
+        VerticalLayout {
+            horizontal-stretch: 1;
+            spacing: Spacing.xs;
+            Text {
+                text: @tr("Hex colour");
+                font-size: Typography.xs;
+                color: Theme.text-secondary;
+            }
+            HexInput {
+                enabled <=> root.enabled;
+                text <=> root.hex;
+                accepted(value) => {
+                    base_colour = hex_to_colour(value);
+                    root.colourbox = base_colour;
+                    root.final_colour = base_colour;
+                    root.external_colour_change();
+                    root.released();
+                }
             }
         }
 
         Rectangle {
-            width: self.height;
+            width: 36px;
+            height: 36px;
             border-width: 1px;
             border-radius: Radii.md;
             border-color: Theme.border;
