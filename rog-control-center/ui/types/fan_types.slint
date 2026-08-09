@@ -31,6 +31,8 @@ export global FanPageData {
     in-out property <bool> balanced_available: false;
     in-out property <bool> performance_available: false;
     in-out property <bool> quiet_available: false;
+    in-out property <bool> custom_available: false;
+    in-out property <bool> custom_mode_available: false;
     in-out property <bool> quiet_is_low_power: false;
 
     in-out property <bool> balanced_cpu_enabled: false;
@@ -42,6 +44,9 @@ export global FanPageData {
     in-out property <bool> quiet_cpu_enabled: false;
     in-out property <bool> quiet_gpu_enabled: false;
     in-out property <bool> quiet_mid_enabled: false;
+    in-out property <bool> custom_cpu_enabled: false;
+    in-out property <bool> custom_gpu_enabled: false;
+    in-out property <bool> custom_mid_enabled: false;
 
     in-out property <int> max_rpm: 0;
 
@@ -58,6 +63,9 @@ export global FanPageData {
     in-out property <[Node]> quiet_cpu: [];
     in-out property <[Node]> quiet_mid: [];
     in-out property <[Node]> quiet_gpu: [];
+    in-out property <[Node]> custom_cpu: [];
+    in-out property <[Node]> custom_mid: [];
+    in-out property <[Node]> custom_gpu: [];
 
     function set_fan(profile: Profile, fan: FanType, data: [Node]) {
     }

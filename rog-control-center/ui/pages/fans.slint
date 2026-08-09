@@ -81,7 +81,9 @@ component FanTab inherits Rectangle {
                         horizontal-stretch: 1;
                         horizontal-alignment: right;
                         vertical-alignment: center;
-                        text: @tr("Drag the points to adjust fan speed");
+                        text: root.enabled
+                            ? @tr("Override active · drag points to adjust fan speed")
+                            : @tr("Saved curve · firmware default is active");
                         color: Theme.text-secondary;
                         font-size: Typography.xs;
                     }
@@ -141,7 +143,7 @@ component FanTab inherits Rectangle {
 
                     HorizontalLayout {
                         Text {
-                            text: @tr("Custom curve");
+                            text: root.enabled ? @tr("Curve override active") : @tr("Firmware curve");
                             color: Theme.text-primary;
                             font-size: Typography.md;
                             font-weight: Typography.weight-semibold;
@@ -152,12 +154,12 @@ component FanTab inherits Rectangle {
                         wrap: TextWrap.word-wrap;
                         color: Theme.text-secondary;
                         font-size: Typography.xs;
-                        text: @tr("Use this curve for the selected fan in this profile.");
+                        text: @tr("Use this curve instead of the firmware default for this fan in this mode.");
                     }
                 }
 
                 Text {
-                    text: root.enabled ? @tr("On") : @tr("Off");
+                    text: root.enabled ? @tr("Override active") : @tr("Firmware default");
                     color: root.enabled ? Theme.primary : Theme.text-secondary;
                     font-size: Typography.sm;
                     vertical-alignment: center;
@@ -186,7 +188,7 @@ component FanTab inherits Rectangle {
                 }
 
                 ActionButton {
-                    text: @tr("Restore defaults");
+                    text: @tr("Reset");
                     enabled: root.active && !FanPageData.busy;
                     clicked => {
                         root.default();
@@ -207,12 +209,19 @@ export component PageFans inherits VerticalLayout {
     // edit another profile for later use.
     property <Profile> selected_profile: FanPageData.active_profile_kind;
     property <FanType> selected_fan: FanType.CPU;
+    property <string> selected_profile_name:
+        selected_profile == Profile.Balanced ? @tr("Balanced") :
+        selected_profile == Profile.Performance ? @tr("Performance") :
+        selected_profile == Profile.Quiet
+            ? (FanPageData.quiet_is_low_power ? @tr("Low Power") : @tr("Quiet")) :
+        selected_profile == Profile.LowPower ? @tr("Low Power") :
+        @tr("Custom");
 
     PageHeader {
         height: 104px;
         badge: @tr("Cooling");
         title: @tr("Fan Curves");
-        subtitle: @tr("Set temperature-based fan speeds for each performance profile.");
+        subtitle: @tr("Edit the cooling curve used by each performance mode.");
         aside: "";
     }
 
@@ -233,8 +242,8 @@ export component PageFans inherits VerticalLayout {
             color: Theme.text-secondary;
             font-size: Typography.sm;
             text: FanPageData.active_profile != ""
-                ? @tr("Active profile: {0}", FanPageData.active_profile)
-                : @tr("Active profile");
+                ? @tr("Active now: {0}", FanPageData.active_profile)
+                : @tr("Active mode");
         }
 
         Text {
@@ -242,7 +251,7 @@ export component PageFans inherits VerticalLayout {
             vertical-alignment: center;
             color: Theme.text-tertiary;
             font-size: Typography.xs;
-            text: @tr("Changes are saved per profile.");
+            text: @tr("Edits are saved per mode.");
         }
 
         Text {
@@ -276,7 +285,9 @@ export component PageFans inherits VerticalLayout {
                 color: FanPageData.has_error ? Theme.error : Theme.text-secondary;
                 font-size: Typography.sm;
                 horizontal-alignment: center;
-                text: FanPageData.status_message != ""
+                text: FanPageData.loading
+                    ? @tr("Reading the available fan controls…")
+                    : FanPageData.status_message != ""
                     ? FanPageData.status_message
                     : @tr("This machine did not report editable fan curves.");
             }
@@ -304,7 +315,7 @@ export component PageFans inherits VerticalLayout {
 
                 HorizontalLayout {
                     Text {
-                        text: @tr("Profile");
+                        text: @tr("Performance mode");
                         font-size: Typography.xs;
                         font-weight: Typography.weight-semibold;
                         color: Theme.text-secondary;
@@ -312,9 +323,7 @@ export component PageFans inherits VerticalLayout {
                     Text {
                         horizontal-stretch: 1;
                         horizontal-alignment: right;
-                        text: FanPageData.active_profile != ""
-                            ? @tr("Active: {0}", FanPageData.active_profile)
-                            : "";
+                        text: @tr("Editing: {0}", root.selected_profile_name);
                         font-size: Typography.xs;
                         color: Theme.text-tertiary;
                     }
@@ -347,6 +356,15 @@ export component PageFans inherits VerticalLayout {
                         available: FanPageData.quiet_available;
                         clicked => {
                             root.selected_profile = Profile.Quiet;
+                        }
+                    }
+
+                    if FanPageData.custom_mode_available: SelectorChip {
+                        label: @tr("Custom");
+                        selected: root.selected_profile == Profile.Custom;
+                        available: FanPageData.custom_available;
+                        clicked => {
+                            root.selected_profile = Profile.Custom;
                         }
                     }
                 }
@@ -551,6 +569,54 @@ export component PageFans inherits VerticalLayout {
             }
             default => {
                 FanPageData.set_profile_default(Profile.Quiet);
+            }
+        }
+
+        if root.selected_profile == Profile.Custom && root.selected_fan == FanType.CPU: FanTab {
+            profile_available <=> FanPageData.custom_available;
+            tab_enabled <=> FanPageData.cpu_fan_available;
+            enabled <=> FanPageData.custom_cpu_enabled;
+            nodes <=> FanPageData.custom_cpu;
+            apply => {
+                FanPageData.set_fan_data(FanType.CPU, Profile.Custom, self.enabled, FanPageData.custom_cpu);
+            }
+            cancel => {
+                FanPageData.reload_profile(Profile.Custom);
+            }
+            default => {
+                FanPageData.set_profile_default(Profile.Custom);
+            }
+        }
+
+        if root.selected_profile == Profile.Custom && root.selected_fan == FanType.Middle: FanTab {
+            profile_available <=> FanPageData.custom_available;
+            tab_enabled <=> FanPageData.mid_fan_available;
+            enabled <=> FanPageData.custom_mid_enabled;
+            nodes <=> FanPageData.custom_mid;
+            apply => {
+                FanPageData.set_fan_data(FanType.Middle, Profile.Custom, self.enabled, FanPageData.custom_mid);
+            }
+            cancel => {
+                FanPageData.reload_profile(Profile.Custom);
+            }
+            default => {
+                FanPageData.set_profile_default(Profile.Custom);
+            }
+        }
+
+        if root.selected_profile == Profile.Custom && root.selected_fan == FanType.GPU: FanTab {
+            profile_available <=> FanPageData.custom_available;
+            tab_enabled <=> FanPageData.gpu_fan_available;
+            enabled <=> FanPageData.custom_gpu_enabled;
+            nodes <=> FanPageData.custom_gpu;
+            apply => {
+                FanPageData.set_fan_data(FanType.GPU, Profile.Custom, self.enabled, FanPageData.custom_gpu);
+            }
+            cancel => {
+                FanPageData.reload_profile(Profile.Custom);
+            }
+            default => {
+                FanPageData.set_profile_default(Profile.Custom);
             }
         }
     }

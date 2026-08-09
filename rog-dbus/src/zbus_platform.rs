@@ -60,6 +60,12 @@ pub trait Platform {
     #[zbus(property)]
     fn set_profile_performance_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
 
+    /// ThrottleCustomEpp property
+    #[zbus(property)]
+    fn profile_custom_epp(&self) -> zbus::Result<CPUEPP>;
+    #[zbus(property)]
+    fn set_profile_custom_epp(&self, epp: CPUEPP) -> zbus::Result<()>;
+
     /// ThrottlePolicyLinkedEpp property
     #[zbus(property)]
     fn platform_profile_linked_epp(&self) -> zbus::Result<bool>;

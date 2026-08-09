@@ -52,12 +52,21 @@ async fn load_profile(
 async fn load_profiles(
     fans: &FanCurvesProxy<'_>,
     platform_profile_choices: &[PlatformProfile],
-) -> Result<(Vec<CurveData>, Vec<CurveData>, Vec<CurveData>), String> {
+) -> Result<
+    (
+        Vec<CurveData>,
+        Vec<CurveData>,
+        Vec<CurveData>,
+        Vec<CurveData>,
+    ),
+    String,
+> {
     let balanced = load_profile(fans, platform_profile_choices, Profile::Balanced).await?;
     let perf = load_profile(fans, platform_profile_choices, Profile::Performance).await?;
     let quiet = load_profile(fans, platform_profile_choices, Profile::Quiet).await?;
+    let custom = load_profile(fans, platform_profile_choices, Profile::Custom).await?;
 
-    Ok((balanced, perf, quiet))
+    Ok((balanced, perf, quiet, custom))
 }
 
 fn platform_profile_label(profile: PlatformProfile, quiet_is_low_power: bool) -> &'static str {
@@ -81,9 +90,7 @@ fn ui_profile_for_platform(profile: PlatformProfile) -> Profile {
         PlatformProfile::Balanced => Profile::Balanced,
         PlatformProfile::Performance => Profile::Performance,
         PlatformProfile::Quiet | PlatformProfile::LowPower => Profile::Quiet,
-        // The fan page has no Custom selector yet; keep a usable curve view
-        // instead of leaving the page with no matching FanTab.
-        PlatformProfile::Custom => Profile::Balanced,
+        PlatformProfile::Custom => Profile::Custom,
     }
 }
 
@@ -262,7 +269,34 @@ fn update_profile_data(handle: Weak<MainWindow>, profile: Profile, curves: Vec<C
                         }
                     }
                 }
-                Profile::Custom => {}
+                Profile::Custom => {
+                    global.set_custom_available(!curves.is_empty());
+                    global.set_custom_cpu_enabled(false);
+                    global.set_custom_gpu_enabled(false);
+                    global.set_custom_mid_enabled(false);
+                    global.set_custom_cpu(empty_nodes.clone());
+                    global.set_custom_gpu(empty_nodes.clone());
+                    global.set_custom_mid(empty_nodes.clone());
+                    for fan in curves {
+                        match fan.fan {
+                            rog_profiles::FanCurvePU::CPU => {
+                                global.set_cpu_fan_available(true);
+                                global.set_custom_cpu_enabled(fan.enabled);
+                                global.set_custom_cpu(collect(&fan.temp, &fan.pwm))
+                            }
+                            rog_profiles::FanCurvePU::GPU => {
+                                global.set_gpu_fan_available(true);
+                                global.set_custom_gpu_enabled(fan.enabled);
+                                global.set_custom_gpu(collect(&fan.temp, &fan.pwm))
+                            }
+                            rog_profiles::FanCurvePU::MID => {
+                                global.set_mid_fan_available(true);
+                                global.set_custom_mid_enabled(fan.enabled);
+                                global.set_custom_mid(collect(&fan.temp, &fan.pwm))
+                            }
+                        }
+                    }
+                }
             }
         })
         .map_err(|e| error!("update_profile_data: upgrade_in_event_loop: {e:?}"))
@@ -274,8 +308,9 @@ pub fn update_fan_data(
     bal: Vec<CurveData>,
     perf: Vec<CurveData>,
     quiet: Vec<CurveData>,
+    custom: Vec<CurveData>,
 ) {
-    let any_curves = !(bal.is_empty() && perf.is_empty() && quiet.is_empty());
+    let any_curves = !(bal.is_empty() && perf.is_empty() && quiet.is_empty() && custom.is_empty());
     handle
         .upgrade_in_event_loop(move |handle| {
             let global = handle.global::<FanPageData>();
@@ -290,6 +325,7 @@ pub fn update_fan_data(
             global.set_balanced_available(!bal.is_empty());
             global.set_performance_available(!perf.is_empty());
             global.set_quiet_available(!quiet.is_empty());
+            global.set_custom_available(!custom.is_empty());
             global.set_balanced_cpu_enabled(false);
             global.set_balanced_gpu_enabled(false);
             global.set_balanced_mid_enabled(false);
@@ -299,6 +335,9 @@ pub fn update_fan_data(
             global.set_quiet_cpu_enabled(false);
             global.set_quiet_gpu_enabled(false);
             global.set_quiet_mid_enabled(false);
+            global.set_custom_cpu_enabled(false);
+            global.set_custom_gpu_enabled(false);
+            global.set_custom_mid_enabled(false);
             global.set_balanced_cpu(empty_nodes.clone());
             global.set_balanced_gpu(empty_nodes.clone());
             global.set_balanced_mid(empty_nodes.clone());
@@ -308,6 +347,9 @@ pub fn update_fan_data(
             global.set_quiet_cpu(empty_nodes.clone());
             global.set_quiet_gpu(empty_nodes.clone());
             global.set_quiet_mid(empty_nodes.clone());
+            global.set_custom_cpu(empty_nodes.clone());
+            global.set_custom_gpu(empty_nodes.clone());
+            global.set_custom_mid(empty_nodes.clone());
             let collect = |temp: &[u8], pwm: &[u8]| -> slint::ModelRc<Node> {
                 let tmp: Vec<Node> = temp
                     .iter()
@@ -377,6 +419,25 @@ pub fn update_fan_data(
                     }
                 }
             }
+            for fan in custom {
+                match fan.fan {
+                    rog_profiles::FanCurvePU::CPU => {
+                        global.set_cpu_fan_available(true);
+                        global.set_custom_cpu_enabled(fan.enabled);
+                        global.set_custom_cpu(collect(&fan.temp, &fan.pwm))
+                    }
+                    rog_profiles::FanCurvePU::GPU => {
+                        global.set_gpu_fan_available(true);
+                        global.set_custom_gpu_enabled(fan.enabled);
+                        global.set_custom_gpu(collect(&fan.temp, &fan.pwm))
+                    }
+                    rog_profiles::FanCurvePU::MID => {
+                        global.set_mid_fan_available(true);
+                        global.set_custom_mid_enabled(fan.enabled);
+                        global.set_custom_mid(collect(&fan.temp, &fan.pwm))
+                    }
+                }
+            }
         })
         .map_err(|e| error!("update_fan_data: upgrade_in_event_loop: {e:?}"))
         .ok();
@@ -443,20 +504,23 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         };
 
         let handle_copy = handle.clone();
+        let custom_mode_available = platform_profile_choices.contains(&PlatformProfile::Custom);
         let quiet_is_low_power = !platform_profile_choices.contains(&PlatformProfile::Quiet)
             && platform_profile_choices.contains(&PlatformProfile::LowPower);
         // Do initial setup
-        let (balanced, perf, quiet) = match load_profiles(&fans, &platform_profile_choices).await {
-            Ok(curves) => curves,
-            Err(e) => {
-                error!("{e}");
-                mark_unavailable(&handle, e);
-                return;
-            }
-        };
-        let has_any_curves = !(balanced.is_empty() && perf.is_empty() && quiet.is_empty());
+        let (balanced, perf, quiet, custom) =
+            match load_profiles(&fans, &platform_profile_choices).await {
+                Ok(curves) => curves,
+                Err(e) => {
+                    error!("{e}");
+                    mark_unavailable(&handle, e);
+                    return;
+                }
+            };
+        let has_any_curves =
+            !(balanced.is_empty() && perf.is_empty() && quiet.is_empty() && custom.is_empty());
 
-        update_fan_data(handle, balanced, perf, quiet);
+        update_fan_data(handle, balanced, perf, quiet, custom);
         if let Ok(active) = platform.platform_profile().await {
             set_active_profile_label(&handle_copy, active, quiet_is_low_power);
         }
@@ -474,6 +538,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
         let handle_next1 = handle_copy.clone();
         if let Err(e) = handle_copy.upgrade_in_event_loop(move |handle| {
             let global = handle.global::<FanPageData>();
+            global.set_custom_mode_available(custom_mode_available);
             global.set_quiet_is_low_power(quiet_is_low_power);
             let fans1 = fans.clone();
             let platform_default = platform.clone();
@@ -512,7 +577,8 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         set_busy(&handle_next, false);
                         return;
                     }
-                    let (balanced, perf, quiet) = match load_profiles(&fans, &choices).await {
+                    let (balanced, perf, quiet, custom) = match load_profiles(&fans, &choices).await
+                    {
                         Ok(curves) => curves,
                         Err(e) => {
                             error!("{e}");
@@ -521,7 +587,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                             return;
                         }
                     };
-                    update_fan_data(handle_next, balanced, perf, quiet);
+                    update_fan_data(handle_next, balanced, perf, quiet, custom);
                     if let Ok(active) = platform.platform_profile().await {
                         set_active_profile_label(&handle_status, active, quiet_is_low_power);
                     }
@@ -597,7 +663,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         error!("No platform profile mapping available for {:?}", profile);
                         set_status(
                             &handle_next,
-                            format!("No platform profile mapping is available for {:?}", profile),
+                            format!("No performance mode mapping is available for {:?}", profile),
                             true,
                         );
                         set_busy(&handle_next, false);
@@ -653,7 +719,7 @@ pub fn setup_fan_curve_page(ui: &MainWindow, _config: Arc<Mutex<Config>>) {
                         set_status(
                             &handle_status,
                             format!(
-                                "Saved {} fan changes. They will apply live when that profile \
+                                "Saved {} fan changes. They will apply live when that mode \
                                  becomes active.",
                                 platform_profile_label(target, quiet_is_low_power)
                             ),

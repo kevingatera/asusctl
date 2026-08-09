@@ -6,7 +6,7 @@ use rog_dbus::asus_armoury::AsusArmouryProxy;
 use rog_dbus::zbus_backlight::BacklightProxy;
 use rog_dbus::zbus_platform::{PlatformProxy, PlatformProxyBlocking};
 use rog_platform::asus_armoury::FirmwareAttribute;
-use rog_platform::platform::Properties;
+use rog_platform::platform::{PlatformProfile, Properties};
 use slint::{ComponentHandle, Model, ModelRc, SharedString, VecModel};
 
 use super::show_toast;
@@ -313,6 +313,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         let platform_copy = platform.clone();
         if let Ok(mut value) = platform.platform_profile_choices().await {
             debug!("Available platform profile choices: {:?}", value);
+            let custom_profile_available = value.contains(&PlatformProfile::Custom);
             handle
                 .upgrade_in_event_loop(move |handle| {
                     value.sort();
@@ -341,6 +342,9 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                     handle
                         .global::<SystemPageData>()
                         .set_platform_profile_indexes(ModelRc::from(indexes.as_slice()));
+                    handle
+                        .global::<SystemPageData>()
+                        .set_custom_profile_available(custom_profile_available);
 
                     // Set current only after setting the choices up
                     let handle = handle.as_weak();
@@ -373,6 +377,7 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
         set_ui_props_async!(handle, platform, SystemPageData, profile_balanced_epp);
         set_ui_props_async!(handle, platform, SystemPageData, profile_performance_epp);
         set_ui_props_async!(handle, platform, SystemPageData, profile_quiet_epp);
+        set_ui_props_async!(handle, platform, SystemPageData, profile_custom_epp);
         set_ui_props_async!(
             handle,
             platform,
@@ -427,8 +432,8 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                         let handle_copy = handle_copy.clone();
                         tokio::spawn(async move {
                             show_toast(
-                                format!("Throttle policy set to {}", value).into(),
-                                "Setting Throttle policy failed".into(),
+                                format!("Performance mode set to {}", value).into(),
+                                "Setting performance mode failed".into(),
                                 handle_copy,
                                 proxy_copy.set_platform_profile(value.into()).await,
                             );
@@ -487,51 +492,57 @@ pub fn setup_system_page_callbacks(ui: &MainWindow, _states: Arc<Mutex<Config>>)
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.profile_balanced_epp(.into()),
-                    "Throttle policy EPP set to {}",
-                    "Setting Throttle policy EPP failed"
+                    "Performance mode CPU preference set to {}",
+                    "Setting CPU preference failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.profile_performance_epp(.into()),
-                    "Throttle policy EPP set to {}",
-                    "Setting Throttle policy EPP failed"
+                    "Performance mode CPU preference set to {}",
+                    "Setting CPU preference failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.profile_quiet_epp(.into()),
-                    "Throttle policy EPP set to {}",
-                    "Setting Throttle policy EPP failed"
+                    "Performance mode CPU preference set to {}",
+                    "Setting CPU preference failed"
+                );
+                set_ui_callbacks!(handle,
+                    SystemPageData(as i32),
+                    platform_copy.profile_custom_epp(.into()),
+                    "Performance mode CPU preference set to {}",
+                    "Setting Custom mode CPU preference failed"
                 );
                 set_ui_callbacks!(
                     handle,
                     SystemPageData(),
                     platform_copy.platform_profile_linked_epp(),
-                    "Throttle policy linked to EPP: {}",
-                    "Setting Throttle policy linked to EPP failed"
+                    "CPU preference follows performance mode: {}",
+                    "Setting CPU preference linkage failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.platform_profile_on_ac(.into()),
-                    "Throttle policy on AC set to {}",
-                    "Setting Throttle policy on AC failed"
+                    "AC performance mode set to {}",
+                    "Setting AC performance mode failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
                     platform_copy.change_platform_profile_on_ac(.into()),
-                    "Throttle policy on AC enabled: {}",
-                    "Setting Throttle policy on AC failed"
+                    "Automatic AC mode switching: {}",
+                    "Setting AC mode switching failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as i32),
                     platform_copy.platform_profile_on_battery(.into()),
-                    "Throttle policy on battery set to {}",
-                    "Setting Throttle policy on battery failed"
+                    "Battery performance mode set to {}",
+                    "Setting battery performance mode failed"
                 );
                 set_ui_callbacks!(handle,
                     SystemPageData(as bool),
                     platform_copy.change_platform_profile_on_battery(.into()),
-                    "Throttle policy on battery enabled: {}",
-                    "Setting Throttle policy on AC failed"
+                    "Automatic battery mode switching: {}",
+                    "Setting battery mode switching failed"
                 );
 
                 set_ui_callbacks!(handle,

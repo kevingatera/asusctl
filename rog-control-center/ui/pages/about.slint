@@ -37,7 +37,6 @@ component AboutCard inherits RogItem {
 
 export component PageAbout inherits Rectangle {
     clip: true;
-    property <bool> wide: self.width >= 900px;
 
     ScrollView {
         VerticalLayout {
@@ -57,28 +56,12 @@ export component PageAbout inherits Rectangle {
                 body: @tr("ROG Control Center is the graphical front end for asusctl and related services. It keeps the UI close to the machine's actual capabilities instead of showing controls that do not apply.");
             }
 
-            if wide: HorizontalLayout {
-                spacing: Spacing.lg;
-
-                AboutCard {
-                    horizontal-stretch: 1;
-                    title: @tr("What you can change");
-                    body: @tr("Power: switch performance profiles and adjust fan behavior.\nLighting: configure Aura effects and AniMe Matrix on supported devices.\nBattery: set charge limits and other firmware-backed limits.\nGraphics: inspect and request supported GPU modes through supergfxctl.");
-                }
-
-                AboutCard {
-                    horizontal-stretch: 1;
-                    title: @tr("What it needs");
-                    body: @tr("Kernel 6.19 or newer.\nasusd for platform controls.\nsupergfxctl for graphics routing.");
-                }
+            AboutCard {
+                title: @tr("How the modes relate");
+                body: @tr("A performance mode is the top-level choice. Its CPU preference, power limits, and fan settings are stored together. A curve override applies to one fan within that mode. AC and battery rules choose which mode is active.");
             }
 
-            if !wide: AboutCard {
-                title: @tr("What you can change");
-                body: @tr("Power: switch performance profiles and adjust fan behavior.\nLighting: configure Aura effects and AniMe Matrix on supported devices.\nBattery: set charge limits and other firmware-backed limits.\nGraphics: inspect and request supported GPU modes through supergfxctl.");
-            }
-
-            if !wide: AboutCard {
+            AboutCard {
                 title: @tr("What it needs");
                 body: @tr("Kernel 6.19 or newer.\nasusd for platform controls.\nsupergfxctl for graphics routing.");
             }

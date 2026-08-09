@@ -55,16 +55,17 @@ export global SystemPageData {
     in-out property <float> charge_control_end_threshold: 30;
     callback cb_charge_control_end_threshold(/* charge limit */ int);
     in-out property <int> platform_profile: 0;
-    in-out property <[string]> platform_profile_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet"), @tr("LowPower")];
+    in-out property <[string]> platform_profile_choices: [@tr("Balanced"), @tr("Performance"), @tr("Quiet"), @tr("Low Power")];
     // The dropdown list index is used to index in to this and find the correct
     // value for platform profile
     in-out property <[int]> platform_profile_indexes: [0, 1, 2, 3];
+    in-out property <bool> custom_profile_available: false;
     callback cb_platform_profile(int);
     in-out property <[string]> energy_performance_choices: [
-        @tr("Default"),
+        @tr("System default"),
         @tr("Performance"),
-        @tr("BalancePerformance"),
-        @tr("BalancePower"),
+        @tr("Balanced performance"),
+        @tr("Balanced power"),
         @tr("Power")
     ];
     in-out property <int> profile_balanced_epp: 0;
@@ -73,6 +74,8 @@ export global SystemPageData {
     callback cb_profile_performance_epp(int);
     in-out property <int> profile_quiet_epp: 0;
     callback cb_profile_quiet_epp(int);
+    in-out property <int> profile_custom_epp: 0;
+    callback cb_profile_custom_epp(int);
     // if the EPP should change with throttle
     in-out property <bool> platform_profile_linked_epp: true;
     callback cb_platform_profile_linked_epp(bool);
@@ -201,7 +204,8 @@ export component PageSystem inherits Rectangle {
     property <bool> fan_curve_active:
         (active_profile_value == 0 && (FanPageData.balanced_cpu_enabled || FanPageData.balanced_gpu_enabled || FanPageData.balanced_mid_enabled)) ||
         (active_profile_value == 1 && (FanPageData.performance_cpu_enabled || FanPageData.performance_gpu_enabled || FanPageData.performance_mid_enabled)) ||
-        ((active_profile_value == 2 || active_profile_value == 3) && (FanPageData.quiet_cpu_enabled || FanPageData.quiet_gpu_enabled || FanPageData.quiet_mid_enabled));
+        ((active_profile_value == 2 || active_profile_value == 3) && (FanPageData.quiet_cpu_enabled || FanPageData.quiet_gpu_enabled || FanPageData.quiet_mid_enabled)) ||
+        (active_profile_value == 4 && (FanPageData.custom_cpu_enabled || FanPageData.custom_gpu_enabled || FanPageData.custom_mid_enabled));
     property <bool> ppt_unlocked: fan_curve_active;
     clip: true;
     
@@ -214,12 +218,59 @@ export component PageSystem inherits Rectangle {
             PageHeader {
                 badge: @tr("System");
                 title: @tr("System Control");
-                subtitle: @tr("Profiles, charging, displays, and hardware tuning.");
+                subtitle: @tr("Performance modes, charging, displays, and hardware tuning.");
                 aside: @tr("Platform and power");
             }
             
             SectionHeader {
-                title: @tr("Power settings");
+                title: @tr("Performance mode");
+                subtitle: @tr("One mode ties together CPU behavior, cooling overrides, and hardware tuning.");
+            }
+
+            if SystemPageData.platform_profile != -1: HorizontalLayout {
+                spacing: Spacing.md;
+                SystemDropdown {
+                    text: @tr("Active mode");
+                    current_index <=> SystemPageData.platform_profile;
+                    current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile];
+                    model <=> SystemPageData.platform_profile_choices;
+                    selected => {
+                        SystemPageData.cb_platform_profile(SystemPageData.platform_profile_indexes[SystemPageData.platform_profile])
+                    }
+                }
+
+                ActionButton {
+                    text: @tr("Mode details");
+                    clicked => {
+                        root.show_throttle_advanced = true;
+                    }
+                }
+            }
+
+            RogItem {
+                min-height: 56px;
+                max-height: 72px;
+                HorizontalLayout {
+                    padding: Spacing.md;
+                    spacing: Spacing.md;
+                    Text {
+                        text: @tr("What this controls");
+                        font-size: Typography.sm;
+                        font-weight: Typography.weight-semibold;
+                        color: Theme.text-primary;
+                    }
+                    Text {
+                        horizontal-stretch: 1;
+                        text: @tr("The selected mode is the anchor for CPU preference, fan-curve overrides, and power limits.");
+                        wrap: TextWrap.word-wrap;
+                        font-size: Typography.sm;
+                        color: Theme.text-secondary;
+                    }
+                }
+            }
+
+            SectionHeader {
+                title: @tr("Power and charging");
             }
 
             if SystemPageData.charge_control_end_threshold != -1: SystemSlider {
@@ -232,26 +283,6 @@ export component PageSystem inherits Rectangle {
                 released => {
                     SystemPageData.charge_control_end_threshold = self.value;
                     SystemPageData.cb_charge_control_end_threshold(Math.round(SystemPageData.charge_control_end_threshold))
-                }
-            }
-
-            if SystemPageData.platform_profile != -1: HorizontalLayout {
-                spacing: Spacing.md;
-                SystemDropdown {
-                    text: @tr("Platform Profile");
-                    current_index <=> SystemPageData.platform_profile;
-                    current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile];
-                    model <=> SystemPageData.platform_profile_choices;
-                    selected => {
-                        SystemPageData.cb_platform_profile(SystemPageData.platform_profile_indexes[SystemPageData.platform_profile])
-                    }
-                }
-
-                ActionButton {
-                    text: @tr("Advanced");
-                    clicked => {
-                        root.show_throttle_advanced = true;
-                    }
                 }
             }
 
@@ -494,7 +525,7 @@ export component PageSystem inherits Rectangle {
                 VerticalBox {
                     padding: Spacing.sm;
                     Text {
-                        text: @tr("requires_fan_curve_warning" => "CPU power limits require an active custom fan curve. Enable a fan curve for the active profile in the Fans tab to unlock these controls.");
+                        text: @tr("requires_fan_curve_warning" => "CPU power limits require an active cooling-curve override. Enable a curve override for the active mode in the Fans tab to unlock these controls.");
                         font-size: 14px;
                         color: white;
                         wrap: TextWrap.word-wrap;
@@ -667,7 +698,7 @@ export component PageSystem inherits Rectangle {
     }
 
     Modal {
-        title: "Advanced Settings";
+        title: @tr("Performance mode details");
         open: root.show_throttle_advanced;
         close => {
             root.show_throttle_advanced = false;
@@ -679,13 +710,13 @@ export component PageSystem inherits Rectangle {
                 spacing: Spacing.md;
                 
                 GroupBox {
-                    title: @tr("Energy Performance Preference linked to Throttle Policy");
+                    title: @tr("CPU behavior");
                     
                     VerticalBox {
                         spacing: Spacing.md;
 
                         SystemToggle {
-                            text: @tr("Change EPP based on Throttle Policy");
+                            text: @tr("Follow the active mode");
                             checked <=> SystemPageData.platform_profile_linked_epp;
                             toggled => {
                                 SystemPageData.cb_platform_profile_linked_epp(SystemPageData.platform_profile_linked_epp)
@@ -693,7 +724,7 @@ export component PageSystem inherits Rectangle {
                         }
 
                         SystemDropdown {
-                            text: @tr("EPP for Balanced Policy");
+                            text: @tr("CPU preference · Balanced");
                             current_index <=> SystemPageData.profile_balanced_epp;
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_balanced_epp];
                             model <=> SystemPageData.energy_performance_choices;
@@ -703,7 +734,7 @@ export component PageSystem inherits Rectangle {
                         }
 
                         SystemDropdown {
-                            text: @tr("EPP for Performance Policy");
+                            text: @tr("CPU preference · Performance");
                             current_index <=> SystemPageData.profile_performance_epp;
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_performance_epp];
                             model <=> SystemPageData.energy_performance_choices;
@@ -713,7 +744,7 @@ export component PageSystem inherits Rectangle {
                         }
 
                         SystemDropdown {
-                            text: @tr("EPP for ") + SystemPageData.platform_profile_choices[2] + @tr(" Policy");
+                            text: @tr("CPU preference · Quiet / Low Power");
                             current_index <=> SystemPageData.profile_quiet_epp;
                             current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_quiet_epp];
                             model <=> SystemPageData.energy_performance_choices;
@@ -721,11 +752,21 @@ export component PageSystem inherits Rectangle {
                                 SystemPageData.cb_profile_quiet_epp(SystemPageData.profile_quiet_epp)
                             }
                         }
+
+                        if SystemPageData.custom_profile_available: SystemDropdown {
+                            text: @tr("CPU preference · Custom");
+                            current_index <=> SystemPageData.profile_custom_epp;
+                            current_value: SystemPageData.energy_performance_choices[SystemPageData.profile_custom_epp];
+                            model <=> SystemPageData.energy_performance_choices;
+                            selected => {
+                                SystemPageData.cb_profile_custom_epp(SystemPageData.profile_custom_epp)
+                            }
+                        }
                     }
                 }
 
                 GroupBox {
-                    title: @tr("Throttle Policy for power state");
+                    title: @tr("Automatic mode switching");
                     
                     VerticalBox {
                         spacing: Spacing.md;
@@ -734,7 +775,7 @@ export component PageSystem inherits Rectangle {
                             spacing: Spacing.md;
                             
                             SystemDropdown {
-                                text: @tr("Throttle Policy on Battery");
+                                text: @tr("Mode on battery");
                                 current_index <=> SystemPageData.platform_profile_on_battery;
                                 current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile_on_battery];
                                 model <=> SystemPageData.platform_profile_choices;
@@ -744,7 +785,7 @@ export component PageSystem inherits Rectangle {
                             }
 
                             SystemToggle {
-                                text: @tr("Enabled");
+                                text: @tr("Switch automatically");
                                 checked <=> SystemPageData.change_platform_profile_on_battery;
                                 toggled => {
                                     SystemPageData.cb_change_platform_profile_on_battery(SystemPageData.change_platform_profile_on_battery);
@@ -756,7 +797,7 @@ export component PageSystem inherits Rectangle {
                             spacing: Spacing.md;
                             
                             SystemDropdown {
-                                text: @tr("Throttle Policy on AC");
+                                text: @tr("Mode on AC power");
                                 current_index <=> SystemPageData.platform_profile_on_ac;
                                 current_value: SystemPageData.platform_profile_choices[SystemPageData.platform_profile_on_ac];
                                 model <=> SystemPageData.platform_profile_choices;
@@ -766,7 +807,7 @@ export component PageSystem inherits Rectangle {
                             }
 
                             SystemToggle {
-                                text: @tr("Enabled");
+                                text: @tr("Switch automatically");
                                 checked <=> SystemPageData.change_platform_profile_on_ac;
                                 toggled => {
                                     SystemPageData.cb_change_platform_profile_on_ac(SystemPageData.change_platform_profile_on_ac);
