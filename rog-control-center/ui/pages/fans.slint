@@ -46,6 +46,9 @@ component SelectorChip inherits Rectangle {
 }
 
 component FanTab inherits Rectangle {
+    // The graph has no intrinsic height, so give the tab enough room for the
+    // chart and its action row even when it is hosted by a ScrollView.
+    min-height: 428px;
     in-out property <bool> enabled: false;
     in property <bool> profile_available: true;
     in-out property <bool> tab_enabled: true;
@@ -63,6 +66,7 @@ component FanTab inherits Rectangle {
         spacing: Spacing.md;
 
         HorizontalLayout {
+            min-height: 320px;
             vertical-stretch: 1;
             if root.active: VerticalLayout {
                 horizontal-stretch: 1;
@@ -90,6 +94,7 @@ component FanTab inherits Rectangle {
                 }
 
                 Graph {
+                    min-height: 280px;
                     vertical-stretch: 1;
                     nodes <=> root.nodes;
                     max-rpm: FanPageData.max_rpm;
@@ -425,6 +430,10 @@ export component PageFans inherits PageLayout {
     }
 
     if FanPageData.available && !FanPageData.loading: ScrollView {
+        // This is the final child of PageLayout; without a stretch it receives
+        // only the graph's tiny intrinsic size and the chart collapses.
+        vertical-stretch: 1;
+        min-height: 428px;
         if root.selected_profile == Profile.Balanced && root.selected_fan == FanType.CPU: FanTab {
             profile_available <=> FanPageData.balanced_available;
             tab_enabled <=> FanPageData.cpu_fan_available;
