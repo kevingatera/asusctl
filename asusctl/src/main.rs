@@ -837,6 +837,15 @@ fn handle_throttle_profile(
     Ok(())
 }
 
+/// Whether the saved curve for `fan` is currently enabled. A fan with no saved
+/// curve counts as disabled.
+fn curve_enabled(
+    curves: &[rog_profiles::fan_curve_set::CurveData],
+    fan: rog_profiles::FanCurvePU,
+) -> bool {
+    curves.iter().any(|curve| curve.fan == fan && curve.enabled)
+}
+
 fn handle_fan_curve(
     conn: &Connection,
     cmd: &FanCurveCommand,
@@ -901,6 +910,10 @@ fn handle_fan_curve(
         if let Some(mut curve) = cmd.data.clone() {
             let fan = cmd.fan.unwrap_or_default();
             curve.set_fan(fan);
+            // `--data` only carries curve points, and the parser defaults `enabled` to
+            // false. Keep the fan's current state so updating points does not turn
+            // an enabled curve off.
+            curve.enabled = curve_enabled(&fan_proxy.fan_curve_data(profile)?, fan);
             fan_proxy.set_fan_curve(profile, curve)?;
         }
     }
@@ -1082,5 +1095,42 @@ fn handle_armoury_command(
             }
             Ok(())
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rog_profiles::FanCurvePU;
+    use rog_profiles::fan_curve_set::CurveData;
+
+    use super::curve_enabled;
+
+    fn curve(fan: FanCurvePU, enabled: bool) -> CurveData {
+        CurveData {
+            fan,
+            pwm: [0; 8],
+            temp: [0; 8],
+            enabled,
+        }
+    }
+
+    #[test]
+    fn curve_enabled_reads_the_selected_fan_only() {
+        let curves = [
+            curve(FanCurvePU::CPU, true),
+            curve(FanCurvePU::GPU, false),
+        ];
+        assert!(curve_enabled(&curves, FanCurvePU::CPU));
+        assert!(!curve_enabled(&curves, FanCurvePU::GPU));
+    }
+
+    #[test]
+    fn curve_enabled_is_false_for_a_fan_without_a_curve() {
+        let curves = [curve(
+            FanCurvePU::CPU,
+            true,
+        )];
+        assert!(!curve_enabled(&curves, FanCurvePU::MID));
+        assert!(!curve_enabled(&[], FanCurvePU::CPU));
     }
 }
