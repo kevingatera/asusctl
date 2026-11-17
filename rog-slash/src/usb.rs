@@ -91,6 +91,89 @@ pub const fn slash_pkt_save(slash_type: SlashType) -> SlashUsbPacket {
     pkt
 }
 
+/// Number of segments in the Slash bar.
+pub const SLASH_SEGMENTS: usize = 7;
+
+/// Get the three packets that switch the device to custom frames. After these,
+/// frames from `slash_pkt_custom_frame()` are shown until a firmware mode is
+/// set again.
+#[inline]
+pub const fn slash_pkt_custom_init(slash_type: SlashType) -> [SlashUsbPacket; 3] {
+    let report_id = report_id(slash_type);
+
+    let mut pkt1 = [0; PACKET_SIZE];
+    pkt1[0] = report_id;
+    pkt1[1] = 0xd2;
+    pkt1[2] = 0x02;
+    pkt1[3] = 0x01;
+    pkt1[4] = 0x08;
+    pkt1[5] = 0xac;
+
+    let mut pkt2 = [0; PACKET_SIZE];
+    pkt2[0] = report_id;
+    pkt2[1] = 0xd3;
+    pkt2[2] = 0x03;
+    pkt2[3] = 0x01;
+    pkt2[4] = 0x08;
+    pkt2[5] = 0xac;
+    pkt2[6] = 0xff;
+    pkt2[7] = 0xff;
+    pkt2[8] = 0x01;
+    pkt2[9] = 0x05;
+    pkt2[10] = 0xff;
+    pkt2[11] = 0xff;
+
+    let mut pkt3 = [0; PACKET_SIZE];
+    pkt3[0] = report_id;
+    pkt3[1] = 0xd4;
+    pkt3[2] = 0x00;
+    pkt3[3] = 0x00;
+    pkt3[4] = 0x01;
+    pkt3[5] = 0xac;
+
+    [
+        pkt1, pkt2, pkt3,
+    ]
+}
+
+/// Get the packet for one custom frame. Each value is the brightness of one
+/// segment.
+#[inline]
+pub const fn slash_pkt_custom_frame(
+    slash_type: SlashType,
+    segments: &[u8; SLASH_SEGMENTS],
+) -> SlashUsbPacket {
+    let mut pkt = [0; PACKET_SIZE];
+    pkt[0] = report_id(slash_type);
+    pkt[1] = 0xd3;
+    pkt[2] = 0x00;
+    pkt[3] = 0x00;
+    pkt[4] = SLASH_SEGMENTS as u8;
+    let mut i = 0;
+    while i < SLASH_SEGMENTS {
+        pkt[5 + i] = segments[i];
+        i += 1;
+    }
+
+    pkt
+}
+
+/// Build a custom frame that shows `percentage` (0-100) as a bar. The bar
+/// fills from the last segment towards the first, and the segment at the edge
+/// is dimmed in proportion to how full it is.
+pub fn battery_level_frame(percentage: u8, brightness: u8) -> [u8; SLASH_SEGMENTS] {
+    let mut frame = [0; SLASH_SEGMENTS];
+    // Work in units of 1/7 of a percent so segment maths stays in integers
+    let segment_span = 100;
+    let mut remaining = percentage.min(100) as usize * SLASH_SEGMENTS;
+    for slot in frame.iter_mut().rev() {
+        let lit = remaining.min(segment_span);
+        *slot = (brightness as usize * lit / segment_span) as u8;
+        remaining -= lit;
+    }
+    frame
+}
+
 #[inline]
 pub const fn slash_pkt_set_mode(slash_type: SlashType, mode: SlashMode) -> [SlashUsbPacket; 2] {
     let report_id = report_id(slash_type);
@@ -184,4 +267,55 @@ pub const fn slash_pkt_lid_closed(slash_type: SlashType, enabled: bool) -> [u8; 
     [
         typ, 0xd8, 0x00, 0x00, 0x02, 0xa5, status,
     ]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn battery_frame_is_dark_when_empty_and_full_when_charged() {
+        assert_eq!(battery_level_frame(0, 200), [0; SLASH_SEGMENTS]);
+        assert_eq!(battery_level_frame(100, 200), [200; SLASH_SEGMENTS]);
+        // Values above 100 are treated as full
+        assert_eq!(battery_level_frame(250, 200), [200; SLASH_SEGMENTS]);
+    }
+
+    #[test]
+    fn battery_frame_fills_from_the_last_segment() {
+        let frame = battery_level_frame(50, 140);
+        assert_eq!(
+            frame,
+            [
+                0, 0, 0, 70, 140, 140, 140
+            ]
+        );
+    }
+
+    #[test]
+    fn battery_frame_never_exceeds_brightness() {
+        for pct in 0..=100 {
+            let frame = battery_level_frame(pct, 99);
+            assert!(frame.iter().all(|v| *v <= 99));
+            // Segments must not get brighter towards the empty end
+            assert!(frame.windows(2).all(|w| w[0] <= w[1]));
+        }
+    }
+
+    #[test]
+    fn custom_frame_packet_carries_the_segments() {
+        let segments = [
+            1, 2, 3, 4, 5, 6, 7,
+        ];
+        let pkt = slash_pkt_custom_frame(SlashType::GU605_2024, &segments);
+        assert_eq!(pkt[0], report_id(SlashType::GU605_2024));
+        assert_eq!(
+            pkt[1..5],
+            [
+                0xd3, 0x00, 0x00, 0x07
+            ]
+        );
+        assert_eq!(pkt[5..12], segments);
+        assert!(pkt[12..].iter().all(|b| *b == 0));
+    }
 }

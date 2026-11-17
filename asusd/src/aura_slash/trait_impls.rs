@@ -1,9 +1,9 @@
 use config_traits::StdConfig;
 use log::{debug, error, warn};
 use rog_slash::usb::{
-    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_lid_closed,
-    slash_pkt_low_battery, slash_pkt_options, slash_pkt_save, slash_pkt_set_mode,
-    slash_pkt_shutdown, slash_pkt_sleep,
+    slash_pkt_battery_saver, slash_pkt_boot, slash_pkt_enable, slash_pkt_init,
+    slash_pkt_lid_closed, slash_pkt_low_battery, slash_pkt_options, slash_pkt_save,
+    slash_pkt_set_mode, slash_pkt_shutdown, slash_pkt_sleep,
 };
 use rog_slash::{DeviceState, SlashMode};
 use zbus::zvariant::OwnedObjectPath;
@@ -81,6 +81,7 @@ impl SlashZbus {
         config.enabled = enabled;
         config.brightness = brightness;
         config.write();
+        self.0.sync_battery_task(&config).await;
     }
 
     /// Get brightness level
@@ -111,6 +112,7 @@ impl SlashZbus {
         config.enabled = enabled;
         config.brightness = brightness;
         config.write();
+        self.0.sync_battery_task(&config).await;
     }
 
     #[zbus(property)]
@@ -150,6 +152,33 @@ impl SlashZbus {
             zbus::fdo::Error::InvalidArgs(format!("ctrl_slash::set_mode {}", err))
         })?;
         let mut config = self.0.lock_config().await;
+
+        if mode.is_software() {
+            config.display_mode = mode;
+            config.write();
+            self.0.sync_battery_task(&config).await;
+            return Ok(());
+        }
+
+        if config.display_mode.is_software() {
+            // Leave custom frames before handing control back to the firmware
+            config.display_mode = mode;
+            self.0.sync_battery_task(&config).await;
+            for pkt in &slash_pkt_init(config.slash_type) {
+                self.0.write_bytes(pkt).await?;
+            }
+            self.0
+                .write_bytes(&slash_pkt_enable(config.slash_type, config.enabled))
+                .await?;
+            self.0
+                .write_bytes(&slash_pkt_options(
+                    config.slash_type,
+                    config.enabled,
+                    config.brightness,
+                    config.display_interval,
+                ))
+                .await?;
+        }
 
         let command_packets = slash_pkt_set_mode(config.slash_type, mode);
         // self.node.write_bytes(&command_packets[0])?;

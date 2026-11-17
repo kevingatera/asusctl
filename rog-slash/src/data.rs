@@ -126,6 +126,9 @@ pub enum SlashMode {
     GameOver = 0x42,
     Start = 0x43,
     Buzzer = 0x44,
+    /// Shows the battery charge as a bar. Not a firmware animation: asusd
+    /// draws it with custom frames, so the value is not sent to the device.
+    BatteryLevel = 0xf0,
 }
 
 impl FromStr for SlashMode {
@@ -149,6 +152,7 @@ impl FromStr for SlashMode {
             "GameOver" => Ok(SlashMode::GameOver),
             "Start" => Ok(SlashMode::Start),
             "Buzzer" => Ok(SlashMode::Buzzer),
+            "BatteryLevel" => Ok(SlashMode::BatteryLevel),
             _ => Ok(SlashMode::Bounce),
         }
     }
@@ -175,6 +179,7 @@ impl TryFrom<u8> for SlashMode {
             0x42 => Ok(SlashMode::GameOver),
             0x43 => Ok(SlashMode::Start),
             0x44 => Ok(SlashMode::Buzzer),
+            0xf0 => Ok(SlashMode::BatteryLevel),
             _ => Err(SlashError::ParseError(format!(
                 "Unknown SlashMode discriminant: 0x{value:02x}"
             ))),
@@ -201,13 +206,19 @@ impl Display for SlashMode {
             SlashMode::GameOver => String::from("GameOver"),
             SlashMode::Start => String::from("Start"),
             SlashMode::Buzzer => String::from("Buzzer"),
+            SlashMode::BatteryLevel => String::from("BatteryLevel"),
         };
         write!(f, "{}", str)
     }
 }
 
 impl SlashMode {
-    pub fn list() -> [String; 16] {
+    /// True for modes that asusd draws itself instead of the firmware.
+    pub const fn is_software(self) -> bool {
+        matches!(self, SlashMode::BatteryLevel)
+    }
+
+    pub fn list() -> [String; 17] {
         [
             SlashMode::Static.to_string(),
             SlashMode::Bounce.to_string(),
@@ -225,6 +236,7 @@ impl SlashMode {
             SlashMode::GameOver.to_string(),
             SlashMode::Start.to_string(),
             SlashMode::Buzzer.to_string(),
+            SlashMode::BatteryLevel.to_string(),
         ]
     }
 }
@@ -236,4 +248,36 @@ pub struct DeviceState {
     pub slash_brightness: u8,
     pub slash_interval: u8,
     pub slash_mode: SlashMode,
+}
+
+#[cfg(test)]
+mod tests {
+    use std::str::FromStr;
+
+    use super::SlashMode;
+
+    #[test]
+    fn battery_level_round_trips_through_u8_and_str() {
+        let raw = SlashMode::BatteryLevel as u8;
+        assert_eq!(SlashMode::try_from(raw).unwrap(), SlashMode::BatteryLevel);
+        assert_eq!(
+            SlashMode::from_str(&SlashMode::BatteryLevel.to_string()).unwrap(),
+            SlashMode::BatteryLevel
+        );
+    }
+
+    #[test]
+    fn every_listed_mode_parses_back_to_itself() {
+        for name in SlashMode::list() {
+            assert_eq!(SlashMode::from_str(&name).unwrap().to_string(), name);
+        }
+    }
+
+    #[test]
+    fn only_battery_level_is_software_driven() {
+        for name in SlashMode::list() {
+            let mode = SlashMode::from_str(&name).unwrap();
+            assert_eq!(mode.is_software(), mode == SlashMode::BatteryLevel);
+        }
+    }
 }
