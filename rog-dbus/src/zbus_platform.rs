@@ -78,6 +78,12 @@ pub trait Platform {
     #[zbus(property)]
     fn set_change_platform_profile_on_ac(&self, change: bool) -> zbus::Result<()>;
 
+    /// RememberLastPlatformProfile property
+    #[zbus(property)]
+    fn remember_last_platform_profile(&self) -> zbus::Result<bool>;
+    #[zbus(property)]
+    fn set_remember_last_platform_profile(&self, remember: bool) -> zbus::Result<()>;
+
     /// ThrottlePolicyOnBattery property
     #[zbus(property)]
     fn platform_profile_on_battery(&self) -> zbus::Result<PlatformProfile>;

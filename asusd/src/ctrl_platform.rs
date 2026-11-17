@@ -294,6 +294,21 @@ impl CtrlPlatform {
         }
     }
 
+    /// Record `profile` as the one to restore for the power source in use, if
+    /// the user enabled remembering the last used profile. Returns true if the
+    /// stored profile changed.
+    async fn remember_profile_for_power_source(&self, profile: PlatformProfile) -> bool {
+        let Ok(power_plugged) = self.power.get_online() else {
+            return false;
+        };
+        let mut config = self.config.lock().await;
+        let changed = config.remember_platform_profile(power_plugged > 0, profile);
+        if changed {
+            config.write();
+        }
+        changed
+    }
+
     async fn select_power_profile_for_source(&self, power_plugged: bool) -> PlatformProfile {
         let configured = if power_plugged {
             self.config.lock().await.platform_profile_on_ac
@@ -516,6 +531,10 @@ impl CtrlPlatform {
                 FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
             })?;
             self.enable_ppt_group_changed(&ctxt).await?;
+            if self.remember_profile_for_power_source(policy).await {
+                self.platform_profile_on_ac_changed(&ctxt).await?;
+                self.platform_profile_on_battery_changed(&ctxt).await?;
+            }
             Ok(self.platform_profile_changed(&ctxt).await?)
         } else {
             Err(FdoErr::NotSupported(
@@ -563,6 +582,10 @@ impl CtrlPlatform {
                 FdoErr::Failed(format!("RogPlatform: platform_profile: {err}"))
             })?;
             self.enable_ppt_group_changed(&ctxt).await?;
+            if self.remember_profile_for_power_source(policy).await {
+                self.platform_profile_on_ac_changed(&ctxt).await?;
+                self.platform_profile_on_battery_changed(&ctxt).await?;
+            }
             Ok(())
         } else {
             Err(FdoErr::NotSupported(
@@ -650,6 +673,21 @@ impl CtrlPlatform {
     async fn set_change_platform_profile_on_ac(&mut self, change: bool) -> Result<(), FdoErr> {
         self.config.lock().await.change_platform_profile_on_ac = change;
         self.config.lock().await.write();
+        Ok(())
+    }
+
+    /// Whether a profile chosen by the user replaces the stored AC or battery
+    /// profile for the power source in use
+    #[zbus(property)]
+    async fn remember_last_platform_profile(&self) -> Result<bool, FdoErr> {
+        Ok(self.config.lock().await.remember_last_platform_profile)
+    }
+
+    #[zbus(property)]
+    async fn set_remember_last_platform_profile(&mut self, remember: bool) -> Result<(), FdoErr> {
+        let mut config = self.config.lock().await;
+        config.remember_last_platform_profile = remember;
+        config.write();
         Ok(())
     }
 

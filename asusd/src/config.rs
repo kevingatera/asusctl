@@ -44,6 +44,11 @@ pub struct Config {
     pub platform_profile_on_ac: PlatformProfile,
     /// Should the platform profile be set on bat/ac change?
     pub change_platform_profile_on_ac: bool,
+    /// If true, a profile chosen by the user replaces the stored AC or battery
+    /// profile for the power source in use, so it is restored the next time
+    /// that power source is connected
+    #[serde(default)]
+    pub remember_last_platform_profile: bool,
     /// The energy_performance_preference for this platform profile
     pub profile_quiet_epp: CPUEPP,
     /// The energy_performance_preference for this platform profile
@@ -92,6 +97,31 @@ impl Config {
     }
 }
 
+impl Config {
+    /// Store `profile` as the one to use for the given power source, if the
+    /// user asked for the last used profile to be remembered. Returns true if
+    /// the config changed and needs writing.
+    pub fn remember_platform_profile(
+        &mut self,
+        power_plugged: bool,
+        profile: PlatformProfile,
+    ) -> bool {
+        if !self.remember_last_platform_profile {
+            return false;
+        }
+        let stored = if power_plugged {
+            &mut self.platform_profile_on_ac
+        } else {
+            &mut self.platform_profile_on_battery
+        };
+        if *stored == profile {
+            return false;
+        }
+        *stored = profile;
+        true
+    }
+}
+
 impl Default for Config {
     fn default() -> Self {
         Self {
@@ -108,6 +138,7 @@ impl Default for Config {
             change_platform_profile_on_battery: true,
             platform_profile_on_ac: PlatformProfile::Performance,
             change_platform_profile_on_ac: true,
+            remember_last_platform_profile: false,
             profile_quiet_epp: CPUEPP::Power,
             profile_balanced_epp: CPUEPP::BalancePower,
             profile_performance_epp: CPUEPP::Performance,
@@ -185,6 +216,7 @@ impl From<Config611> for Config {
             change_platform_profile_on_battery: c.change_platform_profile_on_battery,
             platform_profile_on_ac: c.platform_profile_on_ac,
             change_platform_profile_on_ac: c.change_platform_profile_on_ac,
+            remember_last_platform_profile: false,
             profile_quiet_epp: c.profile_quiet_epp,
             profile_balanced_epp: c.profile_balanced_epp,
             profile_performance_epp: c.profile_performance_epp,
@@ -258,6 +290,7 @@ impl From<Config601> for Config {
             change_platform_profile_on_battery: c.change_platform_profile_on_battery,
             platform_profile_on_ac: c.platform_profile_on_ac,
             change_platform_profile_on_ac: c.change_platform_profile_on_ac,
+            remember_last_platform_profile: false,
             profile_quiet_epp: c.profile_quiet_epp,
             profile_balanced_epp: c.profile_balanced_epp,
             profile_performance_epp: c.profile_performance_epp,
@@ -270,5 +303,71 @@ impl From<Config601> for Config {
             screenpad_sync_primary: Default::default(),
             xgm_led_enabled: Default::default(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn remember_platform_profile_does_nothing_when_disabled() {
+        let mut config = Config::default();
+        let before = (
+            config.platform_profile_on_ac,
+            config.platform_profile_on_battery,
+        );
+        assert!(!config.remember_platform_profile(true, PlatformProfile::Balanced));
+        assert!(!config.remember_platform_profile(false, PlatformProfile::Balanced));
+        assert_eq!(
+            before,
+            (
+                config.platform_profile_on_ac,
+                config.platform_profile_on_battery
+            )
+        );
+    }
+
+    #[test]
+    fn remember_platform_profile_only_touches_the_current_power_source() {
+        let mut config = Config {
+            remember_last_platform_profile: true,
+            ..Default::default()
+        };
+        let battery = config.platform_profile_on_battery;
+        assert!(config.remember_platform_profile(true, PlatformProfile::Balanced));
+        assert_eq!(config.platform_profile_on_ac, PlatformProfile::Balanced);
+        assert_eq!(config.platform_profile_on_battery, battery);
+
+        assert!(config.remember_platform_profile(false, PlatformProfile::Performance));
+        assert_eq!(config.platform_profile_on_ac, PlatformProfile::Balanced);
+        assert_eq!(
+            config.platform_profile_on_battery,
+            PlatformProfile::Performance
+        );
+    }
+
+    #[test]
+    fn remember_platform_profile_reports_no_change_for_the_same_profile() {
+        let mut config = Config {
+            remember_last_platform_profile: true,
+            ..Default::default()
+        };
+        let current = config.platform_profile_on_ac;
+        assert!(!config.remember_platform_profile(true, current));
+    }
+
+    #[test]
+    fn config_without_the_remember_field_still_parses() {
+        let config = Config {
+            remember_last_platform_profile: true,
+            ..Default::default()
+        };
+        let ron = ron::to_string(&config)
+            .unwrap()
+            .replace("remember_last_platform_profile:true,", "");
+        assert!(!ron.contains("remember_last_platform_profile"));
+        let parsed: Config = ron::from_str(&ron).unwrap();
+        assert!(!parsed.remember_last_platform_profile);
     }
 }
